@@ -1,12 +1,16 @@
 package ru.melod1n.vk.api.model;
 
+import androidx.annotation.NonNull;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 
-public class VKConversation implements Serializable {
+public class VKConversation extends VKModel implements Serializable {
+
+    public static int count;
 
     private static final long serialVersionUID = 1L;
 
@@ -59,9 +63,20 @@ public class VKConversation implements Serializable {
             ChatSettings settings = new ChatSettings();
             settings.setMembersCount(oChatSettings.optInt("members_count"));
             settings.setTitle(oChatSettings.optString("title"));
-            settings.setPinnedMessage(new PinnedMessage(oChatSettings.optJSONObject("pinned_message")));
+
+            JSONObject oPinnedMessage = oChatSettings.optJSONObject("pinned_message");
+            if (oPinnedMessage != null) {
+                settings.setPinnedMessage(new VKPinnedMessage(oPinnedMessage));
+            }
+
             settings.setState(oChatSettings.optString("state"));
-            settings.setPhoto(new ChatSettings.Photo(oChatSettings.optJSONObject("photo")));
+
+            JSONObject oPhoto = oChatSettings.optJSONObject("photo");
+            if (oPhoto != null) {
+                settings.setPhoto(new ChatSettings.Photo(oPhoto));
+
+            }
+
             settings.setGroupChannel(oChatSettings.optBoolean("is_group_channel"));
 
             JSONArray activeIds = oChatSettings.optJSONArray("active_ids");
@@ -87,7 +102,7 @@ public class VKConversation implements Serializable {
         return conversations;
     }
 
-    private class Peer {
+    public class Peer {
         public static final String TYPE_USER = "user";
         public static final String TYPE_CHAT = "chat";
         public static final String TYPE_GROUP = "group";
@@ -122,7 +137,7 @@ public class VKConversation implements Serializable {
         }
     }
 
-    private class PushSettings {
+    public class PushSettings {
         private int disabledUntil;
         private boolean disabledForever;
         private boolean noSound;
@@ -152,7 +167,7 @@ public class VKConversation implements Serializable {
         }
     }
 
-    private class CanWrite {
+    public class CanWrite {
         private boolean allowed;
         private int reason = -1;
 
@@ -185,7 +200,7 @@ public class VKConversation implements Serializable {
         }
     }
 
-    private static class ChatSettings {
+    public static class ChatSettings {
         public static final String STATE_IN = "in";
         public static final String STATE_KICKED = "kicked";
         public static final String STATE_LEFT = "left";
@@ -254,7 +269,7 @@ public class VKConversation implements Serializable {
             isGroupChannel = groupChannel;
         }
 
-        private static class Photo {
+        public static class Photo {
             private String photo50;
             private String photo100;
             private String photo200;
@@ -349,5 +364,11 @@ public class VKConversation implements Serializable {
 
     public void setChatSettings(ChatSettings chatSettings) {
         this.chatSettings = chatSettings;
+    }
+
+    @NonNull
+    @Override
+    public String toString() {
+        return getChatSettings().getTitle();
     }
 }

@@ -1,108 +1,258 @@
 package ru.melod1n.vk.api.model;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 
-import ru.melod1n.vk.api.VKApi;
-import ru.melod1n.vk.api.VKAttachments;
+public class VKMessage extends VKModel implements Serializable {
 
-public class VKMessage implements Serializable {
     private static final long serialVersionUID = 1L;
-    public long date;
-    public long uid;
-    public long mid;
-    public String title;
-    public String body;
-    public boolean read_state;
-    public boolean is_out;
-    public ArrayList<VKAttachments> attachments = new ArrayList<VKAttachments>();
-    public Long chat_id;
-    public ArrayList<Long> chat_members;
-    public Long admin_id;
 
-    public static VKMessage parse(JSONObject o, boolean from_history, long history_uid, boolean from_chat, long me) throws NumberFormatException, JSONException {
-        VKMessage m = new VKMessage();
-        if (from_chat) {
-            long from_id = o.getLong("user_id");
-            m.uid = from_id;
-            m.is_out = (from_id == me);
-        } else if (from_history) {
-            m.uid = history_uid;
-            Long from_id = o.getLong("from_id");
-            m.is_out = !(from_id == history_uid);
-        } else {
-            //тут не очень, потому что при получении списка диалогов если есть моё сообщение, которое я написал в беседу, то в нём uid будет мой. Хотя в других случайх uid всегда собеседника.
-            m.uid = o.getLong("user_id");
-            m.is_out = o.optInt("out") == 1;
+    public static int count;
+    public static int lastHistoryCount;
+
+    public static final int UNREAD = 1;       // message unread
+    public static final int OUTBOX = 2;       // исходящее сообщение
+    public static final int REPLIED = 4;      // на сообщение был создан ответ
+    public static final int IMPORTANT = 8;    // помеченное сообщение
+    public static final int CHAT = 16;        // сообщение отправлено через диалог
+    public static final int FRIENDS = 32;     // сообщение отправлено другом
+    public static final int SPAM = 64;        // сообщение помечено как "Спам"
+    public static final int DELETED = 128;    // сообщение удалено (в корзине)
+    public static final int FIXED = 256;      // сообщение проверено пользователем на спам
+    public static final int MEDIA = 512;      // сообщение содержит медиаконтент
+    public static final int BESEDA = 8192;    // беседа
+
+    public static final String ACTION_CHAT_CREATE = "chat_create";
+    public static final String ACTION_CHAT_INVITE_USER = "chat_invite_user";
+    public static final String ACTION_CHAT_KICK_USER = "chat_kick_user";
+
+    public static final String ACTION_CHAT_TITLE_UPDATE = "chat_title_update";
+    public static final String ACTION_CHAT_PHOTO_UPDATE = "chat_photo_update";
+    public static final String ACTION_CHAT_PHOTO_REMOVE = "chat_photo_remove";
+
+    private int id;
+    private int date;
+    private int peerId;
+    private int fromId;
+    private String text;
+    private int randomId;
+    private ArrayList<VKModel> attachments;
+    private boolean important;
+    private ArrayList<VKMessage> fwdMessages;
+    private VKMessage replyMessage;
+    private Action action;
+
+    public VKMessage(JSONObject o) {
+        setId(o.optInt("id", -1));
+        setDate(o.optInt("date"));
+        setPeerId(o.optInt("peer_id", -1));
+        setFromId(o.optInt("from_id", -1));
+        setText(o.optString("text"));
+        setRandomId(o.optInt("random_id", -1));
+
+        JSONArray oAttachments = o.optJSONArray("attachments");
+        if (oAttachments != null) {
+            setAttachments(VKAttachments.parse(oAttachments));
         }
-        m.mid = o.optLong("id");
-        m.date = o.optLong("date");
-        m.title = VKApi.unescape(o.optString("title"));
-        m.body = VKApi.unescapeWithSmiles(o.optString("body"));
-        m.read_state = (o.optInt("read_state") == 1);
-        if (o.has("chat_id"))
-            m.chat_id = o.getLong("chat_id");
 
-        //for dialog list
-        JSONArray tmp = o.optJSONArray("chat_active");
-        if (tmp != null && tmp.length() != 0) {
-            m.chat_members = new ArrayList<Long>();
-            for (int i = 0; i < tmp.length(); ++i)
-                m.chat_members.add(tmp.getLong(i));
-        }
+        setImportant(o.optBoolean("important"));
 
-        JSONArray attachments = o.optJSONArray("attachments");
-        JSONObject geo_json = o.optJSONObject("geo");
-        m.attachments = VKAttachments.parseAttachments(attachments);
-
-        //parse fwd_messages and add them to attachments
-        JSONArray fwd_messages = o.optJSONArray("fwd_messages");
-        if (fwd_messages != null) {
-            for (int i = 0; i < fwd_messages.length(); ++i) {
-                JSONObject fwd_message_json = fwd_messages.getJSONObject(i);
-                VKMessage fwd_message = VKMessage.parse(fwd_message_json, false, 0, false, 0);
-                VKAttachments att = new VKAttachments();
-                att.type = "message";
-                att.message = fwd_message;
-                m.attachments.add(att);
+        JSONArray oFwdMessages = o.optJSONArray("fwd_messages");
+        if (oFwdMessages != null) {
+            ArrayList<VKMessage> fwdMessages = new ArrayList<>(oFwdMessages.length());
+            for (int i = 0; i < oFwdMessages.length(); i++) {
+                fwdMessages.add(new VKMessage(oFwdMessages.optJSONObject(i)));
             }
+
+            setFwdMessages(fwdMessages);
         }
 
-        return m;
+        JSONObject oReplyMessage = o.optJSONObject("reply_message");
+        if (oReplyMessage != null) {
+            setReplyMessage(new VKMessage(oReplyMessage));
+        }
+
+        JSONObject oAction = o.optJSONObject("action");
+        if (oAction != null) {
+            setAction(new Action(oAction));
+        }
     }
 
-    public static int UNREAD = 1;        //сообщение не прочитано
-    public static int OUTBOX = 2;        //исходящее сообщение
-    public static int REPLIED = 4;        //на сообщение был создан ответ
-    public static int IMPORTANT = 8;    //помеченное сообщение
-    public static int CHAT = 16;        //сообщение отправлено через диалог
-    public static int FRIENDS = 32;        //сообщение отправлено другом
-    public static int SPAM = 64;        //сообщение помечено как "Спам"
-    public static int DELETED = 128;    //сообщение удалено (в корзине)
-    public static int FIXED = 256;        //сообщение проверено пользователем на спам
-    public static int MEDIA = 512;        //сообщение содержит медиаконтент
-    public static int BESEDA = 8192;    //беседа
+    public int getId() {
+        return id;
+    }
 
-    public static VKMessage parse(JSONArray a) throws JSONException {
-        VKMessage m = new VKMessage();
-        m.mid = a.getLong(1);
-        m.uid = a.getLong(3);
-        m.date = a.getLong(4);
-        m.title = VKApi.unescape(a.getString(5));
-        m.body = VKApi.unescapeWithSmiles(a.getString(6));
-        int flag = a.getInt(2);
-        m.read_state = (flag & UNREAD) == 0;
-        m.is_out = (flag & OUTBOX) != 0;
-        if ((flag & BESEDA) != 0) {
-            m.chat_id = a.getLong(3) & 63;//cut 6 last digits
-            JSONObject o = a.getJSONObject(7);
-            m.uid = o.getLong("from");
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public int getDate() {
+        return date;
+    }
+
+    public void setDate(int date) {
+        this.date = date;
+    }
+
+    public int getPeerId() {
+        return peerId;
+    }
+
+    public void setPeerId(int peerId) {
+        this.peerId = peerId;
+    }
+
+    public int getFromId() {
+        return fromId;
+    }
+
+    public void setFromId(int fromId) {
+        this.fromId = fromId;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
+    }
+
+    public int getRandomId() {
+        return randomId;
+    }
+
+    public void setRandomId(int randomId) {
+        this.randomId = randomId;
+    }
+
+    public ArrayList<VKModel> getAttachments() {
+        return attachments;
+    }
+
+    public void setAttachments(ArrayList<VKModel> attachments) {
+        this.attachments = attachments;
+    }
+
+    public boolean isImportant() {
+        return important;
+    }
+
+    public void setImportant(boolean important) {
+        this.important = important;
+    }
+
+    public ArrayList<VKMessage> getFwdMessages() {
+        return fwdMessages;
+    }
+
+    public void setFwdMessages(ArrayList<VKMessage> fwdMessages) {
+        this.fwdMessages = fwdMessages;
+    }
+
+    public VKMessage getReplyMessage() {
+        return replyMessage;
+    }
+
+    public void setReplyMessage(VKMessage replyMessage) {
+        this.replyMessage = replyMessage;
+    }
+
+    public Action getAction() {
+        return action;
+    }
+
+    public void setAction(Action action) {
+        this.action = action;
+    }
+
+    private class Action extends VKModel implements Serializable {
+        /*
+            chat_photo_update — обновлена фотография беседы;
+            chat_photo_remove — удалена фотография беседы;
+            chat_create — создана беседа;
+            chat_title_update — обновлено название беседы;
+            chat_invite_user — приглашен пользователь;
+            chat_kick_user — исключен пользователь;
+            chat_pin_message — закреплено сообщение;
+            chat_unpin_message — откреплено сообщение;
+            chat_invite_user_by_link — пользователь присоединился к беседе по ссылке.
+        */
+
+        private String type;
+        private int memberId; //kick / invite / pin / unpin
+        private String text; //for chat_create / title_update
+        private Photo photo;
+
+        public Action(JSONObject o) {
+            setType(o.optString("type"));
+            setMemberId(o.optInt("member_id", -1));
+            setText(o.optString("text"));
         }
-        //m.attachment = a.getJSONArray(7); TODO
-        return m;
+
+        public String getType() {
+            return type;
+        }
+
+        public void setType(String type) {
+            this.type = type;
+        }
+
+        public int getMemberId() {
+            return memberId;
+        }
+
+        public void setMemberId(int memberId) {
+            this.memberId = memberId;
+        }
+
+        public String getText() {
+            return text;
+        }
+
+        public void setText(String text) {
+            this.text = text;
+        }
+
+        public Photo getPhoto() {
+            return photo;
+        }
+
+        public void setPhoto(Photo photo) {
+            this.photo = photo;
+        }
+
+        private class Photo {
+            private String photo50;
+            private String photo100;
+            private String photo200;
+
+            public String getPhoto50() {
+                return photo50;
+            }
+
+            public void setPhoto50(String photo50) {
+                this.photo50 = photo50;
+            }
+
+            public String getPhoto100() {
+                return photo100;
+            }
+
+            public void setPhoto100(String photo100) {
+                this.photo100 = photo100;
+            }
+
+            public String getPhoto200() {
+                return photo200;
+            }
+
+            public void setPhoto200(String photo200) {
+                this.photo200 = photo200;
+            }
+        }
     }
 }

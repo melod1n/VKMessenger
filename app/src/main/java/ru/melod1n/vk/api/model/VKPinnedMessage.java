@@ -5,10 +5,7 @@ import org.json.JSONObject;
 import java.io.Serializable;
 import java.util.ArrayList;
 
-import ru.melod1n.vk.api.VKAttachments;
-import ru.melod1n.vk.api.VKAuth;
-
-public class PinnedMessage implements Serializable {
+public class VKPinnedMessage extends VKModel implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -16,17 +13,15 @@ public class PinnedMessage implements Serializable {
     private int date;
     private int fromId;
     private String text;
-    private ArrayList<VKAttachments> attachments;
+    private ArrayList<VKModel> attachments;
     private ArrayList<VKMessage> fwdMessages;
 
-    public PinnedMessage() {}
-
-    public PinnedMessage(JSONObject o) {
+    public VKPinnedMessage(JSONObject o) {
         setId(o.optInt("id", -1));
         setDate(o.optInt("date"));
         setFromId(o.optInt("from_id", -1));
         setText(o.optString("text"));
-        setAttachments(VKAttachments.parseAttachments(o.optJSONArray("attachments")));
+        setAttachments(VKAttachments.parse(o.optJSONArray("attachments")));
     }
 
     public int getId() {
@@ -61,11 +56,11 @@ public class PinnedMessage implements Serializable {
         this.text = text;
     }
 
-    public ArrayList<VKAttachments> getAttachments() {
+    public ArrayList<VKModel> getAttachments() {
         return attachments;
     }
 
-    public void setAttachments(ArrayList<VKAttachments> attachments) {
+    public void setAttachments(ArrayList<VKModel> attachments) {
         this.attachments = attachments;
     }
 

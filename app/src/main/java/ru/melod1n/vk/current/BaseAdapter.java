@@ -10,7 +10,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 
-public abstract class RecyclerAdapter<T, VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<VH> {
+public abstract class BaseAdapter<T, VH extends BaseHolder> extends RecyclerView.Adapter<VH> {
 
     private Context context;
     private LayoutInflater inflater;
@@ -21,7 +21,7 @@ public abstract class RecyclerAdapter<T, VH extends RecyclerView.ViewHolder> ext
     private OnItemClickListener onItemClickListener;
     private OnItemLongClickListener onItemLongClickListener;
 
-    public RecyclerAdapter(Context context, ArrayList<T> values) {
+    public BaseAdapter(Context context, ArrayList<T> values) {
         this.context = context;
         this.values = values;
 
@@ -36,6 +36,7 @@ public abstract class RecyclerAdapter<T, VH extends RecyclerView.ViewHolder> ext
 
     @Override
     public void onBindViewHolder(@NonNull VH holder, int position) {
+        holder.bind(position);
         updateListeners(holder.itemView, position);
     }
 
@@ -63,8 +64,32 @@ public abstract class RecyclerAdapter<T, VH extends RecyclerView.ViewHolder> ext
         return values.get(position);
     }
 
-    public void remove(int i) {
-        getValues().remove(i);
+    public void add(T item) {
+        getValues().add(item);
+    }
+
+    public void add(int position, T item) {
+        getValues().add(position, item);
+    }
+
+    public void addAll(ArrayList<T> values) {
+        getValues().addAll(values);
+    }
+
+    public void addAll(int position, ArrayList<T> values) {
+        getValues().addAll(position, values);
+    }
+
+    public void remove(int position) {
+        getValues().remove(position);
+    }
+
+    public void remove(T item) {
+        getValues().remove(item);
+    }
+
+    public void removeAll(ArrayList<T> values) {
+        getValues().removeAll(values);
     }
 
     public void changeItems(ArrayList<T> items) {
@@ -94,7 +119,9 @@ public abstract class RecyclerAdapter<T, VH extends RecyclerView.ViewHolder> ext
         notifyDataSetChanged();
     }
 
-    abstract boolean onQueryItem(T item, String lowerQuery);
+    public boolean onQueryItem(T item, String lowerQuery) {
+        return false;
+    }
 
     public void setOnItemClickListener(OnItemClickListener onItemClickListener) {
         this.onItemClickListener = onItemClickListener;

@@ -1,4 +1,4 @@
-package ru.melod1n.vk.api.model.attachment;
+package ru.melod1n.vk.api.model;
 
 import org.json.JSONObject;
 
