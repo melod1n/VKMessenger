@@ -89,10 +89,11 @@ public class VKApi {
             }
             for (int i = 0; i < array.length(); i++) {
                 JSONObject source = array.optJSONObject(i);
-                int unread = source.optInt("unread");
+
                 if (source.has("message")) {
                     source = source.optJSONObject("message");
                 }
+
                 VKMessage message = new VKMessage(source);
                 models.add((T) message);
             }

@@ -45,6 +45,8 @@ public class VKMessage extends VKModel implements Serializable {
     private VKMessage replyMessage;
     private Action action;
 
+    public VKMessage() {}
+
     public VKMessage(JSONObject o) {
         setId(o.optInt("id", -1));
         setDate(o.optInt("date"));
@@ -169,7 +171,10 @@ public class VKMessage extends VKModel implements Serializable {
         this.action = action;
     }
 
-    private class Action extends VKModel implements Serializable {
+    public class Action implements Serializable {
+
+        private static final long serialVersionUID = 1L;
+
         /*
             chat_photo_update — обновлена фотография беседы;
             chat_photo_remove — удалена фотография беседы;
@@ -225,7 +230,10 @@ public class VKMessage extends VKModel implements Serializable {
             this.photo = photo;
         }
 
-        private class Photo {
+        private class Photo implements Serializable {
+
+            private static final long serialVersionUID = 1L;
+
             private String photo50;
             private String photo100;
             private String photo200;

@@ -102,7 +102,10 @@ public class VKConversation extends VKModel implements Serializable {
         return conversations;
     }
 
-    public class Peer {
+    public class Peer implements Serializable {
+
+        private static final long serialVersionUID = 1L;
+
         public static final String TYPE_USER = "user";
         public static final String TYPE_CHAT = "chat";
         public static final String TYPE_GROUP = "group";
@@ -137,7 +140,10 @@ public class VKConversation extends VKModel implements Serializable {
         }
     }
 
-    public class PushSettings {
+    public class PushSettings implements Serializable {
+
+        private static final long serialVersionUID = 1L;
+
         private int disabledUntil;
         private boolean disabledForever;
         private boolean noSound;
@@ -167,7 +173,10 @@ public class VKConversation extends VKModel implements Serializable {
         }
     }
 
-    public class CanWrite {
+    public class CanWrite implements Serializable {
+
+        private static final long serialVersionUID = 1L;
+
         private boolean allowed;
         private int reason = -1;
 
@@ -200,7 +209,10 @@ public class VKConversation extends VKModel implements Serializable {
         }
     }
 
-    public static class ChatSettings {
+    public static class ChatSettings implements Serializable {
+
+        private static final long serialVersionUID = 1L;
+
         public static final String STATE_IN = "in";
         public static final String STATE_KICKED = "kicked";
         public static final String STATE_LEFT = "left";
@@ -269,7 +281,10 @@ public class VKConversation extends VKModel implements Serializable {
             isGroupChannel = groupChannel;
         }
 
-        public static class Photo {
+        public static class Photo implements Serializable {
+
+            private static final long serialVersionUID = 1L;
+
             private String photo50;
             private String photo100;
             private String photo200;

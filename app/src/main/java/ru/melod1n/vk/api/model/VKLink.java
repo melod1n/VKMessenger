@@ -5,6 +5,7 @@ import org.json.JSONObject;
 import java.io.Serializable;
 
 public class VKLink extends VKModel implements Serializable {
+
     private static final long serialVersionUID = 1L;
 
     private String url;
@@ -100,7 +101,10 @@ public class VKLink extends VKModel implements Serializable {
         this.previewUrl = previewUrl;
     }
 
-    private class Button {
+    private class Button implements Serializable {
+
+        private static final long serialVersionUID = 1L;
+
         private String title;
         private Action action;
 
@@ -130,6 +134,9 @@ public class VKLink extends VKModel implements Serializable {
         }
 
         private class Action implements Serializable {
+
+            private static final long serialVersionUID = 1L;
+
             private String type;
             private String url;
 

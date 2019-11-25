@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 public class VKDoc extends VKModel implements Serializable {
+
     private static final long serialVersionUID = 1L;
 
     public static final int TYPE_NONE = 0;
@@ -18,7 +19,6 @@ public class VKDoc extends VKModel implements Serializable {
     public static final int TYPE_VIDEO = 6;
     public static final int TYPE_BOOK = 7;
     public static final int TYPE_UNKNOWN = 8;
-
 
     private int id;
     private int ownerId;
@@ -120,6 +120,8 @@ public class VKDoc extends VKModel implements Serializable {
 
     private class Preview implements Serializable {
 
+        private static final long serialVersionUID = 1L;
+
         private Photo photo;
         private Graffiti graffiti;
         private AudioMessage audioMessage;
@@ -166,6 +168,9 @@ public class VKDoc extends VKModel implements Serializable {
         }
 
         private class Photo implements Serializable {
+
+            private static final long serialVersionUID = 1L;
+
             private ArrayList<VKPhotoSize> sizes;
 
             public Photo(JSONObject o) {
@@ -190,6 +195,9 @@ public class VKDoc extends VKModel implements Serializable {
         }
 
         private class Graffiti implements Serializable {
+
+            private static final long serialVersionUID = 1L;
+
             private String src;
             private int width;
             private int height;
@@ -226,6 +234,9 @@ public class VKDoc extends VKModel implements Serializable {
         }
 
         private class AudioMessage implements Serializable {
+
+            private static final long serialVersionUID = 1L;
+
             private int duration;
             private ArrayList<Integer> waveform;
             private String linkOgg;

@@ -23,9 +23,12 @@ import ru.melod1n.vk.R;
 import ru.melod1n.vk.adapter.ConversationAdapter;
 import ru.melod1n.vk.adapter.model.VKDialog;
 import ru.melod1n.vk.api.VKApi;
+import ru.melod1n.vk.api.model.VKConversation;
+import ru.melod1n.vk.api.model.VKMessage;
 import ru.melod1n.vk.api.model.VKUser;
 import ru.melod1n.vk.concurrent.TaskManager;
 import ru.melod1n.vk.current.BaseAdapter;
+import ru.melod1n.vk.database.CacheStorage;
 
 public class FragmentConversations extends Fragment implements SwipeRefreshLayout.OnRefreshListener, BaseAdapter.OnItemClickListener {
 
@@ -42,7 +45,7 @@ public class FragmentConversations extends Fragment implements SwipeRefreshLayou
 
     @Override
     public void onRefresh() {
-        getConversations(0, 30);
+        getDialogs(0, 30);
     }
 
     @Nullable
@@ -60,7 +63,8 @@ public class FragmentConversations extends Fragment implements SwipeRefreshLayou
         prepareRefreshLayout();
         prepareRecyclerView();
 
-        onRefresh();
+        getCachedDialogs(0, 30);
+        getDialogs(0, 30);
     }
 
     private void prepareToolbar() {
@@ -78,7 +82,24 @@ public class FragmentConversations extends Fragment implements SwipeRefreshLayou
         recyclerView.setHasFixedSize(true);
     }
 
-    private void getConversations(int offset, int count) {
+    private void getCachedDialogs(int offset, int count) {
+        ArrayList<VKConversation> conversations = CacheStorage.getConversations(count);
+        ArrayList<VKDialog> dialogs = new ArrayList<>(conversations.size());
+
+        for (VKConversation conversation : conversations) {
+            VKDialog dialog = new VKDialog();
+            dialog.setConversation(conversation);
+
+            VKMessage lastMessage = CacheStorage.getMessageByPeerId(conversation.getPeer().getId());
+            dialog.setLastMessage(lastMessage);
+
+            dialogs.add(dialog);
+        }
+
+        createAdapter(offset, dialogs);
+    }
+
+    private void getDialogs(int offset, int count) {
         TaskManager.execute(() -> VKApi.messages()
                 .getConversations()
                 .filter("all")
@@ -88,7 +109,8 @@ public class FragmentConversations extends Fragment implements SwipeRefreshLayou
                 .execute(VKDialog.class, new VKApi.OnResponseListener<VKDialog>() {
                     @Override
                     public void onSuccess(ArrayList<VKDialog> models) {
-                        Log.d("getConversations", "Success");
+                        insertDataInDatabase(models);
+                        Log.d("getDialogs", "Success");
 
                         refreshLayout.setRefreshing(false);
                         createAdapter(offset, models);
@@ -97,9 +119,22 @@ public class FragmentConversations extends Fragment implements SwipeRefreshLayou
                     @Override
                     public void onError(Exception ex) {
                         refreshLayout.setRefreshing(false);
-                        Log.d("getConversations", "Error: " + Log.getStackTraceString(ex));
+                        Log.d("getDialogs", "Error: " + Log.getStackTraceString(ex));
                     }
                 }));
+    }
+
+    private void insertDataInDatabase(ArrayList<VKDialog> dialogs) {
+        ArrayList<VKConversation> conversations = new ArrayList<>(dialogs.size());
+        ArrayList<VKMessage> messages = new ArrayList<>(dialogs.size());
+
+        for (VKDialog dialog : dialogs) {
+            conversations.add(dialog.getConversation());
+            messages.add(dialog.getLastMessage());
+        }
+
+        CacheStorage.insertMessages(messages);
+        CacheStorage.insertConversations(conversations);
     }
 
     private void createAdapter(int offset, ArrayList<VKDialog> dialogs) {

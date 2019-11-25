@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 public class VKSticker extends VKModel implements Serializable {
+
     private static final long serialVersionUID = 1L;
 
     private int productId;
@@ -52,7 +53,10 @@ public class VKSticker extends VKModel implements Serializable {
         this.images = images;
     }
 
-    private class Image {
+    private class Image implements Serializable {
+
+        private static final long serialVersionUID = 1L;
+
         private String url;
         private int width;
         private int height;

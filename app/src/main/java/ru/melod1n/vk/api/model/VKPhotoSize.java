@@ -2,7 +2,11 @@ package ru.melod1n.vk.api.model;
 
 import org.json.JSONObject;
 
-public class VKPhotoSize {
+import java.io.Serializable;
+
+public class VKPhotoSize implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private String type;
     private String url;
