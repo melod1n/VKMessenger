@@ -25,6 +25,7 @@ public class VKConversation extends VKModel implements Serializable {
     private ChatSettings chatSettings;
 
     private ArrayList<VKUser> profiles = new ArrayList<>();
+    private ArrayList<VKGroup> groups = new ArrayList<>();
 
     public VKConversation() {
     }
@@ -91,16 +92,6 @@ public class VKConversation extends VKModel implements Serializable {
             }
 
             setChatSettings(settings);
-        }
-
-        JSONArray oProfiles = o.optJSONArray("profiles");
-        if (oProfiles != null) {
-            ArrayList<VKUser> profiles = new ArrayList<>();
-            for (int i = 0; i < oProfiles.length(); i++) {
-                profiles.add(new VKUser(oProfiles.optJSONObject(i)));
-            }
-
-            setProfiles(profiles);
         }
     }
 
@@ -415,6 +406,14 @@ public class VKConversation extends VKModel implements Serializable {
 
     public void setProfiles(ArrayList<VKUser> profiles) {
         this.profiles = profiles;
+    }
+
+    public ArrayList<VKGroup> getGroups() {
+        return groups;
+    }
+
+    public void setGroups(ArrayList<VKGroup> groups) {
+        this.groups = groups;
     }
 
     @NonNull

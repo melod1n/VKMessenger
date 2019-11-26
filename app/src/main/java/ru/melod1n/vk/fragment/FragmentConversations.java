@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -86,8 +87,22 @@ public class FragmentConversations extends Fragment implements SwipeRefreshLayou
         ArrayList<VKConversation> conversations = CacheStorage.getConversations(count);
         ArrayList<VKDialog> dialogs = new ArrayList<>(conversations.size());
 
+        Collections.sort(conversations, (o1, o2) -> {
+            VKMessage m1 = CacheStorage.getMessageByPeerId(o1.getPeer().getId());
+            VKMessage m2 = CacheStorage.getMessageByPeerId(o2.getPeer().getId());
+
+            if (m1 == null || m2 == null) return 0;
+
+            long x = m1.getDate();
+            long y = m2.getDate();
+
+
+            return (x > y) ? -1 : ((x == y) ? 1 : 0);
+        });
+
         for (VKConversation conversation : conversations) {
             VKDialog dialog = new VKDialog();
+
             dialog.setConversation(conversation);
 
             VKMessage lastMessage = CacheStorage.getMessageByPeerId(conversation.getPeer().getId());
@@ -129,14 +144,14 @@ public class FragmentConversations extends Fragment implements SwipeRefreshLayou
         ArrayList<VKMessage> messages = new ArrayList<>(dialogs.size());
 
         for (VKDialog dialog : dialogs) {
-            CacheStorage.insertUsers(dialog.getConversation().getProfiles());
-
             conversations.add(dialog.getConversation());
             messages.add(dialog.getLastMessage());
         }
 
         CacheStorage.insertMessages(messages);
         CacheStorage.insertConversations(conversations);
+        CacheStorage.insertUsers(conversations.get(0).getProfiles());
+        CacheStorage.insertGroups(conversations.get(0).getGroups());
     }
 
     private void createAdapter(int offset, ArrayList<VKDialog> dialogs) {

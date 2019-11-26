@@ -21,31 +21,31 @@ public class MethodSetter {
         this.params = new ArrayMap<>();
     }
 
-    public MethodSetter put(String key, Object value) {
+    MethodSetter put(String key, Object value) {
         this.params.put(key, String.valueOf(value));
         return this;
     }
 
-    public MethodSetter put(String key, int value) {
+    MethodSetter put(String key, int value) {
         this.params.put(key, String.valueOf(value));
         return this;
     }
 
-    public MethodSetter put(String key, long value) {
+    MethodSetter put(String key, long value) {
         this.params.put(key, String.valueOf(value));
         return this;
     }
 
-    public MethodSetter put(String key, boolean value) {
+    MethodSetter put(String key, boolean value) {
         this.params.put(key, value ? "1" : "0");
         return this;
     }
 
-    public String getSignedUrl() {
+    private String getSignedUrl() {
         return getSignedUrl(false);
     }
 
-    public String getSignedUrl(boolean isPost) {
+    private String getSignedUrl(boolean isPost) {
         if (!params.containsKey("access_token")) {
             params.put("access_token", UserConfig.getToken());
         }
@@ -59,7 +59,7 @@ public class MethodSetter {
         return VKApi.BASE_URL + name + "?" + (isPost ? "" : getParams());
     }
 
-    public String getParams() {
+    private String getParams() {
         StringBuilder buffer = new StringBuilder();
         try {
 

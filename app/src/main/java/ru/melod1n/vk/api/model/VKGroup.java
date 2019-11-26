@@ -8,7 +8,6 @@ public class VKGroup extends VKModel implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private int position;
     private int id;
     private String name;
     private String screenName;
@@ -104,13 +103,5 @@ public class VKGroup extends VKModel implements Serializable {
 
     public void setPhoto200(String photo200) {
         this.photo200 = photo200;
-    }
-
-    public int getPosition() {
-        return position;
-    }
-
-    public void setPosition(int position) {
-        this.position = position;
     }
 }

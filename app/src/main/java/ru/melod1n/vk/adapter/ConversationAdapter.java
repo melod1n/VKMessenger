@@ -21,10 +21,9 @@ import butterknife.ButterKnife;
 import ru.melod1n.vk.R;
 import ru.melod1n.vk.adapter.model.VKDialog;
 import ru.melod1n.vk.api.model.VKConversation;
+import ru.melod1n.vk.api.model.VKGroup;
 import ru.melod1n.vk.api.model.VKMessage;
 import ru.melod1n.vk.api.model.VKUser;
-import ru.melod1n.vk.concurrent.TaskManager;
-import ru.melod1n.vk.concurrent.TryCallback;
 import ru.melod1n.vk.current.BaseAdapter;
 import ru.melod1n.vk.current.BaseHolder;
 import ru.melod1n.vk.database.CacheStorage;
@@ -77,13 +76,16 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
             VKUser peerUser = searchPeerUser(lastMessage);
             VKUser fromUser = searchFromUser(lastMessage);
 
-            title.setText(getTitle(conversation, peerUser));
+            VKGroup peerGroup = searchPeerGroup(lastMessage);
+            VKGroup fromGroup = searchFromGroup(lastMessage);
 
-            loadImage(getAvatar(conversation, peerUser), avatar);
-            loadImage(getUserAvatar(conversation, fromUser), userAvatar);
+            title.setText(getTitle(conversation, peerUser, peerGroup));
+
+            loadImage(getAvatar(conversation, peerUser, peerGroup), avatar);
+            loadImage(getUserAvatar(conversation, fromUser, fromGroup), userAvatar);
 
             if (conversation.isUser() && peerUser != null && peerUser.isOnline()) {
-                userOnline.setVisibility(View.GONE);
+                userOnline.setVisibility(View.VISIBLE);
             } else {
                 userOnline.setVisibility(View.GONE);
             }
@@ -95,36 +97,23 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
             if (imageUrl == null) {
                 imageView.setImageDrawable(placeholderNormal);
             } else {
-                imageView.setImageDrawable(placeholderNormal);
-                TaskManager.execute(new TryCallback() {
-
-                    Bitmap bitmap;
-
-                    @Override
-                    public void ready() throws Exception {
-                        bitmap = Picasso.get().load(imageUrl).get();
-                    }
-
-                    @Override
-                    public void done() {
-                        imageView.setImageBitmap(bitmap);
-                    }
-
-                    @Override
-                    public void error(Exception e) {
-                        imageView.setImageDrawable(placeholderError);
-                    }
-                });
+                Picasso.get()
+                        .load(imageUrl)
+                        .config(Bitmap.Config.RGB_565)
+                        .placeholder(placeholderNormal)
+                        .into(imageView);
             }
         }
 
-        private String getTitle(VKConversation conversation, VKUser peerUser) {
+        private String getTitle(VKConversation conversation, VKUser peerUser, VKGroup peerGroup) {
             if (conversation.isUser()) {
                 if (peerUser != null) {
                     return peerUser.toString();
                 }
             } else if (conversation.isGroup()) {
-                return "it\'s group";
+                if (peerGroup != null) {
+                    return peerGroup.getName();
+                }
             } else {
                 return conversation.getChatSettings().getTitle();
             }
@@ -132,7 +121,7 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
             return "it\'s title";
         }
 
-        private String getAvatar(VKConversation conversation, VKUser peerUser) {
+        private String getAvatar(VKConversation conversation, VKUser peerUser, VKGroup peerGroup) {
             if (conversation.isUser()) {
                 if (peerUser != null) {
                     return peerUser.getPhoto200();
@@ -140,21 +129,29 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
 
                 return null;
             } else if (conversation.isGroup()) {
+                if (peerGroup != null) {
+                    return peerGroup.getPhoto200();
+                }
+
                 return null;
             }
 
             if (conversation.getChatSettings().getPhoto() == null) return null;
 
-            return conversation.getChatSettings().getPhoto().getPhoto100();
+            return conversation.getChatSettings().getPhoto().getPhoto200();
         }
 
-        private String getUserAvatar(VKConversation conversation, VKUser fromUser) {
+        private String getUserAvatar(VKConversation conversation, VKUser fromUser, VKGroup fromGroup) {
             if (conversation.isUser()) {
                 if (fromUser != null) {
                     return fromUser.getPhoto100();
                 }
                 return null;
             } else {
+                if (fromGroup != null) {
+                    return fromGroup.getPhoto100();
+                }
+
                 return null;
             }
         }
@@ -165,6 +162,14 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
 
         private VKUser searchFromUser(VKMessage message) {
             return CacheStorage.getUser(message.getFromId());
+        }
+
+        private VKGroup searchPeerGroup(VKMessage message) {
+            return CacheStorage.getGroup(message.getPeerId());
+        }
+
+        private VKGroup searchFromGroup(VKMessage message) {
+            return CacheStorage.getGroup(message.getFromId());
         }
     }
 }

@@ -59,7 +59,6 @@ import static ru.melod1n.vk.database.DatabaseHelper.TYPE;
 import static ru.melod1n.vk.database.DatabaseHelper.UNREAD_COUNT;
 import static ru.melod1n.vk.database.DatabaseHelper.USER_ID;
 import static ru.melod1n.vk.database.DatabaseHelper.VERIFIED;
-import static ru.melod1n.vk.database.DatabaseHelper._ID;
 
 public class CacheStorage {
 
@@ -288,7 +287,6 @@ public class CacheStorage {
     private static VKGroup parseGroup(Cursor cursor) {
         VKGroup group = new VKGroup();
 
-        group.setPosition(getInt(cursor, _ID));
         group.setId(getInt(cursor, GROUP_ID));
         group.setName(getString(cursor, NAME));
         group.setScreenName(getString(cursor, SCREEN_NAME));
@@ -381,7 +379,6 @@ public class CacheStorage {
     }
 
     private static void putValues(VKGroup group, ContentValues values) {
-        values.put(_ID, group.getPosition());
         values.put(GROUP_ID, group.getId());
         values.put(NAME, group.getName());
         values.put(SCREEN_NAME, group.getScreenName());

@@ -113,6 +113,28 @@ public class VKApi {
                 VKConversation conversation = new VKConversation(oConversation);
                 VKMessage lastMessage = new VKMessage(oLastMessage);
 
+                JSONObject response = json.optJSONObject("response");
+
+                JSONArray oProfiles = response.optJSONArray("profiles");
+                if (oProfiles != null) {
+                    ArrayList<VKUser> profiles = new ArrayList<>();
+                    for (int j = 0; j < oProfiles.length(); j++) {
+                        profiles.add(new VKUser(oProfiles.optJSONObject(j)));
+                    }
+
+                    conversation.setProfiles(profiles);
+                }
+
+                JSONArray oGroups = response.optJSONArray("groups");
+                if (oGroups != null) {
+                    ArrayList<VKGroup> groups = new ArrayList<>();
+                    for (int j = 0; i < oGroups.length(); i++) {
+                        groups.add(new VKGroup(oGroups.optJSONObject(j)));
+                    }
+
+                    conversation.setGroups(groups);
+                }
+
                 VKDialog dialog = new VKDialog();
                 dialog.setConversation(conversation);
                 dialog.setLastMessage(lastMessage);

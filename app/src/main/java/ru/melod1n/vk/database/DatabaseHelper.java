@@ -11,7 +11,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String DB_NAME = "cache.db";
     private static final int DB_VERSION = 9;
 
-    static final String _ID = "_id";
     static final String SCREEN_NAME = "screen_name";
     static final String DEACTIVATED = "deactivated";
     static final String PHOTO_50 = "photo_50";
@@ -113,8 +112,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             ");";
 
     private static final String CREATE_GROUPS = "create table if not exists " + TABLE_GROUPS + " (" +
-            _ID + " integer, " +
-            GROUP_ID + " integer primary key autoincrement, " +
+            GROUP_ID + " integer primary key on conflict replace, " +
             NAME + " longtext, " +
             SCREEN_NAME + " varchar(255), " +
             IS_CLOSED + " integer, " +
