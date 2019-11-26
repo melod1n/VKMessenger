@@ -129,6 +129,8 @@ public class FragmentConversations extends Fragment implements SwipeRefreshLayou
         ArrayList<VKMessage> messages = new ArrayList<>(dialogs.size());
 
         for (VKDialog dialog : dialogs) {
+            CacheStorage.insertUsers(dialog.getConversation().getProfiles());
+
             conversations.add(dialog.getConversation());
             messages.add(dialog.getLastMessage());
         }
@@ -151,6 +153,7 @@ public class FragmentConversations extends Fragment implements SwipeRefreshLayou
             adapter.notifyDataSetChanged();
             return;
         }
+
         adapter = new ConversationAdapter(getActivity(), dialogs);
         adapter.setOnItemClickListener(this);
         recyclerView.setAdapter(adapter);

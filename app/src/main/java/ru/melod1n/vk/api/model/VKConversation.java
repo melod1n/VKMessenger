@@ -24,6 +24,8 @@ public class VKConversation extends VKModel implements Serializable {
     private CanWrite canWrite;
     private ChatSettings chatSettings;
 
+    private ArrayList<VKUser> profiles = new ArrayList<>();
+
     public VKConversation() {
     }
 
@@ -90,6 +92,32 @@ public class VKConversation extends VKModel implements Serializable {
 
             setChatSettings(settings);
         }
+
+        JSONArray oProfiles = o.optJSONArray("profiles");
+        if (oProfiles != null) {
+            ArrayList<VKUser> profiles = new ArrayList<>();
+            for (int i = 0; i < oProfiles.length(); i++) {
+                profiles.add(new VKUser(oProfiles.optJSONObject(i)));
+            }
+
+            setProfiles(profiles);
+        }
+    }
+
+    public boolean isChat() {
+        return getPeer().getType().equals(Peer.TYPE_CHAT);
+    }
+
+    public boolean isUser() {
+        return getPeer().getType().equals(Peer.TYPE_USER);
+    }
+
+    public boolean isGroup() {
+        return getPeer().getType().equals(Peer.TYPE_GROUP);
+    }
+
+    public boolean isChannel() {
+        return getChatSettings() != null && getChatSettings().isGroupChannel();
     }
 
     public static ArrayList<VKConversation> parse(JSONArray array) {
@@ -379,6 +407,14 @@ public class VKConversation extends VKModel implements Serializable {
 
     public void setChatSettings(ChatSettings chatSettings) {
         this.chatSettings = chatSettings;
+    }
+
+    public ArrayList<VKUser> getProfiles() {
+        return profiles;
+    }
+
+    public void setProfiles(ArrayList<VKUser> profiles) {
+        this.profiles = profiles;
     }
 
     @NonNull

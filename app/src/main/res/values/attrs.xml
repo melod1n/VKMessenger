@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <declare-styleable name="RoundedImageView">
+    <declare-styleable name="CircleImageView">
         <attr name="radius" format="integer" />
     </declare-styleable>
 

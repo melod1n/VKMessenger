@@ -9,9 +9,7 @@ import androidx.annotation.Nullable;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "cache.db";
-    private static final int DB_VERSION = 5;
-
-    private static final String _ID = "_id";
+    private static final int DB_VERSION = 8;
 
     static final String MESSAGE_ID = "message_id";
     static final String DATE = "date";
@@ -34,11 +32,30 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     static final String CAN_WRITE = "can_write";
     static final String CHAT_SETTINGS = "chat_settings";
 
+    static final String FRIEND_ID = "friend_id";
+    static final String USER_ID = "user_id";
+    static final String FIRST_NAME = "first_name";
+    static final String LAST_NAME = "last_name";
+    static final String DEACTIVATED = "deactivated";
+    static final String CLOSED = "closed";
+    static final String CAN_ACCESS_CLOSED = "can_access_closed";
+    static final String SEX = "sex";
+    static final String SCREEN_NAME = "screen_name";
+    static final String PHOTO_50 = "photo_50";
+    static final String PHOTO_100 = "photo_100";
+    static final String PHOTO_200 = "photo_200";
+    static final String ONLINE = "online";
+    static final String ONLINE_MOBILE = "online_mobile";
+    static final String STATUS = "status";
+    static final String LAST_SEEN = "last_seen";
+    static final String VERIFIED = "verified";
+
     static final String TABLE_CONVERSATIONS = "conversations";
     static final String TABLE_MESSAGES = "messages";
+    static final String TABLE_USERS = "users";
+    static final String TABLE_FRIENDS = "friends";
 
     private static final String CREATE_MESSAGES = "create table if not exists " + TABLE_MESSAGES + " (" +
-            _ID + " integer, " +
             MESSAGE_ID + " integer primary key on conflict replace, " +
             DATE + " integer, " +
             PEER_ID + " integer, " +
@@ -53,20 +70,44 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             ");";
 
     private static final String CREATE_CONVERSATIONS = "create table if not exists " + TABLE_CONVERSATIONS + " (" +
-            _ID + " integer primary key autoincrement, " +
-            CONVERSATION_ID + " integer, " +
+            CONVERSATION_ID + " integer primary key on conflict replace, " +
             PEER + " blob, " +
             IN_READ + " integer, " +
             OUT_READ + " integer, " +
             UNREAD_COUNT + " integer, " +
             PUSH_SETTINGS + " blob, " +
             CAN_WRITE + " blob, " +
-            CHAT_SETTINGS + " blob, " +
-            "unique(" + CONVERSATION_ID + ") on conflict replace" +
+            CHAT_SETTINGS + " blob" +
+            ");";
+
+    private static final String CREATE_USERS = "create table if not exists " + TABLE_USERS + " (" +
+            USER_ID + " integer primary key on conflict replace, " +
+            FIRST_NAME + " varchar(255), " +
+            LAST_NAME + " varchar(255), " +
+            DEACTIVATED + " varchar(255), " +
+            CLOSED + " integer default 0, " +
+            CAN_ACCESS_CLOSED + " integer default 0, " +
+            SEX + " integer, " +
+            SCREEN_NAME + " varchar(255), " +
+            PHOTO_50 + " varchar(255), " +
+            PHOTO_100 + " varchar(255), " +
+            PHOTO_200 + " varchar(255), " +
+            ONLINE + " integer default 0, " +
+            ONLINE_MOBILE + " integer default 0, " +
+            STATUS + " longtext, " +
+            LAST_SEEN + " blob, " +
+            VERIFIED + " integer default 0" +
+            ");";
+
+    private static final String CREATE_FRIENDS = "create table if not exists " + TABLE_FRIENDS + " (" +
+            USER_ID + " integer primary key on conflict replace, " +
+            FRIEND_ID + " integer" +
             ");";
 
     private static final String DROP_MESSAGES = "drop table if exists " + TABLE_MESSAGES;
     private static final String DROP_CONVERSATIONS = "drop table if exists " + TABLE_CONVERSATIONS;
+    private static final String DROP_USERS = "drop table if exists " + TABLE_USERS;
+    private static final String DROP_FRIENDS = "drop table if exists " + TABLE_FRIENDS;
 
     private DatabaseHelper(@Nullable Context context) {
         super(context, DB_NAME, null, DB_VERSION);
@@ -90,10 +131,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private void createTables(SQLiteDatabase database) {
         database.execSQL(CREATE_MESSAGES);
         database.execSQL(CREATE_CONVERSATIONS);
+        database.execSQL(CREATE_USERS);
+        database.execSQL(CREATE_FRIENDS);
     }
 
     private void dropTables(SQLiteDatabase database) {
         database.execSQL(DROP_MESSAGES);
         database.execSQL(DROP_CONVERSATIONS);
+        database.execSQL(DROP_USERS);
+        database.execSQL(DROP_FRIENDS);
     }
 }

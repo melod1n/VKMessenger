@@ -22,14 +22,14 @@
             android:layout_height="wrap_content"
             android:layout_weight="0">
 
-            <androidx.appcompat.widget.AppCompatImageView
+            <ru.melod1n.vk.widget.CircleImageView
                 android:id="@+id/dialogAvatar"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
                 android:layout_gravity="bottom|end" />
 
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/online"
+            <ru.melod1n.vk.widget.CircleImageView
+                android:id="@+id/userOnline"
                 android:layout_width="14dp"
                 android:layout_height="14dp"
                 android:layout_gravity="bottom|end"
@@ -98,7 +98,7 @@
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
-                <androidx.appcompat.widget.AppCompatImageView
+                <ru.melod1n.vk.widget.CircleImageView
                     android:id="@+id/dialogUserAvatar"
                     android:layout_width="28dp"
                     android:layout_height="28dp"
