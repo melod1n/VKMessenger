@@ -5,7 +5,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
+import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -16,22 +16,20 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import java.util.ArrayList;
-import java.util.Collections;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import ru.melod1n.vk.R;
 import ru.melod1n.vk.adapter.ConversationAdapter;
 import ru.melod1n.vk.adapter.model.VKDialog;
-import ru.melod1n.vk.api.VKApi;
-import ru.melod1n.vk.api.model.VKConversation;
-import ru.melod1n.vk.api.model.VKMessage;
-import ru.melod1n.vk.api.model.VKUser;
-import ru.melod1n.vk.concurrent.TaskManager;
 import ru.melod1n.vk.current.BaseAdapter;
-import ru.melod1n.vk.database.CacheStorage;
+import ru.melod1n.vk.mvp.contract.BaseContract;
+import ru.melod1n.vk.mvp.presenter.ConversationsPresenter;
+import ru.melod1n.vk.util.Util;
 
-public class FragmentConversations extends Fragment implements SwipeRefreshLayout.OnRefreshListener, BaseAdapter.OnItemClickListener {
+public class FragmentConversations extends Fragment implements BaseContract.View<VKDialog>, SwipeRefreshLayout.OnRefreshListener, BaseAdapter.OnItemClickListener {
+
+    private static final String TAG = "FragmentConversations";
 
     @BindView(R.id.swipeRefreshLayout)
     SwipeRefreshLayout refreshLayout;
@@ -39,14 +37,21 @@ public class FragmentConversations extends Fragment implements SwipeRefreshLayou
     @BindView(R.id.recyclerView)
     RecyclerView recyclerView;
 
+    @BindView(R.id.progressBar)
+    ProgressBar progressBar;
+
     @BindView(R.id.toolbar)
     Toolbar toolbar;
 
     private ConversationAdapter adapter;
 
+    private BaseContract.Presenter<VKDialog> presenter;
+
     @Override
     public void onRefresh() {
-        getDialogs(0, 30);
+        presenter.onValuesLoading();
+        presenter.onRequestClearList();
+        presenter.onRequestLoadValues(0, 30);
     }
 
     @Nullable
@@ -60,12 +65,17 @@ public class FragmentConversations extends Fragment implements SwipeRefreshLayou
         super.onViewCreated(view, savedInstanceState);
         ButterKnife.bind(this, view);
 
+        presenter = new ConversationsPresenter(this);
+
         prepareToolbar();
         prepareRefreshLayout();
         prepareRecyclerView();
 
-        getCachedDialogs(0, 30);
-        getDialogs(0, 30);
+        if (Util.hasConnection()) {
+            onRefresh();
+        } else {
+            presenter.onRequestLoadCachedValues(0, 30);
+        }
     }
 
     private void prepareToolbar() {
@@ -73,6 +83,7 @@ public class FragmentConversations extends Fragment implements SwipeRefreshLayou
     }
 
     private void prepareRefreshLayout() {
+        refreshLayout.setColorSchemeResources(R.color.colorAccent);
         refreshLayout.setOnRefreshListener(this);
     }
 
@@ -83,99 +94,76 @@ public class FragmentConversations extends Fragment implements SwipeRefreshLayou
         recyclerView.setHasFixedSize(true);
     }
 
-    private void getCachedDialogs(int offset, int count) {
-        ArrayList<VKConversation> conversations = CacheStorage.getConversations(count);
-        ArrayList<VKDialog> dialogs = new ArrayList<>(conversations.size());
+    @Override
+    public void onItemClick(int position) {
+        Log.d(TAG, "onItemClick: " + position);
+    }
 
-        Collections.sort(conversations, (o1, o2) -> {
-            VKMessage m1 = CacheStorage.getMessageByPeerId(o1.getPeer().getId());
-            VKMessage m2 = CacheStorage.getMessageByPeerId(o2.getPeer().getId());
+    @Override
+    public void showNoItemsView(boolean visible) {
+        Log.d(TAG, "showNoItemsView: " + visible);
+    }
 
-            if (m1 == null || m2 == null) return 0;
+    @Override
+    public void showNoInternetView(boolean visible) {
+        Log.d(TAG, "showNoInternetView: " + visible);
+    }
 
-            long x = m1.getDate();
-            long y = m2.getDate();
+    @Override
+    public void showErrorView(String errorTitle, String errorDescription) {
+        Log.d(TAG, "showErrorView: " + errorTitle + ": " + errorDescription);
 
-
-            return (x > y) ? -1 : ((x == y) ? 1 : 0);
-        });
-
-        for (VKConversation conversation : conversations) {
-            VKDialog dialog = new VKDialog();
-
-            dialog.setConversation(conversation);
-
-            VKMessage lastMessage = CacheStorage.getMessageByPeerId(conversation.getPeer().getId());
-            dialog.setLastMessage(lastMessage);
-
-            dialogs.add(dialog);
+        if (!Util.hasConnection()) {
+            presenter.onRequestLoadCachedValues(0, 30);
         }
-
-        createAdapter(offset, dialogs);
     }
 
-    private void getDialogs(int offset, int count) {
-        TaskManager.execute(() -> VKApi.messages()
-                .getConversations()
-                .filter("all")
-                .extended(true)
-                .fields(VKUser.DEFAULT_FIELDS)
-                .offset(offset).count(count)
-                .execute(VKDialog.class, new VKApi.OnResponseListener<VKDialog>() {
-                    @Override
-                    public void onSuccess(ArrayList<VKDialog> models) {
-                        insertDataInDatabase(models);
-                        Log.d("getDialogs", "Success");
-
-                        refreshLayout.setRefreshing(false);
-                        createAdapter(offset, models);
-                    }
-
-                    @Override
-                    public void onError(Exception ex) {
-                        refreshLayout.setRefreshing(false);
-                        Log.d("getDialogs", "Error: " + Log.getStackTraceString(ex));
-                    }
-                }));
+    @Override
+    public void hideErrorView() {
+        Log.d(TAG, "hideErrorView");
     }
 
-    private void insertDataInDatabase(ArrayList<VKDialog> dialogs) {
-        ArrayList<VKConversation> conversations = new ArrayList<>(dialogs.size());
-        ArrayList<VKMessage> messages = new ArrayList<>(dialogs.size());
-
-        for (VKDialog dialog : dialogs) {
-            conversations.add(dialog.getConversation());
-            messages.add(dialog.getLastMessage());
-        }
-
-        CacheStorage.insertMessages(messages);
-        CacheStorage.insertConversations(conversations);
-        CacheStorage.insertUsers(conversations.get(0).getProfiles());
-        CacheStorage.insertGroups(conversations.get(0).getGroups());
+    @Override
+    public void showRefreshLayout(boolean visible) {
+        Log.d(TAG, "showRefreshLayout: " + visible);
+        refreshLayout.setRefreshing(visible);
     }
 
-    private void createAdapter(int offset, ArrayList<VKDialog> dialogs) {
-        if (dialogs.isEmpty()) return;
+    @Override
+    public void showProgressBar(boolean visible) {
+        Log.d(TAG, "showProgressBar: " + visible);
+        progressBar.setVisibility(visible ? View.VISIBLE : View.GONE);
+    }
+
+    @Override
+    public void loadValuesIntoList(int offset, ArrayList<VKDialog> values) {
+        Log.d(TAG, "loadValuesIntoList: " + offset + ", " + values.size());
+        if (values.isEmpty()) return;
 
         if (offset != 0) {
-            adapter.addAll(dialogs);
+            adapter.addAll(values);
             adapter.notifyDataSetChanged();
             return;
         }
 
         if (adapter != null) {
-            adapter.changeItems(dialogs);
+            adapter.changeItems(values);
             adapter.notifyDataSetChanged();
             return;
         }
 
-        adapter = new ConversationAdapter(getActivity(), dialogs);
+        adapter = new ConversationAdapter(getActivity(), values);
         adapter.setOnItemClickListener(this);
         recyclerView.setAdapter(adapter);
     }
 
     @Override
-    public void onItemClick(int position) {
-        Toast.makeText(requireContext(), "Clicked position: " + position, Toast.LENGTH_SHORT).show();
+    public void clearList() {
+        Log.d(TAG, "clearList");
+
+        if (adapter == null) return;
+
+        adapter.notifyItemRangeRemoved(0, adapter.getItemCount());
+        adapter.clear();
     }
 }

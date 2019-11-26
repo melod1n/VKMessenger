@@ -378,10 +378,10 @@ public class VKApi {
     public interface OnResponseListener<E> {
         void onSuccess(ArrayList<E> models);
 
-        void onError(Exception ex);
+        void onError(Exception e);
     }
 
-    private static class SuccessCallback<E> implements Runnable {
+    public static class SuccessCallback<E> implements Runnable {
         private ArrayList<E> models;
         private OnResponseListener<E> listener;
 
@@ -400,7 +400,7 @@ public class VKApi {
         }
     }
 
-    private static class ErrorCallback implements Runnable {
+    public static class ErrorCallback implements Runnable {
         private OnResponseListener listener;
         private Exception ex;
 

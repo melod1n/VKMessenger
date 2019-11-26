@@ -1,10 +1,10 @@
 package ru.melod1n.vk.adapter;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -94,12 +94,11 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
         }
 
         private void loadImage(String imageUrl, ImageView imageView) {
-            if (imageUrl == null) {
+            if (TextUtils.isEmpty(imageUrl)) {
                 imageView.setImageDrawable(placeholderNormal);
             } else {
                 Picasso.get()
                         .load(imageUrl)
-                        .config(Bitmap.Config.RGB_565)
                         .placeholder(placeholderNormal)
                         .into(imageView);
             }

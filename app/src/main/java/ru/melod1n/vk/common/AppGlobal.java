@@ -1,9 +1,11 @@
 package ru.melod1n.vk.common;
 
 import android.app.Application;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.ConnectivityManager;
 import android.os.Handler;
 
 import androidx.preference.PreferenceManager;
@@ -21,6 +23,8 @@ public class AppGlobal extends Application {
     public static volatile Resources resources;
     public static volatile SQLiteDatabase database;
 
+    public static volatile ConnectivityManager connectivityManager;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -30,6 +34,7 @@ public class AppGlobal extends Application {
         locale = Locale.getDefault();
         resources = getResources();
         database = DatabaseHelper.getInstance(this).getWritableDatabase();
+        connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 
         UserConfig.restore();
     }

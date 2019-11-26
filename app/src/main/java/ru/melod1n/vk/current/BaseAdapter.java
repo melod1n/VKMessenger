@@ -96,6 +96,10 @@ public abstract class BaseAdapter<T, VH extends BaseHolder> extends RecyclerView
         this.values = items;
     }
 
+    public void clear() {
+        this.values.clear();
+    }
+
     public void filter(String query) {
         if (values == null) return;
         String lowerQuery = query.toLowerCase();

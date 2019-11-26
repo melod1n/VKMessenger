@@ -1,10 +1,14 @@
 package ru.melod1n.vk.util;
 
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
+import ru.melod1n.vk.common.AppGlobal;
 import ru.melod1n.vk.io.BytesOutputStream;
 
 public class Util {
@@ -40,6 +44,13 @@ public class Util {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public static boolean hasConnection() {
+        ConnectivityManager manager = AppGlobal.connectivityManager;
+
+        NetworkInfo info = manager.getActiveNetworkInfo();
+        return info != null && info.isConnected();
     }
 
 }
