@@ -82,7 +82,7 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
             title.setText(getTitle(conversation, peerUser, peerGroup));
 
             loadImage(getAvatar(conversation, peerUser, peerGroup), avatar);
-            loadImage(getUserAvatar(conversation, fromUser, fromGroup), userAvatar);
+            loadImage(getUserAvatar(lastMessage, fromUser, fromGroup), userAvatar);
 
             if (conversation.isUser() && peerUser != null && peerUser.isOnline()) {
                 userOnline.setVisibility(View.VISIBLE);
@@ -90,7 +90,15 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
                 userOnline.setVisibility(View.GONE);
             }
 
-            text.setText(lastMessage.getText());
+            if ((conversation.isChat() || lastMessage.isOut()) && !conversation.isChannel()) {
+                userAvatar.setVisibility(View.VISIBLE);
+            } else {
+                userAvatar.setVisibility(View.GONE);
+            }
+
+            String sText = lastMessage.getText();
+
+            text.setText(sText);
         }
 
         private void loadImage(String imageUrl, ImageView imageView) {
@@ -140,19 +148,18 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
             return conversation.getChatSettings().getPhoto().getPhoto200();
         }
 
-        private String getUserAvatar(VKConversation conversation, VKUser fromUser, VKGroup fromGroup) {
-            if (conversation.isUser()) {
+        private String getUserAvatar(VKMessage message, VKUser fromUser, VKGroup fromGroup) {
+            if (message.isFromUser()) {
                 if (fromUser != null) {
                     return fromUser.getPhoto100();
                 }
-                return null;
-            } else {
+            } else if (message.isFromGroup()) {
                 if (fromGroup != null) {
                     return fromGroup.getPhoto100();
                 }
-
-                return null;
             }
+
+            return null;
         }
 
         private VKUser searchPeerUser(VKMessage message) {
@@ -164,7 +171,7 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
         }
 
         private VKGroup searchPeerGroup(VKMessage message) {
-            return CacheStorage.getGroup(message.getPeerId());
+            return CacheStorage.getGroup(Math.abs(message.getPeerId()));
         }
 
         private VKGroup searchFromGroup(VKMessage message) {

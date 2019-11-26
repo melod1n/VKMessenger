@@ -10,7 +10,7 @@ public class VKUser extends VKModel implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    public static final String DEFAULT_FIELDS = "photo_50, photo_100, photo_200, status, screen_name, online, online_mobile, last_seen, verified, sex";
+    public static final String DEFAULT_FIELDS = "photo_50,photo_100,photo_200,status,screen_name,online,online_mobile,last_seen,verified,sex";
 
     public static final VKUser EMPTY = new VKUser() {
         @NonNull

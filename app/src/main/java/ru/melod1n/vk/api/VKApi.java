@@ -128,7 +128,7 @@ public class VKApi {
                 JSONArray oGroups = response.optJSONArray("groups");
                 if (oGroups != null) {
                     ArrayList<VKGroup> groups = new ArrayList<>();
-                    for (int j = 0; i < oGroups.length(); i++) {
+                    for (int j = 0; j < oGroups.length(); j++) {
                         groups.add(new VKGroup(oGroups.optJSONObject(j)));
                     }
 

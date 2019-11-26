@@ -37,6 +37,7 @@ public class VKMessage extends VKModel implements Serializable {
     private int date;
     private int peerId;
     private int fromId;
+    private boolean out;
     private String text;
     private int randomId;
     private ArrayList<VKModel> attachments;
@@ -45,13 +46,15 @@ public class VKMessage extends VKModel implements Serializable {
     private VKMessage replyMessage;
     private Action action;
 
-    public VKMessage() {}
+    public VKMessage() {
+    }
 
     public VKMessage(JSONObject o) {
         setId(o.optInt("id", -1));
         setDate(o.optInt("date"));
         setPeerId(o.optInt("peer_id", -1));
         setFromId(o.optInt("from_id", -1));
+        setOut(o.optInt("out") == 1);
         setText(o.optString("text"));
         setRandomId(o.optInt("random_id", -1));
 
@@ -81,6 +84,14 @@ public class VKMessage extends VKModel implements Serializable {
         if (oAction != null) {
             setAction(new Action(oAction));
         }
+    }
+
+    public boolean isFromUser() {
+        return fromId > 0;
+    }
+
+    public boolean isFromGroup() {
+        return fromId < 0;
     }
 
     public int getId() {
@@ -113,6 +124,14 @@ public class VKMessage extends VKModel implements Serializable {
 
     public void setFromId(int fromId) {
         this.fromId = fromId;
+    }
+
+    public boolean isOut() {
+        return out;
+    }
+
+    public void setOut(boolean out) {
+        this.out = out;
     }
 
     public String getText() {

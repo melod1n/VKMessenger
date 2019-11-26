@@ -379,7 +379,7 @@ public class CacheStorage {
     }
 
     private static void putValues(VKGroup group, ContentValues values) {
-        values.put(GROUP_ID, group.getId());
+        values.put(GROUP_ID, Math.abs(group.getId()));
         values.put(NAME, group.getName());
         values.put(SCREEN_NAME, group.getScreenName());
         values.put(IS_CLOSED, group.getIsClosed());
