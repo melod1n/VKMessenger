@@ -1,0 +1,47 @@
+:root {
+  --primary: #1565c0;
+  --primary-dark: #104f97;
+  --bg: #121212;
+}
+
+body {
+  padding-top: 50px;
+  background: var(--bg);
+}
+
+.starter-template {
+  padding: 10px;
+  text-align: center;
+}
+
+.starter-template h1 {
+  color: darkgray;
+}
+
+.starter-template p {
+  color: gray;
+}
+
+div .btn {
+  background: var(--primary);
+  color: var(--bg);
+  transition: .3s ease;
+}
+
+div .btn:hover {
+  background: var(--primary-dark);
+  color: var(--bg);
+  transition: .3s ease;
+}
+
+.navbar-nav li.active a:hover {
+  background: #212121;
+}
+
+.navbar-nav li a:hover {
+  background: #212121;
+}
+
+.navbar-nav li a:focus {
+  background: #212121;
+}
