@@ -7,6 +7,7 @@ import java.util.ArrayList;
 
 import ru.melod1n.vk.api.UserConfig;
 import ru.melod1n.vk.api.model.VKConversation;
+import ru.melod1n.vk.api.model.VKGroup;
 import ru.melod1n.vk.api.model.VKMessage;
 import ru.melod1n.vk.api.model.VKModel;
 import ru.melod1n.vk.api.model.VKUser;
@@ -26,11 +27,14 @@ import static ru.melod1n.vk.database.DatabaseHelper.FIRST_NAME;
 import static ru.melod1n.vk.database.DatabaseHelper.FRIEND_ID;
 import static ru.melod1n.vk.database.DatabaseHelper.FROM_ID;
 import static ru.melod1n.vk.database.DatabaseHelper.FWD_MESSAGES;
+import static ru.melod1n.vk.database.DatabaseHelper.GROUP_ID;
 import static ru.melod1n.vk.database.DatabaseHelper.IMPORTANT;
 import static ru.melod1n.vk.database.DatabaseHelper.IN_READ;
+import static ru.melod1n.vk.database.DatabaseHelper.IS_CLOSED;
 import static ru.melod1n.vk.database.DatabaseHelper.LAST_NAME;
 import static ru.melod1n.vk.database.DatabaseHelper.LAST_SEEN;
 import static ru.melod1n.vk.database.DatabaseHelper.MESSAGE_ID;
+import static ru.melod1n.vk.database.DatabaseHelper.NAME;
 import static ru.melod1n.vk.database.DatabaseHelper.ONLINE;
 import static ru.melod1n.vk.database.DatabaseHelper.ONLINE_MOBILE;
 import static ru.melod1n.vk.database.DatabaseHelper.OUT_READ;
@@ -47,12 +51,15 @@ import static ru.melod1n.vk.database.DatabaseHelper.SEX;
 import static ru.melod1n.vk.database.DatabaseHelper.STATUS;
 import static ru.melod1n.vk.database.DatabaseHelper.TABLE_CONVERSATIONS;
 import static ru.melod1n.vk.database.DatabaseHelper.TABLE_FRIENDS;
+import static ru.melod1n.vk.database.DatabaseHelper.TABLE_GROUPS;
 import static ru.melod1n.vk.database.DatabaseHelper.TABLE_MESSAGES;
 import static ru.melod1n.vk.database.DatabaseHelper.TABLE_USERS;
 import static ru.melod1n.vk.database.DatabaseHelper.TEXT;
+import static ru.melod1n.vk.database.DatabaseHelper.TYPE;
 import static ru.melod1n.vk.database.DatabaseHelper.UNREAD_COUNT;
 import static ru.melod1n.vk.database.DatabaseHelper.USER_ID;
 import static ru.melod1n.vk.database.DatabaseHelper.VERIFIED;
+import static ru.melod1n.vk.database.DatabaseHelper._ID;
 
 public class CacheStorage {
 
@@ -106,6 +113,9 @@ public class CacheStorage {
                     break;
                 case TABLE_FRIENDS:
                     putValues((VKUser) item, cv, true);
+                    break;
+                case TABLE_GROUPS:
+                    putValues((VKGroup) item, cv);
                     break;
             }
 
@@ -186,6 +196,20 @@ public class CacheStorage {
         return user;
     }
 
+    public static VKGroup getGroup(int id) {
+        Cursor cursor = selectCursor(TABLE_GROUPS, GROUP_ID, id);
+
+        if (cursor.getCount() == 0) return null;
+
+        cursor.moveToFirst();
+
+        VKGroup group = parseGroup(cursor);
+
+        cursor.close();
+
+        return group;
+    }
+
     private static VKMessage parseMessage(Cursor cursor) {
         VKMessage message = new VKMessage();
 
@@ -259,6 +283,22 @@ public class CacheStorage {
         user.setVerified(getInt(cursor, VERIFIED) == 1);
 
         return user;
+    }
+
+    private static VKGroup parseGroup(Cursor cursor) {
+        VKGroup group = new VKGroup();
+
+        group.setPosition(getInt(cursor, _ID));
+        group.setId(getInt(cursor, GROUP_ID));
+        group.setName(getString(cursor, NAME));
+        group.setScreenName(getString(cursor, SCREEN_NAME));
+        group.setIsClosed(getInt(cursor, IS_CLOSED));
+        group.setDeactivated(getString(cursor, DEACTIVATED));
+        group.setPhoto50(getString(cursor, PHOTO_50));
+        group.setPhoto100(getString(cursor, PHOTO_100));
+        group.setPhoto200(getString(cursor, PHOTO_200));
+
+        return group;
     }
 
     private static void putValues(VKMessage message, ContentValues values) {
@@ -340,6 +380,19 @@ public class CacheStorage {
         values.put(VERIFIED, user.isVerified());
     }
 
+    private static void putValues(VKGroup group, ContentValues values) {
+        values.put(_ID, group.getPosition());
+        values.put(GROUP_ID, group.getId());
+        values.put(NAME, group.getName());
+        values.put(SCREEN_NAME, group.getScreenName());
+        values.put(IS_CLOSED, group.getIsClosed());
+        values.put(DEACTIVATED, group.getDeactivated());
+        values.put(TYPE, group.getType());
+        values.put(PHOTO_50, group.getPhoto50());
+        values.put(PHOTO_100, group.getPhoto100());
+        values.put(PHOTO_200, group.getPhoto200());
+    }
+
     public static void insertMessages(ArrayList<VKMessage> messages) {
         insert(TABLE_MESSAGES, messages);
     }
@@ -350,5 +403,9 @@ public class CacheStorage {
 
     public static void insertUsers(ArrayList<VKUser> users) {
         insert(TABLE_USERS, users);
+    }
+
+    public static void insertGroups(ArrayList<VKGroup> groups) {
+        insert(TABLE_GROUPS, groups);
     }
 }

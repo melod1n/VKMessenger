@@ -9,7 +9,14 @@ import androidx.annotation.Nullable;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "cache.db";
-    private static final int DB_VERSION = 8;
+    private static final int DB_VERSION = 9;
+
+    static final String _ID = "_id";
+    static final String SCREEN_NAME = "screen_name";
+    static final String DEACTIVATED = "deactivated";
+    static final String PHOTO_50 = "photo_50";
+    static final String PHOTO_100 = "photo_100";
+    static final String PHOTO_200 = "photo_200";
 
     static final String MESSAGE_ID = "message_id";
     static final String DATE = "date";
@@ -36,24 +43,25 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     static final String USER_ID = "user_id";
     static final String FIRST_NAME = "first_name";
     static final String LAST_NAME = "last_name";
-    static final String DEACTIVATED = "deactivated";
     static final String CLOSED = "closed";
     static final String CAN_ACCESS_CLOSED = "can_access_closed";
     static final String SEX = "sex";
-    static final String SCREEN_NAME = "screen_name";
-    static final String PHOTO_50 = "photo_50";
-    static final String PHOTO_100 = "photo_100";
-    static final String PHOTO_200 = "photo_200";
     static final String ONLINE = "online";
     static final String ONLINE_MOBILE = "online_mobile";
     static final String STATUS = "status";
     static final String LAST_SEEN = "last_seen";
     static final String VERIFIED = "verified";
 
+    static final String GROUP_ID = "group_id";
+    static final String NAME = "name";
+    static final String IS_CLOSED = "is_closed";
+    static final String TYPE = "type";
+
     static final String TABLE_CONVERSATIONS = "conversations";
     static final String TABLE_MESSAGES = "messages";
     static final String TABLE_USERS = "users";
     static final String TABLE_FRIENDS = "friends";
+    static final String TABLE_GROUPS = "groups";
 
     private static final String CREATE_MESSAGES = "create table if not exists " + TABLE_MESSAGES + " (" +
             MESSAGE_ID + " integer primary key on conflict replace, " +
@@ -104,10 +112,24 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             FRIEND_ID + " integer" +
             ");";
 
+    private static final String CREATE_GROUPS = "create table if not exists " + TABLE_GROUPS + " (" +
+            _ID + " integer, " +
+            GROUP_ID + " integer primary key autoincrement, " +
+            NAME + " longtext, " +
+            SCREEN_NAME + " varchar(255), " +
+            IS_CLOSED + " integer, " +
+            DEACTIVATED + " varchar(255), " +
+            TYPE + " varchar(255), " +
+            PHOTO_50 + " varchar(255), " +
+            PHOTO_100 + " varchar(255), " +
+            PHOTO_200 + " varchar(255)" +
+            ");";
+
     private static final String DROP_MESSAGES = "drop table if exists " + TABLE_MESSAGES;
     private static final String DROP_CONVERSATIONS = "drop table if exists " + TABLE_CONVERSATIONS;
     private static final String DROP_USERS = "drop table if exists " + TABLE_USERS;
     private static final String DROP_FRIENDS = "drop table if exists " + TABLE_FRIENDS;
+    private static final String DROP_GROUPS = "drop table if exists " + TABLE_GROUPS;
 
     private DatabaseHelper(@Nullable Context context) {
         super(context, DB_NAME, null, DB_VERSION);
@@ -133,6 +155,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         database.execSQL(CREATE_CONVERSATIONS);
         database.execSQL(CREATE_USERS);
         database.execSQL(CREATE_FRIENDS);
+        database.execSQL(CREATE_GROUPS);
     }
 
     private void dropTables(SQLiteDatabase database) {
@@ -140,5 +163,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         database.execSQL(DROP_CONVERSATIONS);
         database.execSQL(DROP_USERS);
         database.execSQL(DROP_FRIENDS);
+        database.execSQL(DROP_GROUPS);
     }
 }
