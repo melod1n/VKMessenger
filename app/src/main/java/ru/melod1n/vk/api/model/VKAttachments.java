@@ -7,34 +7,41 @@ import java.util.ArrayList;
 
 public class VKAttachments {
 
-    public static final String TYPE_PHOTO = "photo";
-    public static final String TYPE_VIDEO = "video";
-    public static final String TYPE_AUDIO = "audio";
-    public static final String TYPE_DOC = "doc";
-    public static final String TYPE_POST = "wall";
-    public static final String TYPE_POSTED_PHOTO = "posted_photo";
-    public static final String TYPE_LINK = "link";
-    public static final String TYPE_NOTE = "note";
-    public static final String TYPE_APP = "app";
-    public static final String TYPE_POLL = "poll";
-    public static final String TYPE_WIKI_PAGE = "page";
-    public static final String TYPE_ALBUM = "album";
-    public static final String TYPE_STICKER = "sticker";
-    public static final String TYPE_GIFT = "gift";
+    private static final String TYPE_PHOTO = "photo";
+    private static final String TYPE_VIDEO = "video";
+    private static final String TYPE_AUDIO = "audio";
+    private static final String TYPE_DOC = "doc";
+    private static final String TYPE_LINK = "link";
+    private static final String TYPE_STICKER = "sticker";
+    private static final String TYPE_GIFT = "gift";
+    private static final String TYPE_AUDIO_MESSAGE = "audio_message";
+    private static final String TYPE_GRAFFITI = "graffiti";
+    private static final String TYPE_POLL = "poll";
+    private static final String TYPE_GEO = "geo";
+    private static final String TYPE_WALL = "wall";
+    private static final String TYPE_CALL = "call";
+    private static final String TYPE_STORY = "story";
+    private static final String TYPE_POINT = "point";
+    private static final String TYPE_MARKET = "market";
+    private static final String TYPE_ARTICLE = "article";
+    private static final String TYPE_PODCAST = "podcast";
+    private static final String TYPE_WALL_REPLY = "wall_reply";
+    private static final String TYPE_MONEY_REQUEST = "money_request";
+    private static final String TYPE_AUDIO_PLAYLIST = "audio_playlist";
 
     public static ArrayList<VKModel> parse(JSONArray array) {
         ArrayList<VKModel> attachments = new ArrayList<>(array.length());
 
         for (int i = 0; i < array.length(); i++) {
-            JSONObject attach = array.optJSONObject(i);
-            if (attach.has("attachment")) {
-                attach = attach.optJSONObject("attachment");
+            JSONObject attachment = array.optJSONObject(i);
+            if (attachment.has("attachment")) {
+                attachment = attachment.optJSONObject("attachment");
             }
 
-            if (attach == null) continue;
+            if (attachment == null) continue;
 
-            String type = attach.optString("type");
-            JSONObject object = attach.optJSONObject(type);
+            String type = attachment.optString("type");
+            JSONObject object = attachment.optJSONObject(type);
 
             if (object == null) continue;
 
@@ -59,6 +66,15 @@ public class VKAttachments {
                     break;
                 case TYPE_GIFT:
                     attachments.add(new VKGift(object));
+                    break;
+                case TYPE_AUDIO_MESSAGE:
+                    attachments.add(new VKAudioMessage(object));
+                    break;
+                case TYPE_GRAFFITI:
+                    attachments.add(new VKGraffiti(object));
+                    break;
+                case TYPE_POLL:
+                    attachments.add(new VKPoll(object));
                     break;
             }
         }

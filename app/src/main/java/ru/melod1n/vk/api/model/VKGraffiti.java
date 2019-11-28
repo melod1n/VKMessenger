@@ -4,19 +4,70 @@ import org.json.JSONObject;
 
 import java.io.Serializable;
 
-public class VKGraffiti implements Serializable {
+public class VKGraffiti extends VKModel implements Serializable {
     private static final long serialVersionUID = 1L;
-    public int id;
-    public int owner_id;
-    public String src; //200*100 http://cs10730.vkontakte.ru/u110317842/s_5a43e302.png
-    public String src_big;//586*293 http://cs10730.vkontakte.ru/u110317842/l_f8bc298f.png
 
-    public static VKGraffiti parse(JSONObject o) {
-        VKGraffiti graffiti = new VKGraffiti();
-        graffiti.id = o.optInt("id");
-        graffiti.owner_id = o.optInt("owner_id");
-        graffiti.src = o.optString("photo_200");
-        graffiti.src_big = o.optString("photo_586");
-        return graffiti;
+    private int id;
+    private int ownerId;
+    private String url;
+    private int width;
+    private int height;
+    private String accessKey;
+
+    public VKGraffiti(JSONObject o) {
+        setId(o.optInt("id", -1));
+        setOwnerId(o.optInt("owner_id", -1));
+        setUrl(o.optString("url"));
+        setWidth(o.optInt("width"));
+        setHeight(o.optInt("height"));
+        setAccessKey(o.optString("access_key"));
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public int getOwnerId() {
+        return ownerId;
+    }
+
+    public void setOwnerId(int ownerId) {
+        this.ownerId = ownerId;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public void setWidth(int width) {
+        this.width = width;
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    public void setHeight(int height) {
+        this.height = height;
+    }
+
+    public String getAccessKey() {
+        return accessKey;
+    }
+
+    public void setAccessKey(String accessKey) {
+        this.accessKey = accessKey;
     }
 }

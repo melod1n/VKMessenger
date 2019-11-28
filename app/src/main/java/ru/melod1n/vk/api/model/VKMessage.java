@@ -33,6 +33,10 @@ public class VKMessage extends VKModel implements Serializable {
     public static final String ACTION_CHAT_PHOTO_UPDATE = "chat_photo_update";
     public static final String ACTION_CHAT_PHOTO_REMOVE = "chat_photo_remove";
 
+    public static final String ACTION_CHAT_PIN_MESSAGE = "chat_pin_message";
+    public static final String ACTION_CHAT_UNPIN_MESSAGE = "chat_unpin_message";
+    public static final String ACTION_CHAT_INVITE_USER_BY_LINK = "chat_invite_user_by_link";
+
     private int id;
     private int date;
     private int peerId;

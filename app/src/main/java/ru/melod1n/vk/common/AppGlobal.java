@@ -12,6 +12,7 @@ import androidx.preference.PreferenceManager;
 
 import java.util.Locale;
 
+import ru.melod1n.vk.R;
 import ru.melod1n.vk.api.UserConfig;
 import ru.melod1n.vk.database.DatabaseHelper;
 
@@ -22,6 +23,8 @@ public class AppGlobal extends Application {
     public static volatile Handler handler;
     public static volatile Resources resources;
     public static volatile SQLiteDatabase database;
+
+    public static volatile int colorPrimary;
 
     public static volatile ConnectivityManager connectivityManager;
 
@@ -35,6 +38,8 @@ public class AppGlobal extends Application {
         resources = getResources();
         database = DatabaseHelper.getInstance(this).getWritableDatabase();
         connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        colorPrimary = getColor(R.color.colorPrimary);
 
         UserConfig.restore();
     }
