@@ -25,6 +25,7 @@ public class AppGlobal extends Application {
     public static volatile SQLiteDatabase database;
 
     public static volatile int colorPrimary;
+    public static volatile int colorAccent;
 
     public static volatile ConnectivityManager connectivityManager;
 
@@ -40,6 +41,7 @@ public class AppGlobal extends Application {
         connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 
         colorPrimary = getColor(R.color.colorPrimary);
+        colorAccent = getColor(R.color.colorAccent);
 
         UserConfig.restore();
     }

@@ -21,6 +21,7 @@ import androidx.core.content.ContextCompat;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -47,6 +48,7 @@ import ru.melod1n.vk.current.BaseHolder;
 import ru.melod1n.vk.database.CacheStorage;
 import ru.melod1n.vk.database.MemoryCache;
 import ru.melod1n.vk.util.ArrayUtil;
+import ru.melod1n.vk.util.Util;
 import ru.melod1n.vk.widget.CircleImageView;
 
 public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapter.ViewHolder> {
@@ -81,6 +83,15 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
         @BindView(R.id.dialogType)
         ImageView dialogType;
 
+        @BindView(R.id.dialogCounter)
+        TextView dialogCounter;
+
+        @BindView(R.id.dialogOut)
+        CircleImageView dialogOut;
+
+        @BindView(R.id.dialogDate)
+        TextView dialogDate;
+
         private final Drawable placeholderNormal = new ColorDrawable(Color.DKGRAY);
         private final Drawable placeholderError = new ColorDrawable(Color.RED);
 
@@ -107,11 +118,9 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
             loadImage(getAvatar(conversation, peerUser, peerGroup), avatar);
             loadImage(getUserAvatar(lastMessage, fromUser, fromGroup), userAvatar);
 
-            if (conversation.isUser() && peerUser != null && peerUser.isOnline()) {
-                userOnline.setVisibility(View.VISIBLE);
-            } else {
-                userOnline.setVisibility(View.GONE);
-            }
+            Drawable onlineIcon = getOnlineIcon(conversation, peerUser);
+            userOnline.setImageDrawable(onlineIcon);
+            userOnline.setVisibility(onlineIcon == null ? View.GONE : View.VISIBLE);
 
             if ((conversation.isChat() || lastMessage.isOut()) && !conversation.isChannel()) {
                 userAvatar.setVisibility(View.VISIBLE);
@@ -148,7 +157,6 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
                 } else {
                     text.setText(lastMessage.getText());
                 }
-
             } else {
                 String actionText = getActionText(lastMessage);
                 SpannableString span = new SpannableString(actionText);
@@ -157,34 +165,102 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
 
                 text.setText(span);
             }
+
+            if ((lastMessage.isOut() && conversation.getOutRead() == conversation.getLastMessageId()) || (!lastMessage.isOut() && conversation.getInRead() == conversation.getLastMessageId())) {
+                dialogCounter.setVisibility(View.GONE);
+                dialogOut.setVisibility(View.GONE);
+            } else {
+                if (lastMessage.isOut()) {
+                    dialogOut.setVisibility(View.VISIBLE);
+                    dialogCounter.setVisibility(View.GONE);
+                    dialogCounter.setText("");
+                } else {
+                    dialogOut.setVisibility(View.GONE);
+                    dialogCounter.setVisibility(View.VISIBLE);
+                    dialogCounter.setText(String.valueOf(conversation.getUnreadCount()));
+                }
+            }
+
+            dialogDate.setText(getTime(lastMessage));
+
+            dialogCounter.getBackground().setTint(conversation.getPushSettings() != null && conversation.getPushSettings().isNotificationsDisabled() ? Color.GRAY : AppGlobal.colorAccent);
+        }
+
+        private String getTime(VKMessage lastMessage) {
+            int time = lastMessage.getDate();
+
+            Calendar nowTime = Calendar.getInstance();
+            nowTime.setTimeInMillis(System.currentTimeMillis());
+
+            Calendar thenTime = (Calendar) nowTime.clone();
+            thenTime.setTimeInMillis(time * 1000L);
+
+            int nowYear = nowTime.get(Calendar.YEAR);
+            int thenYear = thenTime.get(Calendar.YEAR);
+
+            int nowMonth = nowTime.get(Calendar.MONTH);
+            int thenMonth = thenTime.get(Calendar.MONTH);
+
+            int nowDay = nowTime.get(Calendar.DAY_OF_MONTH);
+            int thenDay = thenTime.get(Calendar.DAY_OF_MONTH);
+
+            if (nowYear > thenYear) {
+                return Util.yearFormatter.format(time * 1000L);
+            } else if (nowMonth > thenMonth) {
+                return Util.monthFormatter.format(time * 1000L);
+            } else {
+                if (nowDay - thenDay == 1) {
+                    return getContext().getString(R.string.message_date_yesterday);
+                } else if (nowDay - thenDay > 1) {
+                    return Util.monthFormatter.format(time * 1000L);
+                }
+            }
+
+            return Util.timeFormatter.format(time * 1000L);
+        }
+
+        @Nullable
+        private Drawable getOnlineIcon(VKConversation conversation, VKUser peerUser) {
+            if (conversation.isUser() && peerUser != null) {
+                if (!peerUser.isOnline()) {
+                    return null;
+                } else {
+                    return getContext().getDrawable(peerUser.isOnlineMobile() ? R.drawable.ic_online_mobile : R.drawable.ic_online_pc);
+                }
+            } else return null;
         }
 
         @NonNull
         private String getActionText(VKMessage lastMessage) {
-            switch (lastMessage.getAction().getText()) {
+            switch (lastMessage.getAction().getType()) {
                 case VKMessage.ACTION_CHAT_CREATE:
-                    return getContext().getString(R.string.message_action_created_chat);
+                    return getContext().getString(R.string.message_action_created_chat, "");
                 case VKMessage.ACTION_CHAT_INVITE_USER:
-                    VKUser invited = MemoryCache.getUser(lastMessage.getAction().getMemberId());
-                    return getContext().getString(R.string.message_action_invited_user, invited);
+                    if (lastMessage.getFromId() == lastMessage.getAction().getMemberId()) {
+                        return getContext().getString(R.string.message_action_returned_to_chat, "");
+                    } else {
+                        VKUser invited = MemoryCache.getUser(lastMessage.getAction().getMemberId());
+                        return getContext().getString(R.string.message_action_invited_user, invited);
+                    }
                 case VKMessage.ACTION_CHAT_INVITE_USER_BY_LINK:
-                    return getContext().getString(R.string.message_action_invited_by_link);
+                    return getContext().getString(R.string.message_action_invited_by_link, "");
                 case VKMessage.ACTION_CHAT_KICK_USER:
                     if (lastMessage.getFromId() == lastMessage.getAction().getMemberId()) {
-                        return getContext().getString(R.string.message_action_left_from_chat);
+                        return getContext().getString(R.string.message_action_left_from_chat, "");
                     } else {
-                        return getContext().getString(R.string.message_action_kicked_user);
+                        VKUser kicked = MemoryCache.getUser(lastMessage.getAction().getMemberId());
+                        return getContext().getString(R.string.message_action_kicked_user, kicked);
                     }
                 case VKMessage.ACTION_CHAT_PHOTO_REMOVE:
-                    return getContext().getString(R.string.message_action_removed_photo);
+                    return getContext().getString(R.string.message_action_removed_photo, "");
                 case VKMessage.ACTION_CHAT_PHOTO_UPDATE:
-                    return getContext().getString(R.string.message_action_updated_photo);
+                    return getContext().getString(R.string.message_action_updated_photo, "");
                 case VKMessage.ACTION_CHAT_PIN_MESSAGE:
-                    return getContext().getString(R.string.message_action_pinned_message);
+                    return getContext().getString(R.string.message_action_pinned_message, "");
                 case VKMessage.ACTION_CHAT_UNPIN_MESSAGE:
-                    return getContext().getString(R.string.message_action_unpinned_message);
+                    return getContext().getString(R.string.message_action_unpinned_message, "");
                 case VKMessage.ACTION_CHAT_TITLE_UPDATE:
-                    return getContext().getString(R.string.message_action_updated_title);
+                    return getContext().getString(R.string.message_action_updated_title, "");
             }
 
 

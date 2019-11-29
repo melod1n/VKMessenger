@@ -1,5 +1,6 @@
 package ru.melod1n.vk.util;
 
+import android.annotation.SuppressLint;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
@@ -7,11 +8,17 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.text.SimpleDateFormat;
 
 import ru.melod1n.vk.common.AppGlobal;
 import ru.melod1n.vk.io.BytesOutputStream;
 
+@SuppressLint("SimpleDateFormat")
 public class Util {
+
+    public static final SimpleDateFormat timeFormatter = new SimpleDateFormat("HH:mm");
+    public static final SimpleDateFormat monthFormatter = new SimpleDateFormat("d MMM");
+    public static final SimpleDateFormat yearFormatter = new SimpleDateFormat("d MMM, yyyy");
 
     public static byte[] serialize(Object source) {
         try {

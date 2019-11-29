@@ -2,8 +2,8 @@
     <string name="app_name">VK Messenger</string>
 
     <string name="message_action_created_chat">Created chat %s</string>
-    <string name="message_action_invited_user">Invited user %s to chat</string>
-    <string name="message_action_kicked_user">Kicked user %s from chat</string>
+    <string name="message_action_invited_user">Invited %s to chat</string>
+    <string name="message_action_kicked_user">Kicked %s from chat</string>
     <string name="message_action_returned_to_chat">%s Returned to chat</string>
     <string name="message_action_left_from_chat">%s Left from chat</string>
     <string name="message_action_updated_photo">%s Updated chat photo</string>
@@ -26,5 +26,11 @@
     <string name="message_attachment_graffiti">Graffiti</string>
     <string name="message_attachment_voice">Voice message</string>
     <string name="message_attachment_poll">Poll</string>
+
+    <string name="navigation_conversations">Conversations</string>
+    <string name="navigation_friends">Friends</string>
+    <string name="navigation_settings">Settings</string>
+
+    <string name="message_date_yesterday">Yesterday</string>
 
 </resources>

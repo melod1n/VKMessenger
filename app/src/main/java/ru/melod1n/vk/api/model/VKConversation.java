@@ -18,6 +18,7 @@ public class VKConversation extends VKModel implements Serializable {
 
     private int inRead;
     private int outRead;
+    private int lastMessageId;
     private int unreadCount;
 
     private PushSettings pushSettings;
@@ -42,7 +43,8 @@ public class VKConversation extends VKModel implements Serializable {
 
         setInRead(o.optInt("in_read"));
         setOutRead(o.optInt("out_read"));
-        setUnreadCount(o.optInt("unread_count"));
+        setLastMessageId(o.optInt("last_message_id", -1));
+        setUnreadCount(o.optInt("unread_count", 0));
 
         JSONObject oPushSettings = o.optJSONObject("push_settings");
         if (oPushSettings != null) {
@@ -77,7 +79,6 @@ public class VKConversation extends VKModel implements Serializable {
             JSONObject oPhoto = oChatSettings.optJSONObject("photo");
             if (oPhoto != null) {
                 settings.setPhoto(new ChatSettings.Photo(oPhoto));
-
             }
 
             settings.setGroupChannel(oChatSettings.optBoolean("is_group_channel"));
@@ -125,10 +126,9 @@ public class VKConversation extends VKModel implements Serializable {
 
         private static final long serialVersionUID = 1L;
 
-        public static final String TYPE_USER = "user";
-        public static final String TYPE_CHAT = "chat";
-        public static final String TYPE_GROUP = "group";
-        public static final String TYPE_EMAIL = "email";
+        static final String TYPE_USER = "user";
+        static final String TYPE_CHAT = "chat";
+        static final String TYPE_GROUP = "group";
 
         private int id;
         private String type;
@@ -189,6 +189,10 @@ public class VKConversation extends VKModel implements Serializable {
 
         public void setNoSound(boolean noSound) {
             this.noSound = noSound;
+        }
+
+        public boolean isNotificationsDisabled() {
+            return isDisabledForever() || getDisabledUntil() > 0 || isNoSound();
         }
     }
 
@@ -366,6 +370,14 @@ public class VKConversation extends VKModel implements Serializable {
 
     public void setOutRead(int outRead) {
         this.outRead = outRead;
+    }
+
+    public int getLastMessageId() {
+        return lastMessageId;
+    }
+
+    public void setLastMessageId(int lastMessageId) {
+        this.lastMessageId = lastMessageId;
     }
 
     public int getUnreadCount() {
