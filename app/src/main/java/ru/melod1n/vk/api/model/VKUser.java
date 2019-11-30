@@ -5,6 +5,8 @@ import androidx.annotation.NonNull;
 import org.json.JSONObject;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
 
 public class VKUser extends VKModel implements Serializable {
 
@@ -225,5 +227,10 @@ public class VKUser extends VKModel implements Serializable {
     @Override
     public String toString() {
         return firstName + " " + lastName;
+    }
+
+    @Override
+    public ArrayList<VKUser> asList() {
+        return new ArrayList<>(Collections.singletonList(this));
     }
 }

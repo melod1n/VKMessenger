@@ -1,6 +1,8 @@
 <resources>
 
 
-    <style name="AppTheme.Toolbar" parent="Widget.MaterialComponents.Toolbar.Primary" />
+    <style name="AppTheme.Toolbar" parent="Widget.MaterialComponents.Toolbar.PrimarySurface">
+        <item name="titleTextColor">?colorAccent</item>
+    </style>
 
 </resources>

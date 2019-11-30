@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="80dp">
+
+    <ru.melod1n.vk.widget.CircleImageView
+        android:id="@+id/profileAvatar"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_centerVertical="true"
+        android:layout_marginStart="8dp"
+        android:src="?colorAccent"
+        tools:src="?colorAccent" />
+
+    <TextView
+        android:id="@+id/profileName"
+        android:layout_width="match_parent"
+        android:layout_height="25dp"
+        android:layout_alignTop="@+id/profileAvatar"
+        android:layout_marginStart="8dp"
+        android:layout_toEndOf="@+id/profileAvatar"
+        android:gravity="center_vertical"
+        android:maxLines="1"
+        android:singleLine="true"
+        android:textColor="?android:textColorPrimary"
+        android:textSize="16sp"
+        tools:text="Danil Nikolaev" />
+
+    <TextView
+        android:id="@+id/profileStatus"
+        android:layout_width="match_parent"
+        android:layout_height="25dp"
+        android:layout_alignBottom="@+id/profileAvatar"
+        android:layout_marginStart="8dp"
+        android:layout_toEndOf="@+id/profileAvatar"
+        android:gravity="center_vertical"
+        android:textColor="?android:textColorSecondary"
+        tools:text="Status" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_alignParentBottom="true"
+        android:background="?dividerHorizontal" />
+
+</RelativeLayout>

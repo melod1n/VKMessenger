@@ -9,7 +9,6 @@ import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -40,9 +39,6 @@ public class FragmentConversations extends Fragment implements BaseContract.View
     @BindView(R.id.progressBar)
     ProgressBar progressBar;
 
-    @BindView(R.id.toolbar)
-    Toolbar toolbar;
-
     private ConversationAdapter adapter;
 
     private BaseContract.Presenter<VKDialog> presenter;
@@ -67,7 +63,6 @@ public class FragmentConversations extends Fragment implements BaseContract.View
 
         presenter = new ConversationsPresenter(this);
 
-        prepareToolbar();
         prepareRefreshLayout();
         prepareRecyclerView();
 
@@ -78,12 +73,8 @@ public class FragmentConversations extends Fragment implements BaseContract.View
         }
     }
 
-    private void prepareToolbar() {
-        toolbar.setTitle("Conversations");
-    }
-
     private void prepareRefreshLayout() {
-        refreshLayout.setColorSchemeResources(R.color.colorAccent);
+        refreshLayout.setColorSchemeResources(R.color.accent);
         refreshLayout.setOnRefreshListener(this);
     }
 

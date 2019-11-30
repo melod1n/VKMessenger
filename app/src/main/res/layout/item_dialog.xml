@@ -136,13 +136,21 @@
                     android:layout_weight="0"
                     android:padding="2dp">
 
+                    <ru.melod1n.vk.widget.CircleImageView
+                        android:id="@+id/dialogOut"
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:layout_gravity="center"
+                        android:layout_marginEnd="4dp"
+                        android:src="?colorPrimary" />
+
                     <TextView
                         android:id="@+id/dialogCounter"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="4dp"
                         android:background="@drawable/ic_conversations_counter_background"
-                        android:backgroundTint="?colorAccent"
+                        android:backgroundTint="?colorPrimary"
                         android:backgroundTintMode="multiply"
                         android:gravity="center"
                         android:minWidth="24dp"
@@ -151,14 +159,6 @@
                         android:textColor="?android:textColorPrimaryInverse"
                         android:textSize="12sp"
                         tools:text="12" />
-
-                    <ru.melod1n.vk.widget.CircleImageView
-                        android:id="@+id/dialogOut"
-                        android:layout_width="10dp"
-                        android:layout_height="10dp"
-                        android:layout_gravity="center"
-                        android:layout_marginEnd="4dp"
-                        android:src="?colorAccent" />
 
                 </FrameLayout>
             </LinearLayout>

@@ -2,13 +2,11 @@ package ru.melod1n.vk.adapter;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.text.SpannableString;
 import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
-import android.text.style.StyleSpan;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -95,6 +93,8 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
         private final Drawable placeholderNormal = new ColorDrawable(Color.DKGRAY);
         private final Drawable placeholderError = new ColorDrawable(Color.RED);
 
+        private int colorHighlight = AppGlobal.colorAccent;
+
         ViewHolder(@NonNull View v) {
             super(v);
 
@@ -142,16 +142,14 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
                     String attachmentText = getAttachmentText(lastMessage.getAttachments());
 
                     SpannableString span = new SpannableString(attachmentText);
-                    span.setSpan(new ForegroundColorSpan(AppGlobal.colorPrimary), 0, attachmentText.length(), 0);
-                    span.setSpan(new StyleSpan(Typeface.BOLD), 0, attachmentText.length(), 0);
+                    span.setSpan(new ForegroundColorSpan(colorHighlight), 0, attachmentText.length(), 0);
 
                     text.setText(span);
                 } else if (!ArrayUtil.isEmpty(lastMessage.getFwdMessages())) {
                     String fwdText = getFwdText(lastMessage.getFwdMessages());
 
                     SpannableString span = new SpannableString(fwdText);
-                    span.setSpan(new ForegroundColorSpan(AppGlobal.colorPrimary), 0, fwdText.length(), 0);
-                    span.setSpan(new StyleSpan(Typeface.BOLD), 0, fwdText.length(), 0);
+                    span.setSpan(new ForegroundColorSpan(colorHighlight), 0, fwdText.length(), 0);
 
                     text.setText(span);
                 } else {
@@ -160,9 +158,16 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
             } else {
                 String actionText = getActionText(lastMessage);
                 SpannableString span = new SpannableString(actionText);
-                span.setSpan(new ForegroundColorSpan(AppGlobal.colorPrimary), 0, actionText.length(), 0);
-                span.setSpan(new StyleSpan(Typeface.BOLD), 0, actionText.length(), 0);
+                span.setSpan(new ForegroundColorSpan(colorHighlight), 0, actionText.length(), 0);
 
+                text.setText(span);
+            }
+
+            if (ArrayUtil.isEmpty(lastMessage.getAttachments()) && ArrayUtil.isEmpty(lastMessage.getFwdMessages()) && TextUtils.isEmpty(lastMessage.getText())) {
+                String unknown = "Unknown";
+
+                SpannableString span = new SpannableString(unknown);
+                span.setSpan(new ForegroundColorSpan(colorHighlight), 0, unknown.length(), 0);
                 text.setText(span);
             }
 
@@ -183,7 +188,7 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
 
             dialogDate.setText(getTime(lastMessage));
 
-            dialogCounter.getBackground().setTint(conversation.getPushSettings() != null && conversation.getPushSettings().isNotificationsDisabled() ? Color.GRAY : AppGlobal.colorAccent);
+            dialogCounter.getBackground().setTint(conversation.getPushSettings() != null && conversation.getPushSettings().isNotificationsDisabled() ? Color.GRAY : colorHighlight);
         }
 
         private String getTime(VKMessage lastMessage) {
@@ -264,11 +269,11 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
             }
 
 
-            return "";
+            return lastMessage.getAction().getType();
         }
 
         private String getAttachmentText(ArrayList<VKModel> attachments) {
-            int resId = 0;
+            int resId;
 
             if (!ArrayUtil.isEmpty(attachments)) {
                 if (attachments.size() > 1) {
@@ -296,6 +301,9 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
                         resId = R.string.message_attachment_link;
                     } else if (attachment instanceof VKPoll) {
                         resId = R.string.message_attachment_poll;
+                    } else {
+                        String s = attachments.getClass().getSimpleName();
+                        return s.substring(1);
                     }
 
                 }

@@ -41,7 +41,7 @@ public class AppGlobal extends Application {
         connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 
         colorPrimary = getColor(R.color.colorPrimary);
-        colorAccent = getColor(R.color.colorAccent);
+        colorAccent = getColor(R.color.accent);
 
         UserConfig.restore();
     }
