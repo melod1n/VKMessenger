@@ -1,6 +1,5 @@
 package ru.melod1n.vk.adapter;
 
-import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -10,16 +9,26 @@ import android.text.style.ForegroundColorSpan;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.squareup.picasso.Picasso;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.Locale;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -41,24 +50,167 @@ import ru.melod1n.vk.api.model.VKSticker;
 import ru.melod1n.vk.api.model.VKUser;
 import ru.melod1n.vk.api.model.VKVideo;
 import ru.melod1n.vk.common.AppGlobal;
+import ru.melod1n.vk.common.EventInfo;
 import ru.melod1n.vk.current.BaseAdapter;
 import ru.melod1n.vk.current.BaseHolder;
 import ru.melod1n.vk.database.CacheStorage;
+import ru.melod1n.vk.database.DatabaseHelper;
 import ru.melod1n.vk.database.MemoryCache;
+import ru.melod1n.vk.fragment.FragmentConversations;
 import ru.melod1n.vk.util.ArrayUtil;
-import ru.melod1n.vk.util.Util;
 import ru.melod1n.vk.widget.CircleImageView;
 
 public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapter.ViewHolder> {
 
-    public ConversationAdapter(Context context, ArrayList<VKDialog> values) {
-        super(context, values);
+    private FragmentConversations conversations;
+
+    public ConversationAdapter(FragmentConversations conversations, ArrayList<VKDialog> values) {
+        super(conversations.requireContext(), values);
+        this.conversations = conversations;
+
+        EventBus.getDefault().register(this);
     }
 
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         return new ViewHolder(getInflater().inflate(R.layout.item_dialog, parent, false));
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
+    public void onReceive(EventInfo info) {
+        switch (info.getKey()) {
+            case EventInfo.MESSAGE_NEW:
+                addMessage((VKMessage) info.getData());
+                break;
+            case EventInfo.MESSAGE_EDIT:
+                editMessage((VKMessage) info.getData());
+                break;
+            case EventInfo.MESSAGE_DELETE:
+                Object[] data = (Object[]) info.getData();
+
+                deleteMessage((int) data[0], (int) data[1]);
+                break;
+            case EventInfo.MESSAGE_RESTORE:
+                restoreMessage((VKMessage) info.getData());
+                break;
+            case EventInfo.MESSAGE_READ:
+                int[] ints = (int[]) info.getData();
+                readMessage(ints[0], ints[1]);
+                break;
+        }
+    }
+
+    private void readMessage(int messageId, int peerId) {
+        int index = searchConversationIndex(peerId);
+        if (index == -1) return;
+
+        VKDialog dialog = getItem(index);
+        if (dialog.getLastMessage().getId() != messageId) return;
+
+        if (dialog.getLastMessage().isOut()) {
+            dialog.getConversation().setOutRead(messageId);
+        } else {
+            dialog.getConversation().setInRead(messageId);
+        }
+
+        notifyDataSetChanged();
+    }
+
+    private void restoreMessage(VKMessage message) {
+        int index = searchConversationIndex(message.getPeerId());
+        if (index == -1) return;
+
+        VKDialog dialog = getItem(index);
+        if (dialog.getLastMessage().getDate() > message.getDate()) return;
+
+        dialog.setLastMessage(message);
+        notifyDataSetChanged();
+    }
+
+    private void deleteMessage(int messageId, int peerId) {
+        int index = searchConversationIndex(peerId);
+        if (index == -1) return;
+
+        VKDialog dialog = getItem(index);
+
+        CacheStorage.delete(DatabaseHelper.TABLE_MESSAGES, DatabaseHelper.MESSAGE_ID, messageId);
+
+        VKMessage preLast = CacheStorage.getMessages(peerId).get(0);
+
+        if (preLast == null) {
+            CacheStorage.delete(DatabaseHelper.TABLE_CONVERSATIONS, DatabaseHelper.PEER_ID, peerId);
+            remove(index);
+            notifyDataSetChanged();
+            return;
+        }
+
+        if (dialog.getLastMessage().getId() != messageId) return;
+
+        dialog.setLastMessage(preLast);
+        notifyDataSetChanged();
+    }
+
+    private void editMessage(VKMessage message) {
+        int index = searchConversationIndex(message.getPeerId());
+        if (index == -1) return;
+
+        VKDialog dialog = getItem(index);
+
+        dialog.setLastMessage(message);
+
+        notifyDataSetChanged();
+    }
+
+    private void addMessage(VKMessage message) {
+        int index = searchConversationIndex(message.getPeerId());
+
+        LinearLayoutManager manager = (LinearLayoutManager) conversations.getRecyclerView().getLayoutManager();
+
+        if (manager == null) return;
+
+        int firstVisiblePosition = manager.findFirstCompletelyVisibleItemPosition();
+        int lastVisiblePosition = manager.findLastCompletelyVisibleItemPosition();
+
+        int maxDialogsCount = lastVisiblePosition - firstVisiblePosition + 1;
+
+        if (index >= 0) {
+            if (index == 0) {
+                VKDialog dialog = getItem(0);
+                dialog.setLastMessage(message);
+            } else {
+                VKConversation conversation = getItem(index).getConversation();
+
+                remove(index);
+                add(0, new VKDialog(conversation, message));
+
+                if (index > maxDialogsCount) {
+                    notifyItemRemoved(index);
+                    notifyItemInserted(0);
+                } else {
+                    notifyItemMoved(index, 0);
+                }
+
+                if (manager.findFirstVisibleItemPosition() <= 1)
+                    manager.scrollToPosition(0);
+            }
+        } else {
+            VKConversation conversation = CacheStorage.getConversation(message.getPeerId());
+            if (conversation != null) {
+                add(0, new VKDialog(conversation, message));
+            }
+        }
+
+        notifyDataSetChanged();
+    }
+
+    private int searchConversationIndex(int peerId) {
+        for (int i = 0; i < getItemCount(); i++) {
+            VKDialog dialog = getItem(i);
+            if (dialog.getConversation().getPeer().getId() == peerId) return i;
+        }
+
+        return -1;
     }
 
     class ViewHolder extends BaseHolder {
@@ -75,7 +227,7 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
         @BindView(R.id.dialogUserAvatar)
         CircleImageView userAvatar;
 
-        @BindView(R.id.userOnline)
+        @BindView(R.id.dialogUserOnline)
         CircleImageView userOnline;
 
         @BindView(R.id.dialogType)
@@ -89,6 +241,9 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
 
         @BindView(R.id.dialogDate)
         TextView dialogDate;
+
+        @BindView(R.id.dialogCounterContainer)
+        RelativeLayout dialogCounterContainer;
 
         private final Drawable placeholderNormal = new ColorDrawable(Color.DKGRAY);
         private final Drawable placeholderError = new ColorDrawable(Color.RED);
@@ -115,18 +270,19 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
 
             title.setText(getTitle(conversation, peerUser, peerGroup));
 
-            loadImage(getAvatar(conversation, peerUser, peerGroup), avatar);
-            loadImage(getUserAvatar(lastMessage, fromUser, fromGroup), userAvatar);
-
             Drawable onlineIcon = getOnlineIcon(conversation, peerUser);
             userOnline.setImageDrawable(onlineIcon);
             userOnline.setVisibility(onlineIcon == null ? View.GONE : View.VISIBLE);
 
             if ((conversation.isChat() || lastMessage.isOut()) && !conversation.isChannel()) {
                 userAvatar.setVisibility(View.VISIBLE);
+                loadImage(getUserAvatar(lastMessage, fromUser, fromGroup), userAvatar);
             } else {
                 userAvatar.setVisibility(View.GONE);
+                userAvatar.setImageDrawable(null);
             }
+
+            loadImage(getAvatar(conversation, peerUser, peerGroup), avatar);
 
             Drawable dDialogType = getDialogType(conversation);
             if (dDialogType != null) {
@@ -186,42 +342,64 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
                 }
             }
 
+            dialogCounterContainer.setVisibility(dialogOut.getVisibility() == View.VISIBLE || dialogCounter.getVisibility() == View.VISIBLE ? View.VISIBLE : View.GONE);
+
             dialogDate.setText(getTime(lastMessage));
 
             dialogCounter.getBackground().setTint(conversation.getPushSettings() != null && conversation.getPushSettings().isNotificationsDisabled() ? Color.GRAY : colorHighlight);
         }
 
         private String getTime(VKMessage lastMessage) {
-            int time = lastMessage.getDate();
+            long time = lastMessage.getDate() * 1000L;
 
-            Calendar nowTime = Calendar.getInstance();
-            nowTime.setTimeInMillis(System.currentTimeMillis());
+            Calendar thenCal = new GregorianCalendar();
+            thenCal.setTimeInMillis(time);
 
-            Calendar thenTime = (Calendar) nowTime.clone();
-            thenTime.setTimeInMillis(time * 1000L);
+            Calendar nowCal = new GregorianCalendar();
+            nowCal.setTimeInMillis(System.currentTimeMillis());
 
-            int nowYear = nowTime.get(Calendar.YEAR);
-            int thenYear = thenTime.get(Calendar.YEAR);
+            DateFormat formatter =
+                    (thenCal.get(Calendar.YEAR) == nowCal.get(Calendar.YEAR)
+                            && thenCal.get(Calendar.MONTH) == nowCal.get(Calendar.MONTH)
+                            && thenCal.get(Calendar.DAY_OF_MONTH) == nowCal.get(Calendar.DAY_OF_MONTH))
 
-            int nowMonth = nowTime.get(Calendar.MONTH);
-            int thenMonth = thenTime.get(Calendar.MONTH);
+                            ? DateFormat.getTimeInstance(DateFormat.SHORT) :
+                            (thenCal.get(Calendar.YEAR) == nowCal.get(Calendar.YEAR)
+                                    && thenCal.get(Calendar.MONTH) == nowCal.get(Calendar.MONTH)
+                                    && nowCal.get(Calendar.DAY_OF_MONTH) - thenCal.get(Calendar.DAY_OF_MONTH) < 7)
 
-            int nowDay = nowTime.get(Calendar.DAY_OF_MONTH);
-            int thenDay = thenTime.get(Calendar.DAY_OF_MONTH);
+                                    ? new SimpleDateFormat("EEE", Locale.getDefault())
+                                    : DateFormat.getDateInstance(DateFormat.SHORT);
 
-            if (nowYear > thenYear) {
-                return Util.yearFormatter.format(time * 1000L);
-            } else if (nowMonth > thenMonth) {
-                return Util.monthFormatter.format(time * 1000L);
-            } else {
-                if (nowDay - thenDay == 1) {
-                    return getContext().getString(R.string.message_date_yesterday);
-                } else if (nowDay - thenDay > 1) {
-                    return Util.monthFormatter.format(time * 1000L);
-                }
-            }
-
-            return Util.timeFormatter.format(time * 1000L);
+            return formatter.format(thenCal.getTime());
+//            Calendar nowTime = Calendar.getInstance();
+//            nowTime.setTimeInMillis(System.currentTimeMillis());
+//
+//            Calendar thenTime = (Calendar) nowTime.clone();
+//            thenTime.setTimeInMillis(time * 1000L);
+//
+//            int nowYear = nowTime.get(Calendar.YEAR);
+//            int thenYear = thenTime.get(Calendar.YEAR);
+//
+//            int nowMonth = nowTime.get(Calendar.MONTH);
+//            int thenMonth = thenTime.get(Calendar.MONTH);
+//
+//            int nowDay = nowTime.get(Calendar.DAY_OF_MONTH);
+//            int thenDay = thenTime.get(Calendar.DAY_OF_MONTH);
+//
+//            if (nowYear > thenYear) {
+//                return Util.yearFormatter.format(time * 1000L);
+//            } else if (nowMonth > thenMonth) {
+//                return Util.monthFormatter.format(time * 1000L);
+//            } else {
+//                if (nowDay - thenDay == 1) {
+//                    return getContext().getString(R.string.message_date_yesterday);
+//                } else if (nowDay - thenDay > 1) {
+//                    return Util.monthFormatter.format(time * 1000L);
+//                }
+//            }
+//
+//            return Util.timeFormatter.format(time * 1000L);
         }
 
         @Nullable
@@ -407,5 +585,10 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
         private VKGroup searchFromGroup(VKMessage message) {
             return CacheStorage.getGroup(message.getFromId());
         }
+    }
+
+    @Override
+    public void destroy() {
+        EventBus.getDefault().unregister(this);
     }
 }

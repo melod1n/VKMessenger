@@ -94,6 +94,7 @@ public abstract class BaseAdapter<T, VH extends BaseHolder> extends RecyclerView
 
     public void changeItems(ArrayList<T> items) {
         this.values = items;
+        notifyItemRangeChanged(0, getItemCount(), -1);
     }
 
     public void clear() {
@@ -155,4 +156,5 @@ public abstract class BaseAdapter<T, VH extends BaseHolder> extends RecyclerView
         void onItemLongClick(int position);
     }
 
+    public abstract void destroy();
 }

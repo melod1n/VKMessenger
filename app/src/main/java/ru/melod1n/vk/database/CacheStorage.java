@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.database.Cursor;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 import ru.melod1n.vk.api.UserConfig;
 import ru.melod1n.vk.api.model.VKConversation;
@@ -160,6 +161,41 @@ public class CacheStorage {
         cursor.close();
 
         return message;
+    }
+
+    public static ArrayList<VKMessage> getMessages(int peerId) {
+        Cursor cursor = selectCursor(TABLE_MESSAGES, PEER_ID, peerId);
+
+        ArrayList<VKMessage> messages = new ArrayList<>(cursor.getCount());
+
+        while (cursor.moveToNext()) {
+            messages.add(parseMessage(cursor));
+        }
+
+        cursor.close();
+
+        Collections.sort(messages, (o1, o2) -> {
+            long x = o1.getDate();
+            long y = o2.getDate();
+
+            return x > y ? -1 : (x == y ? 1 : 0);
+        });
+
+        return messages;
+    }
+
+    public static VKConversation getConversation(int peerId) {
+        Cursor cursor = selectCursor(TABLE_CONVERSATIONS, CONVERSATION_ID, peerId);
+
+        if (cursor.getCount() == 0) return null;
+
+        cursor.moveToFirst();
+
+        VKConversation conversation = parseConversation(cursor);
+
+        cursor.close();
+
+        return conversation;
     }
 
     public static ArrayList<VKConversation> getConversations() {
@@ -392,6 +428,10 @@ public class CacheStorage {
 
     public static void insertMessages(ArrayList<VKMessage> messages) {
         insert(TABLE_MESSAGES, messages);
+    }
+
+    public static void insertMessage(VKMessage message) {
+        insert(TABLE_MESSAGES, new ArrayList<>(Collections.singletonList(message)));
     }
 
     public static void insertConversations(ArrayList<VKConversation> conversations) {

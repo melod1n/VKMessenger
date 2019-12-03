@@ -431,6 +431,6 @@ public class VKConversation extends VKModel implements Serializable {
     @NonNull
     @Override
     public String toString() {
-        return getChatSettings().getTitle();
+        return getChatSettings() == null ? "" : getChatSettings().getTitle();
     }
 }

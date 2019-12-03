@@ -1,15 +1,19 @@
 package ru.melod1n.vk.activity;
 
+import android.content.Intent;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 
@@ -30,9 +34,10 @@ import ru.melod1n.vk.database.CacheStorage;
 import ru.melod1n.vk.database.MemoryCache;
 import ru.melod1n.vk.fragment.FragmentConversations;
 import ru.melod1n.vk.fragment.FragmentLogin;
+import ru.melod1n.vk.service.LongPollService;
 import ru.melod1n.vk.widget.CircleImageView;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     @BindView(R.id.drawerLayout)
     DrawerLayout drawerLayout;
@@ -66,11 +71,11 @@ public class MainActivity extends AppCompatActivity {
 
     private void prepareToolbar() {
         setSupportActionBar(toolbar);
-        toolbar.setTitle(R.string.navigation_conversations);
     }
 
     private void prepareNavigationView() {
         navigationView.setCheckedItem(R.id.navigationConversations);
+        navigationView.setNavigationItemSelectedListener(this);
         prepareNavigationHeader(null);
     }
 
@@ -112,9 +117,14 @@ public class MainActivity extends AppCompatActivity {
         if (UserConfig.isLoggedIn()) {
             loadProfileInfo();
             openConversationsScreen();
+            startLongPoll();
         } else {
             openLoginScreen();
         }
+    }
+
+    private void startLongPoll() {
+        startService(new Intent(this, LongPollService.class));
     }
 
     private void openLoginScreen() {
@@ -151,4 +161,9 @@ public class MainActivity extends AppCompatActivity {
         }));
     }
 
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        drawerLayout.closeDrawer(GravityCompat.START);
+        return true;
+    }
 }

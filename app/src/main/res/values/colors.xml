@@ -4,5 +4,5 @@
     <color name="colorPrimaryDark">#ffffff</color>
     <color name="accent">#5C9CE6</color>
 
-    <color name="online">#52AC52</color>
+    <color name="divider">#e6e6e6</color>
 </resources>

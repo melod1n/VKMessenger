@@ -1,5 +1,6 @@
 package ru.melod1n.vk.fragment;
 
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -10,6 +11,7 @@ import android.widget.ProgressBar;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -63,6 +65,7 @@ public class FragmentConversations extends Fragment implements BaseContract.View
 
         presenter = new ConversationsPresenter(this);
 
+        prepareToolbar();
         prepareRefreshLayout();
         prepareRecyclerView();
 
@@ -73,6 +76,14 @@ public class FragmentConversations extends Fragment implements BaseContract.View
         }
     }
 
+    private void prepareToolbar() {
+        requireActivity().setTitle(R.string.navigation_conversations);
+    }
+
+    public RecyclerView getRecyclerView() {
+        return recyclerView;
+    }
+
     private void prepareRefreshLayout() {
         refreshLayout.setColorSchemeResources(R.color.accent);
         refreshLayout.setOnRefreshListener(this);
@@ -80,9 +91,15 @@ public class FragmentConversations extends Fragment implements BaseContract.View
 
     private void prepareRecyclerView() {
         LinearLayoutManager manager = new LinearLayoutManager(requireContext(), RecyclerView.VERTICAL, false);
+        manager.setStackFromEnd(true);
+        manager.setRecycleChildrenOnDetach(true);
+        manager.setSmoothScrollbarEnabled(true);
 
+        DividerItemDecoration decoration = new DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL);
+        decoration.setDrawable(new ColorDrawable(requireContext().getColor(R.color.divider)));
+
+        recyclerView.addItemDecoration(decoration);
         recyclerView.setLayoutManager(manager);
-        recyclerView.setHasFixedSize(true);
     }
 
     @Override
@@ -139,13 +156,14 @@ public class FragmentConversations extends Fragment implements BaseContract.View
 
         if (adapter != null) {
             adapter.changeItems(values);
-            adapter.notifyDataSetChanged();
+            recyclerView.scrollToPosition(0);
             return;
         }
 
-        adapter = new ConversationAdapter(getActivity(), values);
+        adapter = new ConversationAdapter(this, values);
         adapter.setOnItemClickListener(this);
         recyclerView.setAdapter(adapter);
+        recyclerView.scrollToPosition(0);
     }
 
     @Override
@@ -156,5 +174,11 @@ public class FragmentConversations extends Fragment implements BaseContract.View
 
         adapter.notifyItemRangeRemoved(0, adapter.getItemCount());
         adapter.clear();
+    }
+
+    @Override
+    public void onDetach() {
+        if (adapter != null) adapter.destroy();
+        super.onDetach();
     }
 }

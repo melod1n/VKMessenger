@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="80dp"
+    android:layout_height="wrap_content"
     android:background="?selectableItemBackground"
     android:gravity="center_vertical"
     android:orientation="horizontal">
@@ -11,11 +11,10 @@
         android:id="@+id/dialog_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="6dp"
-        android:layout_marginRight="6dp"
+        android:layout_margin="6dp"
         android:baselineAligned="false"
-        android:padding="6dp"
-        android:weightSum="1.0">
+        android:orientation="horizontal"
+        android:padding="6dp">
 
         <FrameLayout
             android:layout_width="wrap_content"
@@ -26,10 +25,11 @@
                 android:id="@+id/dialogAvatar"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
-                android:layout_gravity="bottom|end" />
+                android:layout_gravity="bottom|end"
+                tools:src="?colorAccent" />
 
             <ru.melod1n.vk.widget.CircleImageView
-                android:id="@+id/userOnline"
+                android:id="@+id/dialogUserOnline"
                 android:layout_width="14dp"
                 android:layout_height="14dp"
                 android:layout_gravity="bottom|end"
@@ -40,8 +40,9 @@
 
         <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:layout_marginStart="6dp"
+            android:layout_marginEnd="6dp"
             android:layout_weight="1.0"
             android:gravity="center"
             android:orientation="vertical">
@@ -49,55 +50,31 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:baselineAligned="false"
                 android:orientation="horizontal">
 
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1">
-
-                    <androidx.appcompat.widget.AppCompatImageView
-                        android:id="@+id/dialogType"
-                        android:layout_width="20dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginStart="4dp"
-                        android:paddingStart="2dp"
-                        android:paddingEnd="0dp"
-                        android:tint="?android:textColorPrimary"
-                        tools:src="@drawable/ic_people" />
-
-                    <TextView
-                        android:id="@+id/dialogTitle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="4dp"
-                        android:maxLines="1"
-                        android:singleLine="true"
-                        android:textColor="?android:textColorPrimary"
-                        android:textSize="18sp"
-                        tools:text="Unidevs" />
-
-                    <!--                    <ImageView-->
-                    <!--                        android:id="@+id/muted"-->
-                    <!--                        android:layout_width="15dp"-->
-                    <!--                        android:layout_height="15dp"-->
-                    <!--                        android:layout_gravity="center_vertical"-->
-                    <!--                        android:layout_marginStart="4dp"-->
-                    <!--                        android:src="@drawable/ic_volume_off"-->
-                    <!--                        android:tint="?android:textColorSecondaryNoDisable" />-->
-                </LinearLayout>
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/dialogType"
+                    android:layout_width="20dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="4dp"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="0dp"
+                    android:tint="?colorAccent"
+                    tools:src="@drawable/ic_people" />
 
                 <TextView
-                    android:id="@+id/dialogDate"
+                    android:id="@+id/dialogTitle"
                     android:layout_width="wrap_content"
-                    android:layout_height="22dp"
-                    android:gravity="center"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:fontFamily="@font/tt_commons_medium"
                     android:maxLines="1"
-                    android:minWidth="40dp"
-                    android:padding="2dp"
-                    android:textColor="?android:textColorSecondary"
-                    android:textSize="12sp"
-                    tools:text="03:55" />
+                    android:singleLine="true"
+                    android:textColor="?colorAccent"
+                    android:textSize="22sp"
+                    tools:text="Unidevs" />
+
             </LinearLayout>
 
             <LinearLayout
@@ -112,56 +89,67 @@
                     android:id="@+id/dialogUserAvatar"
                     android:layout_width="26dp"
                     android:layout_height="26dp"
-                    android:layout_marginEnd="4dp" />
+                    android:layout_gravity="top"
+                    android:layout_marginEnd="4dp"
+                    tools:src="?colorAccent" />
 
                 <TextView
                     android:id="@+id/dialogText"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="2dp"
-                    android:layout_weight="1"
-                    android:gravity="center_vertical"
-                    android:maxLines="1"
-                    android:singleLine="true"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:textColor="?android:textColorSecondary"
-                    tools:text="Сообщение" />
-
-                <FrameLayout
-                    android:id="@+id/dialogCounterContainer"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:minWidth="30dp"
-                    android:layout_weight="0"
-                    android:padding="2dp">
+                    android:layout_marginStart="2dp"
+                    android:layout_marginEnd="4dp"
+                    android:baselineAligned="false"
+                    android:gravity="center_vertical"
+                    android:maxLines="2"
+                    android:textColor="?android:textColorPrimary"
+                    tools:text="Сообщениеeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeepeeeeeeeeeeeeeeeeeeeeeeeeeepeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" />
 
-                    <ru.melod1n.vk.widget.CircleImageView
-                        android:id="@+id/dialogOut"
-                        android:layout_width="10dp"
-                        android:layout_height="10dp"
-                        android:layout_gravity="center"
-                        android:layout_marginEnd="4dp"
-                        android:src="?colorPrimary" />
+                <TextView
+                    android:id="@+id/dialogDate"
+                    android:layout_width="60dp"
+                    android:layout_height="wrap_content"
+                    android:gravity="start|center_vertical"
+                    android:maxLines="1"
+                    android:minWidth="40dp"
+                    android:padding="2dp"
+                    android:textColor="?android:textColorSecondary"
+                    android:textSize="12sp"
+                    android:visibility="gone"
+                    tools:text=" · 1ч" />
 
-                    <TextView
-                        android:id="@+id/dialogCounter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="4dp"
-                        android:background="@drawable/ic_conversations_counter_background"
-                        android:backgroundTint="?colorPrimary"
-                        android:backgroundTintMode="multiply"
-                        android:gravity="center"
-                        android:minWidth="24dp"
-                        android:minHeight="20dp"
-                        android:padding="4dp"
-                        android:textColor="?android:textColorPrimaryInverse"
-                        android:textSize="12sp"
-                        tools:text="12" />
-
-                </FrameLayout>
             </LinearLayout>
         </LinearLayout>
+
+        <RelativeLayout
+            android:id="@+id/dialogCounterContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:padding="4dp">
+
+            <ru.melod1n.vk.widget.CircleImageView
+                android:id="@+id/dialogOut"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_centerInParent="true"
+                android:src="?colorAccent" />
+
+            <TextView
+                android:id="@+id/dialogCounter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:background="@drawable/ic_conversations_counter_background"
+                android:backgroundTint="?colorAccent"
+                android:backgroundTintMode="multiply"
+                android:gravity="center"
+                android:minWidth="26dp"
+                android:minHeight="26dp"
+                android:padding="4dp"
+                android:textColor="?android:textColorPrimaryInverse"
+                android:textSize="12sp"
+                tools:text="12" />
+
+        </RelativeLayout>
     </LinearLayout>
 </LinearLayout>

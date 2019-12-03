@@ -6,24 +6,28 @@ import org.json.JSONObject;
 import java.io.Serializable;
 import java.util.ArrayList;
 
+import ru.melod1n.vk.api.UserConfig;
+
 public class VKMessage extends VKModel implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    public static int count;
     public static int lastHistoryCount;
 
-    public static final int UNREAD = 1;       // message unread
-    public static final int OUTBOX = 2;       // исходящее сообщение
-    public static final int REPLIED = 4;      // на сообщение был создан ответ
-    public static final int IMPORTANT = 8;    // помеченное сообщение
-    public static final int CHAT = 16;        // сообщение отправлено через диалог
-    public static final int FRIENDS = 32;     // сообщение отправлено другом
-    public static final int SPAM = 64;        // сообщение помечено как "Спам"
-    public static final int DELETED = 128;    // сообщение удалено (в корзине)
-    public static final int FIXED = 256;      // сообщение проверено пользователем на спам
-    public static final int MEDIA = 512;      // сообщение содержит медиаконтент
-    public static final int BESEDA = 8192;    // беседа
+    public static final int UNREAD = 1;                 // Оно просто есть
+    public static final int OUTBOX = 1 << 1;            // Исходящее сообщение
+    public static final int REPLIED = 1 << 2;           // На сообщение был создан ответ
+    public static final int IMPORTANT = 1 << 3;         // Важное сообщение
+    public static final int FRIENDS = 1 << 5;           // Сообщение в чат друга
+    public static final int SPAM = 1 << 6;              // Сообщение помечено как спам
+    public static final int DELETED = 1 << 7;           // Удаление сообщения
+    public static final int AUDIO_LISTENED = 1 << 12;   // ГС прослушано
+    public static final int CHAT = 1 << 13;             // Сообщение отправлено в беседу
+    public static final int CANCEL_SPAM = 1 << 15;      // Отмена пометки спама
+    public static final int HIDDEN = 1 << 16;           // Приветственное сообщение сообщества
+    public static final int DELETE_FOR_ALL = 1 << 17;   // Сообщение удалено для всех
+    public static final int CHAT_IN = 1 << 19;          // Входяшее сообщение в беседе
+    public static final int REPLY_MSG = 1 << 21;        // Ответ на сообщение
 
     public static final String ACTION_CHAT_CREATE = "chat_create";
     public static final String ACTION_CHAT_INVITE_USER = "chat_invite_user";
@@ -88,7 +92,91 @@ public class VKMessage extends VKModel implements Serializable {
         if (oAction != null) {
             setAction(new Action(oAction));
         }
+
     }
+
+    public static VKMessage parse(JSONArray array) {
+        VKMessage message = new VKMessage();
+
+        int id = array.optInt(1);
+        message.setId(id);
+
+        int flags = array.optInt(2);
+
+        int peerId = array.optInt(3);
+        message.setPeerId(peerId);
+
+        int date = array.optInt(4);
+        message.setDate(date);
+
+        boolean out = VKMessage.isOut(flags);
+        message.setOut(out);
+
+        String text = array.optString(5);
+        message.setText(text);
+
+        JSONObject o = array.optJSONObject(6);
+        if (o != null) {
+            if (o.has("from")) {
+                int fromId = o.optInt("from");
+                message.setFromId(fromId);
+            }
+
+            if (o.has("source_act")) {
+                Action action = new Action();
+                action.setType(o.optString("source_act"));
+
+                if (o.has("source_text"))
+                    action.setText(o.optString("source_text"));
+
+                if (o.has("source_mid"))
+                    action.setMemberId(o.optInt("source_mid"));
+
+                message.setAction(action);
+            }
+        }
+
+        if (out && message.getFromId() == 0) {
+            message.setFromId(UserConfig.getUserId());
+        }
+
+        //JSONArray attachments = array.optJSONArray(7);
+
+        int randomId = array.optInt(8);
+        message.setRandomId(randomId);
+
+
+        return message;
+    }
+
+    public static boolean isOut(int flags) {
+        return (VKMessage.OUTBOX & flags) > 0;
+    }
+
+    public static boolean isDeleted(int flags) {
+        return (VKMessage.DELETED & flags) > 0;
+    }
+
+    public static boolean isUnread(int flags) {
+        return (VKMessage.UNREAD & flags) > 0;
+    }
+
+    public static boolean isSpam(int flags) {
+        return (VKMessage.SPAM & flags) > 0;
+    }
+
+    public static boolean isCanceledSpam(int flags) {
+        return (VKMessage.CANCEL_SPAM & flags) > 0;
+    }
+
+    public static boolean isImportant(int flags) {
+        return (VKMessage.IMPORTANT & flags) > 0;
+    }
+
+    public static boolean isDeletedForAll(int flags) {
+        return (VKMessage.DELETE_FOR_ALL & flags) > 0;
+    }
+
 
     public boolean isFromUser() {
         return fromId > 0;
@@ -194,7 +282,7 @@ public class VKMessage extends VKModel implements Serializable {
         this.action = action;
     }
 
-    public class Action implements Serializable {
+    public static class Action implements Serializable {
 
         private static final long serialVersionUID = 1L;
 
@@ -215,7 +303,10 @@ public class VKMessage extends VKModel implements Serializable {
         private String text; //for chat_create / title_update
         private Photo photo;
 
-        public Action(JSONObject o) {
+        Action() {
+        }
+
+        Action(JSONObject o) {
             setType(o.optString("type"));
             setMemberId(o.optInt("member_id", -1));
             setText(o.optString("text"));

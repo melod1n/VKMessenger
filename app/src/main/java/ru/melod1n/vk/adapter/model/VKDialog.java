@@ -10,6 +10,13 @@ public class VKDialog {
     private VKConversation conversation;
     private VKMessage lastMessage;
 
+    public VKDialog() {}
+
+    public VKDialog(VKConversation conversation, VKMessage lastMessage) {
+        this.conversation = conversation;
+        this.lastMessage = lastMessage;
+    }
+
     public VKConversation getConversation() {
         return conversation;
     }
@@ -29,6 +36,6 @@ public class VKDialog {
     @NonNull
     @Override
     public String toString() {
-        return getLastMessage().getText();
+        return getConversation().toString();
     }
 }

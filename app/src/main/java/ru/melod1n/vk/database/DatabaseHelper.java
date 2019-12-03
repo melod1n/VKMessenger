@@ -17,9 +17,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     static final String PHOTO_100 = "photo_100";
     static final String PHOTO_200 = "photo_200";
 
-    static final String MESSAGE_ID = "message_id";
+    public static final String MESSAGE_ID = "message_id";
     static final String DATE = "date";
-    static final String PEER_ID = "peer_id";
+    public static final String PEER_ID = "peer_id";
     static final String FROM_ID = "from_id";
     static final String TEXT = "text";
     static final String RANDOM_ID = "random_id";
@@ -56,8 +56,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     static final String IS_CLOSED = "is_closed";
     static final String TYPE = "type";
 
-    static final String TABLE_CONVERSATIONS = "conversations";
-    static final String TABLE_MESSAGES = "messages";
+    public static final String TABLE_CONVERSATIONS = "conversations";
+    public static final String TABLE_MESSAGES = "messages";
     static final String TABLE_USERS = "users";
     static final String TABLE_FRIENDS = "friends";
     static final String TABLE_GROUPS = "groups";

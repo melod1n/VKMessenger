@@ -23,6 +23,10 @@
             </intent-filter>
         </activity>
 
+        <service
+            android:name=".service.LongPollService"
+            android:enabled="true" />
+
     </application>
 
 </manifest>

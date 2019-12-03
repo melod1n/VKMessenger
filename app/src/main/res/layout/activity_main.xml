@@ -7,9 +7,11 @@
     android:layout_height="match_parent"
     tools:openDrawer="start">
 
-    <FrameLayout
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
+
+        <include layout="@layout/toolbar" />
 
         <FrameLayout
             android:id="@+id/fragment_container"
@@ -17,9 +19,7 @@
             android:layout_height="match_parent"
             android:layout_marginTop="?actionBarSize" />
 
-        <include layout="@layout/toolbar" />
-
-    </FrameLayout>
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/navigationView"
@@ -27,8 +27,9 @@
         android:layout_height="match_parent"
         android:layout_gravity="start"
         app:headerLayout="@layout/drawer_header"
-        app:itemIconTint="@drawable/ic_drawer_icon_colors"
-        app:itemTextColor="@drawable/ic_drawer_text_colors"
+        app:itemBackground="@drawable/navigation_view_item_background_selector"
+        app:itemIconTint="@drawable/navigation_view_item_icon_colors"
+        app:itemTextColor="@drawable/navigation_view_item_text_colors"
         app:menu="@menu/activity_main_drawer" />
 
 </androidx.drawerlayout.widget.DrawerLayout>
