@@ -1,6 +1,8 @@
 package ru.melod1n.vk.current;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,11 +23,15 @@ public abstract class BaseAdapter<T, VH extends BaseHolder> extends RecyclerView
     private OnItemClickListener onItemClickListener;
     private OnItemLongClickListener onItemLongClickListener;
 
+    private Handler handler;
+
     public BaseAdapter(Context context, ArrayList<T> values) {
         this.context = context;
         this.values = values;
 
         this.inflater = LayoutInflater.from(context);
+
+        this.handler = new Handler(Looper.getMainLooper());
     }
 
     @NonNull
@@ -94,7 +100,6 @@ public abstract class BaseAdapter<T, VH extends BaseHolder> extends RecyclerView
 
     public void changeItems(ArrayList<T> items) {
         this.values = items;
-        notifyItemRangeChanged(0, getItemCount(), -1);
     }
 
     public void clear() {
@@ -157,4 +162,6 @@ public abstract class BaseAdapter<T, VH extends BaseHolder> extends RecyclerView
     }
 
     public abstract void destroy();
+
+
 }

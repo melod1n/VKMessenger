@@ -186,4 +186,12 @@ public class ArrayUtil {
     public static boolean isEmpty(Collection collection) {
         return collection == null || collection.isEmpty();
     }
+
+    public static boolean contains(int[] array, int i) {
+        for (int iInt : array) {
+            if (iInt == i) return true;
+        }
+
+        return false;
+    }
 }

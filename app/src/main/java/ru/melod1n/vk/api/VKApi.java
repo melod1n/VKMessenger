@@ -28,7 +28,7 @@ public class VKApi {
     private static final String TAG = "Messenger.VKApi";
 
     public static final String BASE_URL = "https://api.vk.com/method/";
-    public static final String API_VERSION = "5.103";
+    public static final String API_VERSION = "5.113";
     public static final String LANGUAGE = AppGlobal.locale.getLanguage();
 
     public static <T> ArrayList<T> execute(String url, Class<T> cls) throws Exception {
@@ -401,10 +401,10 @@ public class VKApi {
     }
 
     public static class ErrorCallback implements Runnable {
-        private OnResponseListener listener;
+        private OnResponseListener<? extends Object> listener;
         private Exception ex;
 
-        public ErrorCallback(OnResponseListener listener, Exception ex) {
+        public ErrorCallback(OnResponseListener<? extends Object> listener, Exception ex) {
             this.listener = listener;
             this.ex = ex;
         }

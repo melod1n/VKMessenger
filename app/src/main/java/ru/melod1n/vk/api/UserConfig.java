@@ -14,14 +14,6 @@ public class UserConfig {
     private static String token;
     private static int userId;
 
-    public UserConfig() {
-    }
-
-    public UserConfig(String token, int userId) {
-        UserConfig.token = token;
-        UserConfig.userId = userId;
-    }
-
     public static String getToken() {
         return token;
     }
@@ -39,15 +31,18 @@ public class UserConfig {
     }
 
     public static void save() {
-        AppGlobal.preferences.edit()
-                .putString(TOKEN, token)
-                .putInt(USER_ID, userId)
-                .apply();
+        AppGlobal.preferences.edit().putString(TOKEN, token).putInt(USER_ID, userId).apply();
     }
 
     public static void restore() {
         token = AppGlobal.preferences.getString(TOKEN, "");
         userId = AppGlobal.preferences.getInt(USER_ID, -1);
+    }
+
+    public static void clear() {
+        token = "";
+        userId = -1;
+        AppGlobal.preferences.edit().remove(TOKEN).remove(USER_ID).apply();
     }
 
     public static boolean isLoggedIn() {

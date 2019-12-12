@@ -163,4 +163,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         database.execSQL(DROP_FRIENDS);
         database.execSQL(DROP_GROUPS);
     }
+
+    public void clear(SQLiteDatabase database) {
+        dropTables(database);
+        onCreate(database);
+    }
 }

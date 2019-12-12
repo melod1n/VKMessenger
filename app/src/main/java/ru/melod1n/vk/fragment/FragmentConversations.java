@@ -10,7 +10,6 @@ import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -23,12 +22,14 @@ import butterknife.ButterKnife;
 import ru.melod1n.vk.R;
 import ru.melod1n.vk.adapter.ConversationAdapter;
 import ru.melod1n.vk.adapter.model.VKDialog;
+import ru.melod1n.vk.common.AppGlobal;
 import ru.melod1n.vk.current.BaseAdapter;
+import ru.melod1n.vk.current.BaseFragment;
 import ru.melod1n.vk.mvp.contract.BaseContract;
 import ru.melod1n.vk.mvp.presenter.ConversationsPresenter;
 import ru.melod1n.vk.util.Util;
 
-public class FragmentConversations extends Fragment implements BaseContract.View<VKDialog>, SwipeRefreshLayout.OnRefreshListener, BaseAdapter.OnItemClickListener {
+public class FragmentConversations extends BaseFragment implements BaseContract.View<VKDialog>, SwipeRefreshLayout.OnRefreshListener, BaseAdapter.OnItemClickListener {
 
     private static final String TAG = "FragmentConversations";
 
@@ -44,6 +45,12 @@ public class FragmentConversations extends Fragment implements BaseContract.View
     private ConversationAdapter adapter;
 
     private BaseContract.Presenter<VKDialog> presenter;
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        requireActivity().setTitle(R.string.navigation_conversations);
+    }
 
     @Override
     public void onRefresh() {
@@ -65,7 +72,6 @@ public class FragmentConversations extends Fragment implements BaseContract.View
 
         presenter = new ConversationsPresenter(this);
 
-        prepareToolbar();
         prepareRefreshLayout();
         prepareRecyclerView();
 
@@ -76,28 +82,22 @@ public class FragmentConversations extends Fragment implements BaseContract.View
         }
     }
 
-    private void prepareToolbar() {
-        requireActivity().setTitle(R.string.navigation_conversations);
-    }
-
     public RecyclerView getRecyclerView() {
         return recyclerView;
     }
 
     private void prepareRefreshLayout() {
-        refreshLayout.setColorSchemeResources(R.color.accent);
+        refreshLayout.setColorSchemeColors(AppGlobal.colorAccent);
         refreshLayout.setOnRefreshListener(this);
     }
 
     private void prepareRecyclerView() {
         LinearLayoutManager manager = new LinearLayoutManager(requireContext(), RecyclerView.VERTICAL, false);
-        manager.setStackFromEnd(true);
-        manager.setRecycleChildrenOnDetach(true);
-        manager.setSmoothScrollbarEnabled(true);
 
         DividerItemDecoration decoration = new DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL);
         decoration.setDrawable(new ColorDrawable(requireContext().getColor(R.color.divider)));
 
+        recyclerView.setHasFixedSize(true);
         recyclerView.addItemDecoration(decoration);
         recyclerView.setLayoutManager(manager);
     }
@@ -156,14 +156,13 @@ public class FragmentConversations extends Fragment implements BaseContract.View
 
         if (adapter != null) {
             adapter.changeItems(values);
-            recyclerView.scrollToPosition(0);
+            adapter.notifyDataSetChanged();
             return;
         }
 
         adapter = new ConversationAdapter(this, values);
         adapter.setOnItemClickListener(this);
         recyclerView.setAdapter(adapter);
-        recyclerView.scrollToPosition(0);
     }
 
     @Override
@@ -172,8 +171,8 @@ public class FragmentConversations extends Fragment implements BaseContract.View
 
         if (adapter == null) return;
 
-        adapter.notifyItemRangeRemoved(0, adapter.getItemCount());
         adapter.clear();
+        adapter.notifyDataSetChanged();
     }
 
     @Override

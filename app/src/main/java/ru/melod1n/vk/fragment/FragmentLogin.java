@@ -15,8 +15,6 @@ import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.Toolbar;
-import androidx.fragment.app.Fragment;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -24,17 +22,21 @@ import ru.melod1n.vk.R;
 import ru.melod1n.vk.activity.MainActivity;
 import ru.melod1n.vk.api.UserConfig;
 import ru.melod1n.vk.api.VKAuth;
+import ru.melod1n.vk.current.BaseFragment;
 
-public class FragmentLogin extends Fragment {
+public class FragmentLogin extends BaseFragment {
 
     @BindView(R.id.webView)
     WebView webView;
 
-    @BindView(R.id.toolbar)
-    Toolbar toolbar;
-
     @BindView(R.id.progressBar)
     ProgressBar progressBar;
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        requireActivity().setTitle(R.string.fragment_login);
+    }
 
     @Nullable
     @Override
@@ -47,8 +49,6 @@ public class FragmentLogin extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ButterKnife.bind(this, view);
-
-        toolbar.setTitle("Login");
 
         webView.getSettings().setJavaScriptEnabled(true);
         webView.clearCache(true);
@@ -93,16 +93,17 @@ public class FragmentLogin extends Fragment {
             if (url.startsWith(VKAuth.redirect_url)) {
                 if (!url.contains("error=")) {
                     String[] auth = VKAuth.parseRedirectUrl(url);
-                    Intent intent = new Intent();
-                    intent.setClass(requireContext(), MainActivity.class);
-                    intent.putExtra("token", auth[0]);
-                    intent.putExtra("user_id", Integer.parseInt(auth[1]));
+
+                    String token = auth[0];
+                    int id = Integer.parseInt(auth[1]);
+
+                    Intent intent = new Intent(requireContext(), MainActivity.class);
+                    intent.putExtra("token", token);
+                    intent.putExtra("user_id", id);
 
                     startActivity(intent);
 
-                    if (getActivity() != null) {
-                        getActivity().finish();
-                    }
+                    requireActivity().finish();
                 }
             }
         } catch (Exception e) {

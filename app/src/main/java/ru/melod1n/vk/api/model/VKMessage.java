@@ -95,13 +95,14 @@ public class VKMessage extends VKModel implements Serializable {
 
     }
 
+    // [msg_id, flags, peer_id, timestamp, text, {emoji, from, action, keyboard}, {attachs}, random_id, conv_msg_id, edit_time]
     public static VKMessage parse(JSONArray array) {
         VKMessage message = new VKMessage();
 
         int id = array.optInt(1);
         message.setId(id);
 
-        int flags = array.optInt(2);
+//        int flags = array.optInt(2);
 
         int peerId = array.optInt(3);
         message.setPeerId(peerId);
@@ -109,8 +110,13 @@ public class VKMessage extends VKModel implements Serializable {
         int date = array.optInt(4);
         message.setDate(date);
 
-        boolean out = VKMessage.isOut(flags);
-        message.setOut(out);
+//        boolean out = VKMessage.isOut(flags);
+        int randomId = array.optInt(8);
+        message.setOut(randomId > 0);
+        message.setRandomId(randomId);
+        if (message.isOut()) {
+            message.setFromId(UserConfig.getUserId());
+        }
 
         String text = array.optString(5);
         message.setText(text);
@@ -120,6 +126,7 @@ public class VKMessage extends VKModel implements Serializable {
             if (o.has("from")) {
                 int fromId = o.optInt("from");
                 message.setFromId(fromId);
+                message.setOut(fromId == UserConfig.getUserId());
             }
 
             if (o.has("source_act")) {
@@ -135,16 +142,6 @@ public class VKMessage extends VKModel implements Serializable {
                 message.setAction(action);
             }
         }
-
-        if (out && message.getFromId() == 0) {
-            message.setFromId(UserConfig.getUserId());
-        }
-
-        //JSONArray attachments = array.optJSONArray(7);
-
-        int randomId = array.optInt(8);
-        message.setRandomId(randomId);
-
 
         return message;
     }

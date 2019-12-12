@@ -24,6 +24,8 @@ public class AppGlobal extends Application {
     public static volatile Resources resources;
     public static volatile SQLiteDatabase database;
 
+    public static volatile String packageName;
+
     public static volatile int colorPrimary;
     public static volatile int colorAccent;
 
@@ -40,7 +42,9 @@ public class AppGlobal extends Application {
         database = DatabaseHelper.getInstance(this).getWritableDatabase();
         connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 
-        colorPrimary = getColor(R.color.colorPrimary);
+        packageName = getPackageName();
+
+        colorPrimary = getColor(R.color.primary);
         colorAccent = getColor(R.color.accent);
 
         UserConfig.restore();

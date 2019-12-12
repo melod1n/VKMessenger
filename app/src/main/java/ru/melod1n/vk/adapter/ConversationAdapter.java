@@ -34,6 +34,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import ru.melod1n.vk.R;
 import ru.melod1n.vk.adapter.model.VKDialog;
+import ru.melod1n.vk.api.UserConfig;
 import ru.melod1n.vk.api.model.VKAudio;
 import ru.melod1n.vk.api.model.VKAudioMessage;
 import ru.melod1n.vk.api.model.VKConversation;
@@ -77,7 +78,7 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
         return new ViewHolder(getInflater().inflate(R.layout.item_dialog, parent, false));
     }
 
-    @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
+    @Subscribe(threadMode = ThreadMode.MAIN)
     public void onReceive(EventInfo info) {
         switch (info.getKey()) {
             case EventInfo.MESSAGE_NEW:
@@ -177,31 +178,52 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
         if (index >= 0) {
             if (index == 0) {
                 VKDialog dialog = getItem(0);
-                dialog.setLastMessage(message);
+
+                remove(0);
+                add(0, new VKDialog(prepareConversation(dialog.getConversation(), message), message));
             } else {
                 VKConversation conversation = getItem(index).getConversation();
 
                 remove(index);
-                add(0, new VKDialog(conversation, message));
+                add(0, new VKDialog(prepareConversation(conversation, message), message));
 
-                if (index > maxDialogsCount) {
-                    notifyItemRemoved(index);
-                    notifyItemInserted(0);
-                } else {
-                    notifyItemMoved(index, 0);
-                }
-
-                if (manager.findFirstVisibleItemPosition() <= 1)
-                    manager.scrollToPosition(0);
+//                if (index > maxDialogsCount) {
+//                    notifyItemRemoved(index);
+//                    notifyItemInserted(0);
+//                    notifyItemRangeChanged(0, getItemCount(), null);
+//                } else {
+//                    notifyItemMoved(index, 0);
+//                    notifyItemRangeChanged(0, getItemCount(), null);
+//                }
             }
         } else {
             VKConversation conversation = CacheStorage.getConversation(message.getPeerId());
             if (conversation != null) {
-                add(0, new VKDialog(conversation, message));
+                add(0, new VKDialog(prepareConversation(conversation, message), message));
+//                notifyItemInserted(0);
+//                notifyItemRangeChanged(0, getItemCount(), null);
             }
         }
 
+        if (manager.findFirstVisibleItemPosition() <= 1)
+            manager.scrollToPosition(0);
+
+        //notifyItemRangeChanged(0, getItemCount(), -1);
+
         notifyDataSetChanged();
+    }
+
+    private VKConversation prepareConversation(VKConversation conversation, VKMessage newMessage) {
+        conversation.setLastMessageId(newMessage.getId());
+
+        if (!newMessage.isOut()) conversation.setUnreadCount(conversation.getUnreadCount() + 1);
+        else conversation.setUnreadCount(0);
+
+        if (newMessage.getPeerId() == newMessage.getFromId() && newMessage.getFromId() == UserConfig.getUserId()) {
+            conversation.setOutRead(newMessage.getId());
+        }
+
+        return conversation;
     }
 
     private int searchConversationIndex(int peerId) {
@@ -245,8 +267,7 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
         @BindView(R.id.dialogCounterContainer)
         RelativeLayout dialogCounterContainer;
 
-        private final Drawable placeholderNormal = new ColorDrawable(Color.DKGRAY);
-        private final Drawable placeholderError = new ColorDrawable(Color.RED);
+        private final Drawable placeholderNormal = new ColorDrawable(AppGlobal.colorAccent);
 
         private int colorHighlight = AppGlobal.colorAccent;
 
@@ -319,7 +340,7 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
                 text.setText(span);
             }
 
-            if (ArrayUtil.isEmpty(lastMessage.getAttachments()) && ArrayUtil.isEmpty(lastMessage.getFwdMessages()) && TextUtils.isEmpty(lastMessage.getText())) {
+            if (ArrayUtil.isEmpty(lastMessage.getAttachments()) && ArrayUtil.isEmpty(lastMessage.getFwdMessages()) && lastMessage.getAction() == null && TextUtils.isEmpty(lastMessage.getText())) {
                 String unknown = "Unknown";
 
                 SpannableString span = new SpannableString(unknown);
@@ -327,13 +348,15 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
                 text.setText(span);
             }
 
-            if ((lastMessage.isOut() && conversation.getOutRead() == conversation.getLastMessageId()) || (!lastMessage.isOut() && conversation.getInRead() == conversation.getLastMessageId())) {
+            boolean read = (lastMessage.isOut() && conversation.getOutRead() == conversation.getLastMessageId()) || (!lastMessage.isOut() && conversation.getInRead() == conversation.getLastMessageId());
+
+            if (read) {
                 dialogCounter.setVisibility(View.GONE);
                 dialogOut.setVisibility(View.GONE);
             } else {
                 if (lastMessage.isOut()) {
                     dialogOut.setVisibility(View.VISIBLE);
-                    dialogCounter.setVisibility(View.GONE);
+                    dialogCounter.setVisibility(View.INVISIBLE);
                     dialogCounter.setText("");
                 } else {
                     dialogOut.setVisibility(View.GONE);
@@ -510,13 +533,13 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
         }
 
         private void loadImage(String imageUrl, ImageView imageView) {
-            if (TextUtils.isEmpty(imageUrl)) {
-                imageView.setImageDrawable(placeholderNormal);
-            } else {
+            if (!TextUtils.isEmpty(imageUrl)) {
                 Picasso.get()
                         .load(imageUrl)
                         .placeholder(placeholderNormal)
                         .into(imageView);
+            } else {
+                imageView.setImageDrawable(placeholderNormal);
             }
         }
 
