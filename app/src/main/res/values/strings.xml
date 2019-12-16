@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name" translatable="false">Project.VKM</string>
+    <string name="app_name" translatable="false">VKM</string>
 
     <string name="message_action_created_chat">Created chat %s</string>
     <string name="message_action_invited_user">Invited %s to chat</string>
@@ -39,5 +39,13 @@
     <string name="drawer_name_surname">Name Surname</string>
     <string name="drawer_status">Status</string>
     <string name="pref_account_logout_title">Logout</string>
+
+    <string name="time_format_now">now</string>
+    <string name="time_format_minute">%dm</string>
+    <string name="time_format_hour">%dh</string>
+    <string name="time_format_day">%dd</string>
+    <string name="time_format_week">%dw</string>
+    <string name="time_format_month">%dm</string>
+    <string name="time_format_year">%dy</string>
 
 </resources>

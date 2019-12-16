@@ -103,27 +103,15 @@
                     android:gravity="center_vertical"
                     android:maxLines="2"
                     android:textColor="?android:textColorPrimary"
-                    tools:text="Сообщениеeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeepeeeeeeeeeeeeeeeeeeeeeeeeeepeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" />
-
-                <TextView
-                    android:id="@+id/dialogDate"
-                    android:layout_width="60dp"
-                    android:layout_height="wrap_content"
-                    android:gravity="start|center_vertical"
-                    android:maxLines="1"
-                    android:minWidth="40dp"
-                    android:padding="2dp"
-                    android:textColor="?android:textColorSecondary"
-                    android:textSize="12sp"
-                    android:visibility="gone"
-                    tools:text=" · 1ч" />
+                    tools:text="Сообщениеeeeeeeeeeeepeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" />
 
             </LinearLayout>
         </LinearLayout>
 
-        <RelativeLayout
-            android:id="@+id/dialogCounterContainer"
+        <LinearLayout
+            android:orientation="vertical"
             android:layout_width="wrap_content"
+            android:gravity="center"
             android:layout_height="match_parent"
             android:padding="4dp">
 
@@ -131,25 +119,36 @@
                 android:id="@+id/dialogOut"
                 android:layout_width="10dp"
                 android:layout_height="10dp"
-                android:layout_centerInParent="true"
+                android:visibility="gone"
                 android:src="?colorAccent" />
 
             <TextView
                 android:id="@+id/dialogCounter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
                 android:background="@drawable/ic_conversations_counter_background"
                 android:backgroundTint="?colorAccent"
                 android:backgroundTintMode="multiply"
                 android:gravity="center"
-                android:minWidth="26dp"
-                android:minHeight="26dp"
+                android:minWidth="25dp"
+
+                android:minHeight="22dp"
                 android:padding="4dp"
                 android:textColor="?android:textColorPrimaryInverse"
                 android:textSize="12sp"
                 tools:text="12" />
 
-        </RelativeLayout>
+            <TextView
+                android:id="@+id/dialogDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:gravity="start|center_vertical"
+                android:maxLines="1"
+                android:textColor="?android:textColorSecondary"
+                android:textSize="12sp"
+                tools:text="сейчас" />
+
+        </LinearLayout>
     </LinearLayout>
 </LinearLayout>

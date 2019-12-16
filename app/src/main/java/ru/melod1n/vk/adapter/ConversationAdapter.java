@@ -9,7 +9,6 @@ import android.text.style.ForegroundColorSpan;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -23,12 +22,9 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
-import java.util.Locale;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -264,9 +260,6 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
         @BindView(R.id.dialogDate)
         TextView dialogDate;
 
-        @BindView(R.id.dialogCounterContainer)
-        RelativeLayout dialogCounterContainer;
-
         private final Drawable placeholderNormal = new ColorDrawable(AppGlobal.colorAccent);
 
         private int colorHighlight = AppGlobal.colorAccent;
@@ -356,7 +349,7 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
             } else {
                 if (lastMessage.isOut()) {
                     dialogOut.setVisibility(View.VISIBLE);
-                    dialogCounter.setVisibility(View.INVISIBLE);
+                    dialogCounter.setVisibility(View.GONE);
                     dialogCounter.setText("");
                 } else {
                     dialogOut.setVisibility(View.GONE);
@@ -364,8 +357,6 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
                     dialogCounter.setText(String.valueOf(conversation.getUnreadCount()));
                 }
             }
-
-            dialogCounterContainer.setVisibility(dialogOut.getVisibility() == View.VISIBLE || dialogCounter.getVisibility() == View.VISIBLE ? View.VISIBLE : View.GONE);
 
             dialogDate.setText(getTime(lastMessage));
 
@@ -381,20 +372,70 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
             Calendar nowCal = new GregorianCalendar();
             nowCal.setTimeInMillis(System.currentTimeMillis());
 
-            DateFormat formatter =
-                    (thenCal.get(Calendar.YEAR) == nowCal.get(Calendar.YEAR)
-                            && thenCal.get(Calendar.MONTH) == nowCal.get(Calendar.MONTH)
-                            && thenCal.get(Calendar.DAY_OF_MONTH) == nowCal.get(Calendar.DAY_OF_MONTH))
+            boolean thisDay = thenCal.get(Calendar.DAY_OF_YEAR) == nowCal.get(Calendar.DAY_OF_YEAR);
+            boolean thisWeek = thenCal.get(Calendar.WEEK_OF_YEAR) == nowCal.get(Calendar.WEEK_OF_YEAR);
+            boolean thisMonth = thenCal.get(Calendar.MONTH) == nowCal.get(Calendar.MONTH);
+            boolean thisYear = thenCal.get(Calendar.YEAR) == nowCal.get(Calendar.YEAR);
 
-                            ? DateFormat.getTimeInstance(DateFormat.SHORT) :
-                            (thenCal.get(Calendar.YEAR) == nowCal.get(Calendar.YEAR)
-                                    && thenCal.get(Calendar.MONTH) == nowCal.get(Calendar.MONTH)
-                                    && nowCal.get(Calendar.DAY_OF_MONTH) - thenCal.get(Calendar.DAY_OF_MONTH) < 7)
+            boolean thisHour = thisDay && thenCal.get(Calendar.HOUR_OF_DAY) == nowCal.get(Calendar.HOUR_OF_DAY);
+            boolean thisMinute = thisHour && thenCal.get(Calendar.MINUTE) == nowCal.get(Calendar.MINUTE);
+            boolean isNow = thisMinute && nowCal.get(Calendar.SECOND) < 59; //переделать по-нормальному
 
-                                    ? new SimpleDateFormat("EEE", Locale.getDefault())
-                                    : DateFormat.getDateInstance(DateFormat.SHORT);
+            int stringRes = -1;
+            int integer = -1;
 
-            return formatter.format(thenCal.getTime());
+            if (thisYear) {
+                if (thisMonth) {
+                    if (thisDay) {
+                        if (thisHour) {
+                            if (thisMinute) {
+                                if (isNow) {
+                                    stringRes = R.string.time_format_now;
+                                }
+                            } else {
+                                integer = nowCal.get(Calendar.MINUTE) - thenCal.get(Calendar.MINUTE);
+                                stringRes = R.string.time_format_minute;
+                            }
+                        } else {
+                            integer = nowCal.get(Calendar.HOUR_OF_DAY) - thenCal.get(Calendar.HOUR_OF_DAY);
+                            stringRes = R.string.time_format_hour;
+                        }
+                    } else {
+                        integer = nowCal.get(Calendar.DAY_OF_YEAR) - thenCal.get(Calendar.DAY_OF_YEAR);
+                        if (integer > 6) {
+                            integer = integer / 7;
+                            stringRes = R.string.time_format_week;
+                        } else {
+                            stringRes = R.string.time_format_day;
+                        }
+                    }
+                } else {
+                    integer = nowCal.get(Calendar.MONTH) - thenCal.get(Calendar.MONTH);
+                    stringRes = R.string.time_format_month;
+                }
+            } else {
+                integer = nowCal.get(Calendar.YEAR) - thenCal.get(Calendar.YEAR);
+                stringRes = R.string.time_format_year;
+            }
+
+            if (stringRes != -1) {
+                String s = getContext().getString(stringRes);
+                return integer > 0 ? String.format(s, integer) : s;
+            } else return "";
+//            DateFormat formatter =
+//                    (thenCal.get(Calendar.YEAR) == nowCal.get(Calendar.YEAR)
+//                            && thenCal.get(Calendar.MONTH) == nowCal.get(Calendar.MONTH)
+//                            && thenCal.get(Calendar.DAY_OF_MONTH) == nowCal.get(Calendar.DAY_OF_MONTH))
+//
+//                            ? DateFormat.getTimeInstance(DateFormat.SHORT) :
+//                            (thenCal.get(Calendar.YEAR) == nowCal.get(Calendar.YEAR)
+//                                    && thenCal.get(Calendar.MONTH) == nowCal.get(Calendar.MONTH)
+//                                    && nowCal.get(Calendar.DAY_OF_MONTH) - thenCal.get(Calendar.DAY_OF_MONTH) < 7)
+//
+//                                    ? new SimpleDateFormat("EEE", Locale.getDefault())
+//                                    : DateFormat.getDateInstance(DateFormat.SHORT);
+
+//            return formatter.format(thenCal.getTime());
 //            Calendar nowTime = Calendar.getInstance();
 //            nowTime.setTimeInMillis(System.currentTimeMillis());
 //
@@ -608,6 +649,7 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
         private VKGroup searchFromGroup(VKMessage message) {
             return CacheStorage.getGroup(message.getFromId());
         }
+
     }
 
     @Override
