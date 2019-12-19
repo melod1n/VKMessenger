@@ -1,5 +1,7 @@
 package ru.melod1n.vk.api.model;
 
+import android.util.ArrayMap;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -29,6 +31,25 @@ public class VKMessage extends VKModel implements Serializable {
     public static final int CHAT_IN = 1 << 19;          // Входяшее сообщение в беседе
     public static final int REPLY_MSG = 1 << 21;        // Ответ на сообщение
 
+    private static final ArrayMap<String, Integer> flags = new ArrayMap<>();
+
+    static {
+        flags.put("unread", UNREAD);
+        flags.put("outbox", OUTBOX);
+        flags.put("replied", REPLIED);
+        flags.put("important", IMPORTANT);
+        flags.put("friends", FRIENDS);
+        flags.put("spam", SPAM);
+        flags.put("deleted", DELETED);
+        flags.put("audio_listened", AUDIO_LISTENED);
+        flags.put("chat", CHAT);
+        flags.put("cancel_spam", CANCEL_SPAM);
+        flags.put("hidden", HIDDEN);
+        flags.put("delete_for_all", DELETE_FOR_ALL);
+        flags.put("chat_in", CHAT_IN);
+        flags.put("reply_msg", REPLY_MSG);
+    }
+
     public static final String ACTION_CHAT_CREATE = "chat_create";
     public static final String ACTION_CHAT_INVITE_USER = "chat_invite_user";
     public static final String ACTION_CHAT_KICK_USER = "chat_kick_user";
@@ -45,14 +66,17 @@ public class VKMessage extends VKModel implements Serializable {
     private int date;
     private int peerId;
     private int fromId;
+    private int editTime;
     private boolean out;
     private String text;
     private int randomId;
+    private int conversationMessageId;
     private ArrayList<VKModel> attachments;
     private boolean important;
     private ArrayList<VKMessage> fwdMessages;
     private VKMessage replyMessage;
     private Action action;
+    private boolean read;
 
     public VKMessage() {
     }
@@ -65,6 +89,8 @@ public class VKMessage extends VKModel implements Serializable {
         setOut(o.optInt("out") == 1);
         setText(o.optString("text"));
         setRandomId(o.optInt("random_id", -1));
+        setConversationMessageId(o.optInt("conversation_message_id", -1));
+        setEditTime(o.optInt("edit_time"));
 
         JSONArray oAttachments = o.optJSONArray("attachments");
         if (oAttachments != null) {
@@ -95,6 +121,17 @@ public class VKMessage extends VKModel implements Serializable {
 
     }
 
+    private static boolean hasFlag(int mask, String flagName) {
+        Object object = flags.get(flagName);
+
+        if (object != null) { //has flag
+            int flag = (int) object;
+            return (flag & mask) > 0;
+        } else return false;
+    }
+
+    //TODO: нормально парсить сообщение
+
     // [msg_id, flags, peer_id, timestamp, text, {emoji, from, action, keyboard}, {attachs}, random_id, conv_msg_id, edit_time]
     public static VKMessage parse(JSONArray array) {
         VKMessage message = new VKMessage();
@@ -102,7 +139,7 @@ public class VKMessage extends VKModel implements Serializable {
         int id = array.optInt(1);
         message.setId(id);
 
-//        int flags = array.optInt(2);
+        int flags = array.optInt(2);
 
         int peerId = array.optInt(3);
         message.setPeerId(peerId);
@@ -110,25 +147,27 @@ public class VKMessage extends VKModel implements Serializable {
         int date = array.optInt(4);
         message.setDate(date);
 
-//        boolean out = VKMessage.isOut(flags);
-        int randomId = array.optInt(8);
-        message.setOut(randomId > 0);
-        message.setRandomId(randomId);
-        if (message.isOut()) {
-            message.setFromId(UserConfig.getUserId());
-        }
-
         String text = array.optString(5);
         message.setText(text);
 
         JSONObject o = array.optJSONObject(6);
-        if (o != null) {
-            if (o.has("from")) {
-                int fromId = o.optInt("from");
-                message.setFromId(fromId);
-                message.setOut(fromId == UserConfig.getUserId());
-            }
 
+        int fromId = hasFlag(flags, "outbox") ? UserConfig.getUserId() : (o != null ? o.optInt("from") : peerId);
+        message.setFromId(fromId);
+
+        boolean out = hasFlag(flags, "outbox") || fromId == UserConfig.getUserId();
+        message.setOut(out);
+
+        int editTime = array.optInt(10);
+        message.setEditTime(editTime);
+
+        int conversationMessageId = array.optInt(9);
+        message.setConversationMessageId(conversationMessageId);
+
+        int randomId = array.optInt(8);
+        message.setRandomId(randomId);
+
+        if (o != null) {
             if (o.has("source_act")) {
                 Action action = new Action();
                 action.setType(o.optString("source_act"));
@@ -174,7 +213,6 @@ public class VKMessage extends VKModel implements Serializable {
         return (VKMessage.DELETE_FOR_ALL & flags) > 0;
     }
 
-
     public boolean isFromUser() {
         return fromId > 0;
     }
@@ -215,6 +253,14 @@ public class VKMessage extends VKModel implements Serializable {
         this.fromId = fromId;
     }
 
+    public boolean isRead() {
+        return read;
+    }
+
+    public void setRead(boolean read) {
+        this.read = read;
+    }
+
     public boolean isOut() {
         return out;
     }
@@ -253,6 +299,22 @@ public class VKMessage extends VKModel implements Serializable {
 
     public void setImportant(boolean important) {
         this.important = important;
+    }
+
+    public int getConversationMessageId() {
+        return conversationMessageId;
+    }
+
+    public void setConversationMessageId(int conversationMessageId) {
+        this.conversationMessageId = conversationMessageId;
+    }
+
+    public int getEditTime() {
+        return editTime;
+    }
+
+    public void setEditTime(int editTime) {
+        this.editTime = editTime;
     }
 
     public ArrayList<VKMessage> getFwdMessages() {

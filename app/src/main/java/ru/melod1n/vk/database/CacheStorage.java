@@ -22,8 +22,10 @@ import static ru.melod1n.vk.database.DatabaseHelper.CAN_WRITE;
 import static ru.melod1n.vk.database.DatabaseHelper.CHAT_SETTINGS;
 import static ru.melod1n.vk.database.DatabaseHelper.CLOSED;
 import static ru.melod1n.vk.database.DatabaseHelper.CONVERSATION_ID;
+import static ru.melod1n.vk.database.DatabaseHelper.CONVERSATION_MESSAGE_ID;
 import static ru.melod1n.vk.database.DatabaseHelper.DATE;
 import static ru.melod1n.vk.database.DatabaseHelper.DEACTIVATED;
+import static ru.melod1n.vk.database.DatabaseHelper.EDIT_TIME;
 import static ru.melod1n.vk.database.DatabaseHelper.FIRST_NAME;
 import static ru.melod1n.vk.database.DatabaseHelper.FRIEND_ID;
 import static ru.melod1n.vk.database.DatabaseHelper.FROM_ID;
@@ -38,6 +40,7 @@ import static ru.melod1n.vk.database.DatabaseHelper.MESSAGE_ID;
 import static ru.melod1n.vk.database.DatabaseHelper.NAME;
 import static ru.melod1n.vk.database.DatabaseHelper.ONLINE;
 import static ru.melod1n.vk.database.DatabaseHelper.ONLINE_MOBILE;
+import static ru.melod1n.vk.database.DatabaseHelper.OUT;
 import static ru.melod1n.vk.database.DatabaseHelper.OUT_READ;
 import static ru.melod1n.vk.database.DatabaseHelper.PEER;
 import static ru.melod1n.vk.database.DatabaseHelper.PEER_ID;
@@ -46,6 +49,7 @@ import static ru.melod1n.vk.database.DatabaseHelper.PHOTO_200;
 import static ru.melod1n.vk.database.DatabaseHelper.PHOTO_50;
 import static ru.melod1n.vk.database.DatabaseHelper.PUSH_SETTINGS;
 import static ru.melod1n.vk.database.DatabaseHelper.RANDOM_ID;
+import static ru.melod1n.vk.database.DatabaseHelper.READ;
 import static ru.melod1n.vk.database.DatabaseHelper.REPLY_MESSAGE;
 import static ru.melod1n.vk.database.DatabaseHelper.SCREEN_NAME;
 import static ru.melod1n.vk.database.DatabaseHelper.SEX;
@@ -133,6 +137,20 @@ public class CacheStorage {
 
     public static void delete(String table) {
         database.delete(table, null, null);
+    }
+
+    public static VKMessage getMessage(int id) {
+        Cursor cursor = selectCursor(TABLE_MESSAGES, MESSAGE_ID, id);
+
+        if (cursor.getCount() == 0) return null;
+
+        cursor.moveToFirst();
+
+        VKMessage message = parseMessage(cursor);
+
+        cursor.close();
+
+        return message;
     }
 
     public static ArrayList<VKMessage> getMessages() {
@@ -252,8 +270,12 @@ public class CacheStorage {
         message.setDate(getInt(cursor, DATE));
         message.setPeerId(getInt(cursor, PEER_ID));
         message.setFromId(getInt(cursor, FROM_ID));
+        message.setEditTime(getInt(cursor, EDIT_TIME));
+        message.setOut(getInt(cursor, OUT) == 1);
+        message.setConversationMessageId(getInt(cursor, CONVERSATION_MESSAGE_ID));
         message.setText(getString(cursor, TEXT));
         message.setRandomId(getInt(cursor, RANDOM_ID));
+        message.setRead(getInt(cursor, READ) == 1);
 
         Object attachments = Util.deserialize(getBlob(cursor, ATTACHMENTS));
         message.setAttachments((ArrayList<VKModel>) attachments);
@@ -323,7 +345,7 @@ public class CacheStorage {
     private static VKGroup parseGroup(Cursor cursor) {
         VKGroup group = new VKGroup();
 
-        group.setId(getInt(cursor, GROUP_ID));
+        group.setId(-getInt(cursor, GROUP_ID));
         group.setName(getString(cursor, NAME));
         group.setScreenName(getString(cursor, SCREEN_NAME));
         group.setIsClosed(getInt(cursor, IS_CLOSED));
@@ -340,8 +362,12 @@ public class CacheStorage {
         values.put(DATE, message.getDate());
         values.put(PEER_ID, message.getPeerId());
         values.put(FROM_ID, message.getFromId());
+        values.put(EDIT_TIME, message.getEditTime());
+        values.put(OUT, message.isOut() ? 1 : 0);
+        values.put(CONVERSATION_MESSAGE_ID, message.getConversationMessageId());
         values.put(TEXT, message.getText());
         values.put(RANDOM_ID, message.getRandomId());
+        values.put(READ, message.isRead());
 
         if (message.getAttachments() != null) {
             values.put(ATTACHMENTS, Util.serialize(message.getAttachments()));
@@ -366,6 +392,7 @@ public class CacheStorage {
         if (conversation.getPeer() != null) {
             values.put(CONVERSATION_ID, conversation.getPeer().getId());
             values.put(PEER, Util.serialize(conversation.getPeer()));
+            values.put(PEER_ID, conversation.getPeer().getId());
         }
 
         values.put(IN_READ, conversation.getInRead());
@@ -434,12 +461,24 @@ public class CacheStorage {
         insert(TABLE_MESSAGES, new ArrayList<>(Collections.singletonList(message)));
     }
 
+    public static void insertConversation(VKConversation conversation) {
+        insert(TABLE_CONVERSATIONS, new ArrayList<>(Collections.singletonList(conversation)));
+    }
+
     public static void insertConversations(ArrayList<VKConversation> conversations) {
         insert(TABLE_CONVERSATIONS, conversations);
     }
 
+    public static void insertUser(VKUser user) {
+        insert(TABLE_USERS, new ArrayList<>(Collections.singletonList(user)));
+    }
+
     public static void insertUsers(ArrayList<VKUser> users) {
         insert(TABLE_USERS, users);
+    }
+
+    public static void insertGroup(VKGroup group) {
+        insert(TABLE_GROUPS, new ArrayList<>(Collections.singletonList(group)));
     }
 
     public static void insertGroups(ArrayList<VKGroup> groups) {

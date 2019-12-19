@@ -1,9 +1,12 @@
 package ru.melod1n.vk.activity;
 
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.text.SpannableString;
 import android.text.TextUtils;
+import android.text.style.AbsoluteSizeSpan;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
@@ -13,6 +16,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.graphics.drawable.DrawerArrowDrawable;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
@@ -29,7 +33,7 @@ import ru.melod1n.vk.api.UserConfig;
 import ru.melod1n.vk.api.VKApi;
 import ru.melod1n.vk.api.model.VKUser;
 import ru.melod1n.vk.common.AppGlobal;
-import ru.melod1n.vk.concurrent.TaskManager;
+import ru.melod1n.vk.common.TaskManager;
 import ru.melod1n.vk.current.BaseActivity;
 import ru.melod1n.vk.current.BaseFragment;
 import ru.melod1n.vk.database.CacheStorage;
@@ -38,6 +42,7 @@ import ru.melod1n.vk.fragment.FragmentConversations;
 import ru.melod1n.vk.fragment.FragmentLogin;
 import ru.melod1n.vk.fragment.FragmentSettings;
 import ru.melod1n.vk.service.LongPollService;
+import ru.melod1n.vk.util.ViewUtil;
 import ru.melod1n.vk.widget.CircleImageView;
 
 public class MainActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener {
@@ -51,7 +56,6 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
     @BindView(R.id.toolbar)
     Toolbar toolbar;
 
-    private ActionBarDrawerToggle toggle;
     private DrawerArrowDrawable toggleDrawable;
 
     private final FragmentConversations fragmentConversations = new FragmentConversations();
@@ -74,8 +78,25 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         checkLogin(savedInstanceState);
     }
 
+    @Override
+    public void setTitle(int titleId) {
+        setTitle(getString(titleId));
+    }
+
+    @Override
+    public void setTitle(CharSequence title) {
+        TextView textView = ViewUtil.getToolbarTitleTextView(toolbar);
+        if (textView != null) {
+            SpannableString string = new SpannableString(title);
+            string.setSpan(new AbsoluteSizeSpan(24, true), 0, string.length(), 0);
+            textView.setText(string);
+        } else {
+            super.setTitle(title);
+        }
+    }
+
     private void prepareDrawerToggle() {
-        toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.app_name, R.string.app_name);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.app_name, R.string.app_name);
         toggleDrawable = new DrawerArrowDrawable(this);
         toggleDrawable.setColor(AppGlobal.colorAccent);
 
@@ -89,6 +110,11 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
 
     private void prepareToolbar() {
         setSupportActionBar(toolbar);
+        Typeface font = ResourcesCompat.getFont(this, R.font.tt_commons_medium);
+
+        if (font == null) return;
+
+        ViewUtil.changeToolbarTitleFont(toolbar, font);
     }
 
     private void prepareNavigationView() {

@@ -46,6 +46,8 @@ public class FragmentConversations extends BaseFragment implements BaseContract.
 
     private BaseContract.Presenter<VKDialog> presenter;
 
+    private final int CONVERSATIONS_COUNT = 30;
+
     @Override
     public void onResume() {
         super.onResume();
@@ -56,7 +58,7 @@ public class FragmentConversations extends BaseFragment implements BaseContract.
     public void onRefresh() {
         presenter.onValuesLoading();
         presenter.onRequestClearList();
-        presenter.onRequestLoadValues(0, 30);
+        presenter.onRequestLoadValues(0, CONVERSATIONS_COUNT);
     }
 
     @Nullable
@@ -78,7 +80,7 @@ public class FragmentConversations extends BaseFragment implements BaseContract.
         if (Util.hasConnection()) {
             onRefresh();
         } else {
-            presenter.onRequestLoadCachedValues(0, 30);
+            presenter.onRequestLoadCachedValues(0, CONVERSATIONS_COUNT);
         }
     }
 
@@ -122,7 +124,7 @@ public class FragmentConversations extends BaseFragment implements BaseContract.
         Log.d(TAG, "showErrorView: " + errorTitle + ": " + errorDescription);
 
         if (!Util.hasConnection()) {
-            presenter.onRequestLoadCachedValues(0, 30);
+            presenter.onRequestLoadCachedValues(0, CONVERSATIONS_COUNT);
         }
     }
 

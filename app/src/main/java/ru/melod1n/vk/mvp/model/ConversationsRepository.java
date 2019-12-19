@@ -9,7 +9,7 @@ import ru.melod1n.vk.api.model.VKConversation;
 import ru.melod1n.vk.api.model.VKMessage;
 import ru.melod1n.vk.api.model.VKUser;
 import ru.melod1n.vk.common.AppGlobal;
-import ru.melod1n.vk.concurrent.TaskManager;
+import ru.melod1n.vk.common.TaskManager;
 import ru.melod1n.vk.database.CacheStorage;
 import ru.melod1n.vk.mvp.contract.BaseContract;
 

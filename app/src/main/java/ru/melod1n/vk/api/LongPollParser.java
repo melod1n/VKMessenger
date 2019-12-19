@@ -1,4 +1,4 @@
-package ru.melod1n.vk.common;
+package ru.melod1n.vk.api;
 
 import android.util.Log;
 
@@ -7,7 +7,10 @@ import androidx.annotation.NonNull;
 import org.greenrobot.eventbus.EventBus;
 import org.json.JSONArray;
 
+import ru.melod1n.vk.api.model.VKConversation;
 import ru.melod1n.vk.api.model.VKMessage;
+import ru.melod1n.vk.common.EventInfo;
+import ru.melod1n.vk.common.TaskManager;
 
 public class LongPollParser {
 
@@ -46,6 +49,12 @@ public class LongPollParser {
     private void messageEvent(JSONArray item) {
         VKMessage message = VKMessage.parse(item);
 
+        TaskManager.loadMessage(message.getId());
+
+        if (VKConversation.isChatId(message.getPeerId())) {
+            TaskManager.loadConversation(message.getPeerId());
+        }
+
         sendEvent(new EventInfo(EventInfo.MESSAGE_NEW, message), true);
     }
 
@@ -58,7 +67,7 @@ public class LongPollParser {
         int messageId = item.optInt(1);
         int peerId = item.optInt(3);
 
-        sendEvent(new EventInfo(EventInfo.MESSAGE_DELETE, new Object[] {messageId, peerId}), true);
+        sendEvent(new EventInfo(EventInfo.MESSAGE_DELETE, new Object[]{messageId, peerId}), true);
     }
 
     private void messageRestored(JSONArray item) {

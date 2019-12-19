@@ -9,7 +9,7 @@ import androidx.annotation.Nullable;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "cache.db";
-    private static final int DB_VERSION = 9;
+    private static final int DB_VERSION = 13;
 
     static final String SCREEN_NAME = "screen_name";
     static final String DEACTIVATED = "deactivated";
@@ -21,6 +21,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     static final String DATE = "date";
     public static final String PEER_ID = "peer_id";
     static final String FROM_ID = "from_id";
+    static final String EDIT_TIME = "edit_time";
+    static final String OUT = "out";
+    static final String READ = "read";
+    static final String CONVERSATION_MESSAGE_ID = "conversation_message_id";
     static final String TEXT = "text";
     static final String RANDOM_ID = "random_id";
     static final String ATTACHMENTS = "attachments";
@@ -67,6 +71,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             DATE + " integer, " +
             PEER_ID + " integer, " +
             FROM_ID + " integer, " +
+            EDIT_TIME + " integer, " +
+            READ + " integer default 0, " +
+            OUT + " integer default 0, " +
+            CONVERSATION_MESSAGE_ID + " integer, " +
             TEXT + " longtext, " +
             RANDOM_ID + " integer, " +
             ATTACHMENTS + " blob, " +
@@ -78,6 +86,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String CREATE_CONVERSATIONS = "create table if not exists " + TABLE_CONVERSATIONS + " (" +
             CONVERSATION_ID + " integer primary key on conflict replace, " +
+            PEER_ID + " integer, " +
             PEER + " blob, " +
             IN_READ + " integer, " +
             OUT_READ + " integer, " +

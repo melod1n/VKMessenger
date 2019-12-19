@@ -31,6 +31,7 @@ import butterknife.ButterKnife;
 import ru.melod1n.vk.R;
 import ru.melod1n.vk.adapter.model.VKDialog;
 import ru.melod1n.vk.api.UserConfig;
+import ru.melod1n.vk.api.VKApi;
 import ru.melod1n.vk.api.model.VKAudio;
 import ru.melod1n.vk.api.model.VKAudioMessage;
 import ru.melod1n.vk.api.model.VKConversation;
@@ -48,6 +49,7 @@ import ru.melod1n.vk.api.model.VKUser;
 import ru.melod1n.vk.api.model.VKVideo;
 import ru.melod1n.vk.common.AppGlobal;
 import ru.melod1n.vk.common.EventInfo;
+import ru.melod1n.vk.common.TaskManager;
 import ru.melod1n.vk.current.BaseAdapter;
 import ru.melod1n.vk.current.BaseHolder;
 import ru.melod1n.vk.database.CacheStorage;
@@ -95,7 +97,52 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
                 int[] ints = (int[]) info.getData();
                 readMessage(ints[0], ints[1]);
                 break;
+            case EventInfo.MESSAGE_UPDATE:
+                updateMessage((int) info.getData());
+                break;
+            case EventInfo.USER_UPDATE:
+                updateUser((int) info.getData());
+                break;
+            case EventInfo.GROUP_UPDATE:
+                updateGroup((int) info.getData());
+                break;
+            case EventInfo.CONVERSATION_UPDATE:
+                updateConversation((int) info.getData());
+                break;
         }
+    }
+
+    private void updateConversation(int peerId) {
+        int index = searchConversationIndex(peerId);
+        if (index == -1) return;
+
+        VKDialog dialog = getItem(index);
+        dialog.setConversation(CacheStorage.getConversation(peerId));
+        notifyDataSetChanged();
+    }
+
+    private void updateGroup(int groupId) {
+//        int id = VKGroup.isGroupId(groupId) ? groupId : -groupId;
+        int index = searchConversationIndex(groupId);
+        if (index == -1) return;
+
+        notifyDataSetChanged();
+    }
+
+    private void updateUser(int userId) {
+        int index = searchConversationIndex(userId);
+        if (index == -1) return;
+
+        notifyDataSetChanged();
+    }
+
+    private void updateMessage(int messageId) {
+        int index = searchMessageIndex(messageId);
+        if (index == -1) return;
+
+        VKDialog dialog = getItem(index);
+        dialog.setLastMessage(CacheStorage.getMessage(messageId));
+        notifyDataSetChanged();
     }
 
     private void readMessage(int messageId, int peerId) {
@@ -133,19 +180,47 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
 
         CacheStorage.delete(DatabaseHelper.TABLE_MESSAGES, DatabaseHelper.MESSAGE_ID, messageId);
 
-        VKMessage preLast = CacheStorage.getMessages(peerId).get(0);
+        ArrayList<VKMessage> messages = CacheStorage.getMessages(peerId);
+
+        VKMessage preLast = ArrayUtil.isEmpty(messages) ? null : messages.get(0);
 
         if (preLast == null) {
-            CacheStorage.delete(DatabaseHelper.TABLE_CONVERSATIONS, DatabaseHelper.PEER_ID, peerId);
-            remove(index);
+            TaskManager.loadConversation(peerId, new VKApi.OnResponseListener<VKConversation>() {
+                @Override
+                public void onSuccess(ArrayList<VKConversation> models) {
+                    VKConversation conversation = models.get(0);
+
+                    if (conversation.getLastMessageId() == 0) {
+                        CacheStorage.delete(DatabaseHelper.TABLE_CONVERSATIONS, DatabaseHelper.PEER_ID, peerId);
+                        remove(index);
+                        notifyDataSetChanged();
+                    } else {
+                        TaskManager.loadMessage(conversation.getLastMessageId(), new VKApi.OnResponseListener<VKMessage>() {
+                            @Override
+                            public void onSuccess(ArrayList<VKMessage> models) {
+                                dialog.setLastMessage(models.get(0));
+                                notifyDataSetChanged();
+                            }
+
+                            @Override
+                            public void onError(Exception e) {
+
+                            }
+                        });
+                    }
+                }
+
+                @Override
+                public void onError(Exception e) {
+
+                }
+            });
+        } else {
+            if (dialog.getLastMessage().getId() != messageId) return;
+
+            dialog.setLastMessage(preLast);
             notifyDataSetChanged();
-            return;
         }
-
-        if (dialog.getLastMessage().getId() != messageId) return;
-
-        dialog.setLastMessage(preLast);
-        notifyDataSetChanged();
     }
 
     private void editMessage(VKMessage message) {
@@ -166,11 +241,6 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
 
         if (manager == null) return;
 
-        int firstVisiblePosition = manager.findFirstCompletelyVisibleItemPosition();
-        int lastVisiblePosition = manager.findLastCompletelyVisibleItemPosition();
-
-        int maxDialogsCount = lastVisiblePosition - firstVisiblePosition + 1;
-
         if (index >= 0) {
             if (index == 0) {
                 VKDialog dialog = getItem(0);
@@ -182,34 +252,29 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
 
                 remove(index);
                 add(0, new VKDialog(prepareConversation(conversation, message), message));
-
-//                if (index > maxDialogsCount) {
-//                    notifyItemRemoved(index);
-//                    notifyItemInserted(0);
-//                    notifyItemRangeChanged(0, getItemCount(), null);
-//                } else {
-//                    notifyItemMoved(index, 0);
-//                    notifyItemRangeChanged(0, getItemCount(), null);
-//                }
             }
         } else {
             VKConversation conversation = CacheStorage.getConversation(message.getPeerId());
             if (conversation != null) {
                 add(0, new VKDialog(prepareConversation(conversation, message), message));
-//                notifyItemInserted(0);
-//                notifyItemRangeChanged(0, getItemCount(), null);
+            } else {
+                VKConversation temp = new VKConversation();
+
+                temp.getPeer().setId(message.getPeerId());
+                temp.getPeer().setLocalId(VKConversation.isChatId(temp.getPeer().getId()) ? temp.getPeer().getId() - 2_000_000_000 : temp.getPeer().getId());
+                temp.getPeer().setType(temp.getPeer().getId() < 0 ? VKConversation.Peer.TYPE_GROUP : temp.getPeer().getId() > 2_000_000_000 ? VKConversation.Peer.TYPE_CHAT : VKConversation.Peer.TYPE_USER);
+
+                add(0, new VKDialog(temp, message));
             }
         }
 
         if (manager.findFirstVisibleItemPosition() <= 1)
             manager.scrollToPosition(0);
 
-        //notifyItemRangeChanged(0, getItemCount(), -1);
-
         notifyDataSetChanged();
     }
 
-    private VKConversation prepareConversation(VKConversation conversation, VKMessage newMessage) {
+    private VKConversation prepareConversation(@NonNull VKConversation conversation, @NonNull VKMessage newMessage) {
         conversation.setLastMessageId(newMessage.getId());
 
         if (!newMessage.isOut()) conversation.setUnreadCount(conversation.getUnreadCount() + 1);
@@ -220,6 +285,15 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
         }
 
         return conversation;
+    }
+
+    private int searchMessageIndex(int messageId) {
+        for (int i = 0; i < getItemCount(); i++) {
+            VKDialog dialog = getItem(i);
+            if (dialog.getLastMessage().getId() == messageId) return i;
+        }
+
+        return -1;
     }
 
     private int searchConversationIndex(int peerId) {
@@ -246,7 +320,7 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
         CircleImageView userAvatar;
 
         @BindView(R.id.dialogUserOnline)
-        CircleImageView userOnline;
+        ImageView userOnline;
 
         @BindView(R.id.dialogType)
         ImageView dialogType;
@@ -307,6 +381,9 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
                 dialogType.setImageDrawable(null);
             }
 
+            text.setCompoundDrawablePadding(0);
+            text.setCompoundDrawablesRelativeWithIntrinsicBounds(null, null, null, null);
+
             if (lastMessage.getAction() == null) {
                 if (!ArrayUtil.isEmpty(lastMessage.getAttachments())) {
                     String attachmentText = getAttachmentText(lastMessage.getAttachments());
@@ -315,6 +392,10 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
                     span.setSpan(new ForegroundColorSpan(colorHighlight), 0, attachmentText.length(), 0);
 
                     text.setText(span);
+
+                    Drawable attachmentDrawable = getAttachmentDrawable(lastMessage.getAttachments());
+                    text.setCompoundDrawablesRelativeWithIntrinsicBounds(attachmentDrawable, null, null, null);
+                    text.setCompoundDrawablePadding(8);
                 } else if (!ArrayUtil.isEmpty(lastMessage.getFwdMessages())) {
                     String fwdText = getFwdText(lastMessage.getFwdMessages());
 
@@ -341,7 +422,7 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
                 text.setText(span);
             }
 
-            boolean read = (lastMessage.isOut() && conversation.getOutRead() == conversation.getLastMessageId()) || (!lastMessage.isOut() && conversation.getInRead() == conversation.getLastMessageId());
+            boolean read = ((lastMessage.isOut() && conversation.getOutRead() == conversation.getLastMessageId()) || (!lastMessage.isOut() && conversation.getInRead() == conversation.getLastMessageId())) && conversation.getLastMessageId() == lastMessage.getId();
 
             if (read) {
                 dialogCounter.setVisibility(View.GONE);
@@ -363,6 +444,7 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
             dialogCounter.getBackground().setTint(conversation.getPushSettings() != null && conversation.getPushSettings().isNotificationsDisabled() ? Color.GRAY : colorHighlight);
         }
 
+        //TODO: переделать
         private String getTime(VKMessage lastMessage) {
             long time = lastMessage.getDate() * 1000L;
 
@@ -373,13 +455,13 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
             nowCal.setTimeInMillis(System.currentTimeMillis());
 
             boolean thisDay = thenCal.get(Calendar.DAY_OF_YEAR) == nowCal.get(Calendar.DAY_OF_YEAR);
-            boolean thisWeek = thenCal.get(Calendar.WEEK_OF_YEAR) == nowCal.get(Calendar.WEEK_OF_YEAR);
+//            boolean thisWeek = thenCal.get(Calendar.WEEK_OF_YEAR) == nowCal.get(Calendar.WEEK_OF_YEAR);
             boolean thisMonth = thenCal.get(Calendar.MONTH) == nowCal.get(Calendar.MONTH);
             boolean thisYear = thenCal.get(Calendar.YEAR) == nowCal.get(Calendar.YEAR);
 
             boolean thisHour = thisDay && thenCal.get(Calendar.HOUR_OF_DAY) == nowCal.get(Calendar.HOUR_OF_DAY);
             boolean thisMinute = thisHour && thenCal.get(Calendar.MINUTE) == nowCal.get(Calendar.MINUTE);
-            boolean isNow = thisMinute && nowCal.get(Calendar.SECOND) < 59; //переделать по-нормальному
+            boolean isNow = thisMinute && nowCal.get(Calendar.SECOND) < 59;
 
             int stringRes = -1;
             int integer = -1;
@@ -472,7 +554,7 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
                 if (!peerUser.isOnline()) {
                     return null;
                 } else {
-                    return getContext().getDrawable(peerUser.isOnlineMobile() ? R.drawable.ic_online_mobile : R.drawable.ic_online_pc);
+                    return getContext().getDrawable(peerUser.isOnlineMobile() ? R.drawable.ic_online_mobile : R.drawable.ic_online_pc); //TODO: опционально показывать онлайн с телефона
                 }
             } else return null;
         }
@@ -556,6 +638,37 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
             return getContext().getString(resId);
         }
 
+        private Drawable getAttachmentDrawable(ArrayList<VKModel> attachments) {
+            if (ArrayUtil.isEmpty(attachments) || attachments.size() > 1) return null;
+
+            int resId = -1;
+
+            VKModel attachment = attachments.get(0);
+
+            if (attachment instanceof VKPhoto) {
+                resId = R.drawable.ic_message_attachment_camera;
+            } else if (attachment instanceof VKAudio) {
+            } else if (attachment instanceof VKVideo) {
+            } else if (attachment instanceof VKDoc) {
+            } else if (attachment instanceof VKGraffiti) {
+            } else if (attachment instanceof VKAudioMessage) {
+            } else if (attachment instanceof VKSticker) {
+            } else if (attachment instanceof VKGift) {
+            } else if (attachment instanceof VKLink) {
+            } else if (attachment instanceof VKPoll) {
+            }
+
+            if (resId != -1) {
+                Drawable drawable = getContext().getDrawable(resId);
+                if (drawable != null) {
+                    drawable.setTint(AppGlobal.colorAccent);
+                }
+                return drawable;
+            }
+
+            return null;
+        }
+
         private String getFwdText(ArrayList<VKMessage> forwardedMessages) {
             if (!ArrayUtil.isEmpty(forwardedMessages)) {
                 return getContext().getString(forwardedMessages.size() > 1 ? R.string.message_fwd_many : R.string.message_fwd_one);
@@ -635,19 +748,37 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
         }
 
         private VKUser searchPeerUser(VKMessage message) {
-            return CacheStorage.getUser(message.getPeerId());
+            VKUser user = MemoryCache.getUser(message.getPeerId());
+            if (user == null && VKUser.isUserId(message.getPeerId())) {
+                TaskManager.loadUser(message.getPeerId());
+            }
+            return user;
         }
 
         private VKUser searchFromUser(VKMessage message) {
-            return CacheStorage.getUser(message.getFromId());
+            VKUser user = MemoryCache.getUser(message.getFromId());
+            if (user == null && VKUser.isUserId(message.getFromId())) {
+                TaskManager.loadUser(message.getFromId());
+            }
+
+            return user;
         }
 
         private VKGroup searchPeerGroup(VKMessage message) {
-            return CacheStorage.getGroup(Math.abs(message.getPeerId()));
+            int id = Math.abs(message.getPeerId());
+            VKGroup group = MemoryCache.getGroup(id);
+            if (group == null && VKGroup.isGroupId(message.getPeerId())) {
+                TaskManager.loadGroup(message.getPeerId());
+            }
+            return group;
         }
 
         private VKGroup searchFromGroup(VKMessage message) {
-            return CacheStorage.getGroup(message.getFromId());
+            VKGroup group = MemoryCache.getGroup(message.getFromId());
+            if (group == null && VKGroup.isGroupId(message.getFromId())) {
+                TaskManager.loadGroup(message.getFromId());
+            }
+            return group;
         }
 
     }

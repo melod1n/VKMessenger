@@ -60,6 +60,11 @@ public class MessageMethodSetter extends MethodSetter {
         return this;
     }
 
+    public MessageMethodSetter peerIds(int... values) {
+        put("peer_ids", ArrayUtil.toString(values));
+        return this;
+    }
+
     public MessageMethodSetter rev(boolean value) {
         put("rev", value);
         return this;

@@ -14,7 +14,7 @@ import org.json.JSONObject;
 
 import ru.melod1n.vk.api.VKApi;
 import ru.melod1n.vk.api.model.VKLongPollServer;
-import ru.melod1n.vk.common.LongPollParser;
+import ru.melod1n.vk.api.LongPollParser;
 import ru.melod1n.vk.concurrent.LowThread;
 import ru.melod1n.vk.net.HttpRequest;
 import ru.melod1n.vk.util.Util;

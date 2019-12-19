@@ -95,6 +95,10 @@ public class VKUser extends VKModel implements Serializable {
         }
     }
 
+    public static boolean isUserId(int id) {
+        return id > 0 && id < 2_000_000_000;
+    }
+
     public int getId() {
         return id;
     }

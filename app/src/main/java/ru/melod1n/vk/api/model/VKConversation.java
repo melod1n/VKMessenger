@@ -14,16 +14,16 @@ public class VKConversation extends VKModel implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private Peer peer;
+    private Peer peer = new Peer();
 
     private int inRead;
     private int outRead;
     private int lastMessageId;
     private int unreadCount;
 
-    private PushSettings pushSettings;
-    private CanWrite canWrite;
-    private ChatSettings chatSettings;
+    private PushSettings pushSettings = new PushSettings();
+    private CanWrite canWrite = new CanWrite();
+    private ChatSettings chatSettings = new ChatSettings();
 
     private ArrayList<VKUser> profiles = new ArrayList<>();
     private ArrayList<VKGroup> groups = new ArrayList<>();
@@ -96,6 +96,10 @@ public class VKConversation extends VKModel implements Serializable {
         }
     }
 
+    public static boolean isChatId(int id) {
+        return id > 2_000_000_000;
+    }
+
     public boolean isChat() {
         return getPeer().getType().equals(Peer.TYPE_CHAT);
     }
@@ -122,13 +126,13 @@ public class VKConversation extends VKModel implements Serializable {
         return conversations;
     }
 
-    public class Peer implements Serializable {
+    public static class Peer implements Serializable {
 
         private static final long serialVersionUID = 1L;
 
-        static final String TYPE_USER = "user";
-        static final String TYPE_CHAT = "chat";
-        static final String TYPE_GROUP = "group";
+        public static final String TYPE_USER = "user";
+        public static final String TYPE_CHAT = "chat";
+        public static final String TYPE_GROUP = "group";
 
         private int id;
         private String type;

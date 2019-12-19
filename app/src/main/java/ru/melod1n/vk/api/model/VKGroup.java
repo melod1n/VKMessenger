@@ -6,6 +6,8 @@ import java.io.Serializable;
 
 public class VKGroup extends VKModel implements Serializable {
 
+    public static final String DEFAULT_FIELDS = "description,members_count,counters,status,verified";
+
     private static final long serialVersionUID = 1L;
 
     private int id;
@@ -31,6 +33,10 @@ public class VKGroup extends VKModel implements Serializable {
         setPhoto50(o.optString("photo_50"));
         setPhoto100(o.optString("photo_100"));
         setPhoto200(o.optString("photo_200"));
+    }
+
+    public static boolean isGroupId(int id) {
+        return id < 0;
     }
 
     public int getId() {

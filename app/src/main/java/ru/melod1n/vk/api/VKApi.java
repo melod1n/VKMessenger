@@ -20,7 +20,7 @@ import ru.melod1n.vk.api.model.VKMessage;
 import ru.melod1n.vk.api.model.VKModel;
 import ru.melod1n.vk.api.model.VKUser;
 import ru.melod1n.vk.common.AppGlobal;
-import ru.melod1n.vk.concurrent.TaskManager;
+import ru.melod1n.vk.common.TaskManager;
 import ru.melod1n.vk.net.HttpRequest;
 import ru.melod1n.vk.util.ArrayUtil;
 
@@ -141,6 +141,13 @@ public class VKApi {
 
                 models.add((T) dialog);
             }
+        } else if (cls == VKConversation.class) {
+            if (url.contains("ById")) {
+                for (int i = 0; i < array.length(); i++) {
+                    JSONObject source = array.optJSONObject(i);
+                    models.add((T) new VKConversation(source));
+                }
+            }
         }
         return models;
     }
@@ -246,6 +253,10 @@ public class VKApi {
 
         public MessageMethodSetter getConversations() {
             return new MessageMethodSetter("messages.getConversations");
+        }
+
+        public MessageMethodSetter getConversationsById() {
+            return new MessageMethodSetter("messages.getConversationsById");
         }
 
         public MessageMethodSetter getById() {

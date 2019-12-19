@@ -28,7 +28,7 @@
                 android:layout_gravity="bottom|end"
                 tools:src="?colorAccent" />
 
-            <ru.melod1n.vk.widget.CircleImageView
+            <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/dialogUserOnline"
                 android:layout_width="14dp"
                 android:layout_height="14dp"
