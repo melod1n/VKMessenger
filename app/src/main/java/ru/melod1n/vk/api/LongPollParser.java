@@ -87,13 +87,13 @@ public class LongPollParser {
         int id = item.optInt(1);
         int flags = item.optInt(2);
 
-        if (VKMessage.isCanceledSpam(flags)) {
+        if (VKMessage.hasFlag(flags, "cancel_spam")) {
             Log.i(TAG, "Message with id " + id + ": Not spam");
-        } else if (VKMessage.isDeleted(flags)) {
+        } else if (VKMessage.hasFlag(flags, "deleted")) {
             messageRestored(item);
-        } else if (VKMessage.isImportant(flags)) {
+        } else if (VKMessage.hasFlag(flags, "important")) {
             Log.i(TAG, "Message with id " + id + ": Not Important");
-        } else if (VKMessage.isUnread(flags)) {
+        } else if (VKMessage.hasFlag(flags, "unread")) {
             messageRead(item);
         }
     }
@@ -102,13 +102,13 @@ public class LongPollParser {
         int id = item.optInt(1);
         int flags = item.optInt(2);
 
-        if (VKMessage.isDeletedForAll(flags)) {
+        if (VKMessage.hasFlag(flags, "delete_for_all")) {
             messageDelete(item);
-        } else if (VKMessage.isDeleted(flags)) {
+        } else if (VKMessage.hasFlag(flags, "deleted")) {
             messageDelete(item);
-        } else if (VKMessage.isSpam(flags)) {
+        } else if (VKMessage.hasFlag(flags, "spam")) {
             Log.i(TAG, "Message with id " + id + ": Spam");
-        } else if (VKMessage.isImportant(flags)) {
+        } else if (VKMessage.hasFlag(flags, "important")) {
             Log.i(TAG, "Message with id " + id + ": Important");
         }
     }

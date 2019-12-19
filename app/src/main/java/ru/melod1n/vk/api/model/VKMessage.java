@@ -121,7 +121,7 @@ public class VKMessage extends VKModel implements Serializable {
 
     }
 
-    private static boolean hasFlag(int mask, String flagName) {
+    public static boolean hasFlag(int mask, String flagName) {
         Object object = flags.get(flagName);
 
         if (object != null) { //has flag
