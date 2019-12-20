@@ -18,6 +18,7 @@ import butterknife.ButterKnife;
 import ru.melod1n.vk.R;
 import ru.melod1n.vk.adapter.MessageAdapter;
 import ru.melod1n.vk.adapter.model.VKDialog;
+import ru.melod1n.vk.api.model.VKMessage;
 import ru.melod1n.vk.current.BaseFragment;
 
 public class FragmentMessages extends BaseFragment {
@@ -46,23 +47,37 @@ public class FragmentMessages extends BaseFragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         ButterKnife.bind(this, view);
 
-        refreshLayout.setEnabled(false);
-
-        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext(), RecyclerView.VERTICAL, false));
-
-        recyclerView.setAdapter(new MessageAdapter(requireContext(), new ArrayList<>(40)));
-
-        init(getArguments());
+        if (savedInstanceState == null)
+            init(getArguments());
     }
 
     private void init(Bundle bundle) {
         initExtraData(bundle);
         setTitle(title);
+        prepareRecyclerView();
+        prepareAdapter();
     }
+
+    private void prepareRecyclerView() {
+        refreshLayout.setEnabled(false);
+
+        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext(), RecyclerView.VERTICAL, false));
+    }
+
+    private void prepareAdapter() {
+        ArrayList<VKMessage> messages = new ArrayList<>();
+        for (int i = 0; i < 40; i++) {
+            VKMessage message = new VKMessage();
+            message.setText(title + " " + i);
+            messages.add(message);
+        }
+
+        recyclerView.setAdapter(new MessageAdapter(requireContext(), messages));
+    }
+
 
     @Override
     public void onReopen(@Nullable Bundle bundle) {
-        super.onReopen(bundle);
         init(bundle);
     }
 

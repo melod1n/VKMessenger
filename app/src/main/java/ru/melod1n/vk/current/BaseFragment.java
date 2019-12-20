@@ -11,6 +11,9 @@ public abstract class BaseFragment extends Fragment {
     private String title;
     private int titleRes = -1;
 
+    private boolean requestReopen;
+    private Bundle reopenBundle;
+
     public BaseFragment(int titleRes) {
         this.titleRes = titleRes;
     }
@@ -41,6 +44,11 @@ public abstract class BaseFragment extends Fragment {
             requireActivity().setTitle(titleRes);
         } else {
             requireActivity().setTitle(title);
+        }
+
+        if (requestReopen) {
+            requestReopen = false;
+            onReopen(reopenBundle);
         }
     }
 
@@ -73,5 +81,10 @@ public abstract class BaseFragment extends Fragment {
 
     public void onReopen(@Nullable Bundle bundle) {
 
+    }
+
+    public void requestReopen(@Nullable Bundle bundle) {
+        reopenBundle = bundle;
+        requestReopen = true;
     }
 }

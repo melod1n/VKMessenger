@@ -53,7 +53,7 @@ public class FragmentSwitcher {
 
         if (contains) {
             if (fragment instanceof BaseFragment) {
-                ((BaseFragment) fragment).onReopen(extraData);
+                ((BaseFragment) fragment).requestReopen(extraData);
             }
         } else {
             if (!containsList[0])

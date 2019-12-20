@@ -21,7 +21,7 @@ public class VKConversation extends VKModel implements Serializable {
     private int lastMessageId;
     private int unreadCount;
 
-    private PushSettings pushSettings = new PushSettings();
+    private PushSettings pushSettings;
     private CanWrite canWrite = new CanWrite();
     private ChatSettings chatSettings = new ChatSettings();
 
