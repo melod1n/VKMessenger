@@ -2,10 +2,14 @@ package ru.melod1n.vk.adapter.model;
 
 import androidx.annotation.NonNull;
 
+import java.io.Serializable;
+
 import ru.melod1n.vk.api.model.VKConversation;
 import ru.melod1n.vk.api.model.VKMessage;
 
-public class VKDialog {
+public class VKDialog implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private VKConversation conversation;
     private VKMessage lastMessage;

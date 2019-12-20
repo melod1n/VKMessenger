@@ -10,6 +10,7 @@ import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -22,9 +23,14 @@ import butterknife.ButterKnife;
 import ru.melod1n.vk.R;
 import ru.melod1n.vk.adapter.ConversationAdapter;
 import ru.melod1n.vk.adapter.model.VKDialog;
+import ru.melod1n.vk.api.model.VKConversation;
+import ru.melod1n.vk.api.model.VKGroup;
+import ru.melod1n.vk.api.model.VKUser;
 import ru.melod1n.vk.common.AppGlobal;
+import ru.melod1n.vk.common.FragmentSwitcher;
 import ru.melod1n.vk.current.BaseAdapter;
 import ru.melod1n.vk.current.BaseFragment;
+import ru.melod1n.vk.database.MemoryCache;
 import ru.melod1n.vk.mvp.contract.BaseContract;
 import ru.melod1n.vk.mvp.presenter.ConversationsPresenter;
 import ru.melod1n.vk.util.Util;
@@ -48,10 +54,11 @@ public class FragmentConversations extends BaseFragment implements BaseContract.
 
     private final int CONVERSATIONS_COUNT = 30;
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        requireActivity().setTitle(R.string.navigation_conversations);
+    public FragmentConversations(int titleRes) {
+        super(titleRes);
+    }
+
+    public FragmentConversations() {
     }
 
     @Override
@@ -84,6 +91,21 @@ public class FragmentConversations extends BaseFragment implements BaseContract.
         }
     }
 
+    private void openChat(int position) {
+        VKDialog dialog = adapter.getItem(position);
+
+        VKConversation conversation = dialog.getConversation();
+        VKUser peerUser = MemoryCache.getUser(conversation.getPeer().getId());
+        VKGroup peerGroup = MemoryCache.getGroup(conversation.getPeer().getId());
+
+        Bundle data = new Bundle();
+        data.putSerializable(FragmentMessages.TAG_EXTRA_DIALOG, dialog);
+        data.putString(FragmentMessages.TAG_EXTRA_TITLE, adapter.getTitle(conversation, peerUser, peerGroup));
+        data.putString(FragmentMessages.TAG_EXTRA_AVATAR, adapter.getAvatar(conversation, peerUser, peerGroup));
+
+        FragmentSwitcher.switchFragment((AppCompatActivity) requireActivity(), this, FragmentSwitcher.fragmentMessages, data, true);
+    }
+
     public RecyclerView getRecyclerView() {
         return recyclerView;
     }
@@ -107,6 +129,7 @@ public class FragmentConversations extends BaseFragment implements BaseContract.
     @Override
     public void onItemClick(int position) {
         Log.d(TAG, "onItemClick: " + position);
+        openChat(position);
     }
 
     @Override

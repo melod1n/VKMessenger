@@ -10,9 +10,9 @@ import java.util.ArrayList;
 
 public class VKConversation extends VKModel implements Serializable {
 
-    public static int count;
-
     private static final long serialVersionUID = 1L;
+
+    public static int count;
 
     private Peer peer = new Peer();
 

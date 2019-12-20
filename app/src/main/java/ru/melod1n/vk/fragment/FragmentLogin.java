@@ -32,10 +32,11 @@ public class FragmentLogin extends BaseFragment {
     @BindView(R.id.progressBar)
     ProgressBar progressBar;
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        requireActivity().setTitle(R.string.fragment_login);
+    public FragmentLogin(int titleRes) {
+        super(titleRes);
+    }
+
+    public FragmentLogin() {
     }
 
     @Nullable

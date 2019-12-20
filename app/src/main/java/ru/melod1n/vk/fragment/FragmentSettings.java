@@ -25,6 +25,13 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Prefer
     }
 
     @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+
+        if (!hidden) onResume();
+    }
+
+    @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         setPreferencesFromResource(R.xml.prefs, rootKey);
         init(savedInstanceState, rootKey);

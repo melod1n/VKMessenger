@@ -277,10 +277,14 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
     private VKConversation prepareConversation(@NonNull VKConversation conversation, @NonNull VKMessage newMessage) {
         conversation.setLastMessageId(newMessage.getId());
 
-        if (!newMessage.isOut()) conversation.setUnreadCount(conversation.getUnreadCount() + 1);
-        else conversation.setUnreadCount(0);
+        if (newMessage.isOut()) {
+            conversation.setUnreadCount(0);
+            newMessage.setRead(false);
+        } else {
+            conversation.setUnreadCount(conversation.getUnreadCount() + 1);
+        }
 
-        if (newMessage.getPeerId() == newMessage.getFromId() && newMessage.getFromId() == UserConfig.getUserId()) {
+        if (newMessage.getPeerId() == newMessage.getFromId() && newMessage.getFromId() == UserConfig.getUserId()) { //для лс
             conversation.setOutRead(newMessage.getId());
         }
 
@@ -697,42 +701,6 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
             }
         }
 
-        private String getTitle(VKConversation conversation, VKUser peerUser, VKGroup peerGroup) {
-            if (conversation.isUser()) {
-                if (peerUser != null) {
-                    return peerUser.toString();
-                }
-            } else if (conversation.isGroup()) {
-                if (peerGroup != null) {
-                    return peerGroup.getName();
-                }
-            } else {
-                return conversation.getChatSettings().getTitle();
-            }
-
-            return "it\'s title";
-        }
-
-        private String getAvatar(VKConversation conversation, VKUser peerUser, VKGroup peerGroup) {
-            if (conversation.isUser()) {
-                if (peerUser != null) {
-                    return peerUser.getPhoto200();
-                }
-
-                return null;
-            } else if (conversation.isGroup()) {
-                if (peerGroup != null) {
-                    return peerGroup.getPhoto200();
-                }
-
-                return null;
-            }
-
-            if (conversation.getChatSettings().getPhoto() == null) return null;
-
-            return conversation.getChatSettings().getPhoto().getPhoto200();
-        }
-
         private String getUserAvatar(VKMessage message, VKUser fromUser, VKGroup fromGroup) {
             if (message.isFromUser()) {
                 if (fromUser != null) {
@@ -781,6 +749,43 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
             return group;
         }
 
+    }
+
+
+    public String getTitle(VKConversation conversation, VKUser peerUser, VKGroup peerGroup) {
+        if (conversation.isUser()) {
+            if (peerUser != null) {
+                return peerUser.toString();
+            }
+        } else if (conversation.isGroup()) {
+            if (peerGroup != null) {
+                return peerGroup.getName();
+            }
+        } else {
+            return conversation.getChatSettings().getTitle();
+        }
+
+        return "it\'s title";
+    }
+
+    public String getAvatar(VKConversation conversation, VKUser peerUser, VKGroup peerGroup) {
+        if (conversation.isUser()) {
+            if (peerUser != null) {
+                return peerUser.getPhoto200();
+            }
+
+            return null;
+        } else if (conversation.isGroup()) {
+            if (peerGroup != null) {
+                return peerGroup.getPhoto200();
+            }
+
+            return null;
+        }
+
+        if (conversation.getChatSettings().getPhoto() == null) return null;
+
+        return conversation.getChatSettings().getPhoto().getPhoto200();
     }
 
     @Override

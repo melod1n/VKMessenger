@@ -19,7 +19,6 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.fragment.app.Fragment;
 
 import com.google.android.material.navigation.NavigationView;
 import com.squareup.picasso.Picasso;
@@ -33,6 +32,7 @@ import ru.melod1n.vk.api.UserConfig;
 import ru.melod1n.vk.api.VKApi;
 import ru.melod1n.vk.api.model.VKUser;
 import ru.melod1n.vk.common.AppGlobal;
+import ru.melod1n.vk.common.FragmentSwitcher;
 import ru.melod1n.vk.common.TaskManager;
 import ru.melod1n.vk.current.BaseActivity;
 import ru.melod1n.vk.current.BaseFragment;
@@ -58,11 +58,10 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
 
     private DrawerArrowDrawable toggleDrawable;
 
-    private final FragmentConversations fragmentConversations = new FragmentConversations();
+    private final FragmentConversations fragmentConversations = new FragmentConversations(R.string.navigation_conversations);
     private final FragmentSettings fragmentSettings = new FragmentSettings();
-    private final FragmentLogin fragmentLogin = new FragmentLogin();
+    private final FragmentLogin fragmentLogin = new FragmentLogin(R.string.fragment_login);
 
-    private Fragment selectedFragment;
     private int selectedId;
 
     @Override
@@ -85,7 +84,8 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
 
     @Override
     public void setTitle(CharSequence title) {
-        TextView textView = ViewUtil.getToolbarTitleTextView(toolbar);
+        //TODO: переделать
+        TextView textView = null;//ViewUtil.getToolbarTitleTextView(toolbar);
         if (textView != null) {
             SpannableString string = new SpannableString(title);
             string.setSpan(new AbsoluteSizeSpan(24, true), 0, string.length(), 0);
@@ -180,25 +180,15 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
     }
 
     private void openLoginScreen() {
-        replaceFragment(fragmentLogin);
+        FragmentSwitcher.switchFragment(this, fragmentLogin);
     }
 
     private void openConversationsScreen() {
-        replaceFragment(fragmentConversations);
+        FragmentSwitcher.switchFragment(this, fragmentConversations);
     }
 
     private void openSettingsScreen() {
-        replaceFragment(fragmentSettings);
-    }
-
-    private void replaceFragment(Fragment fragment) {
-        if (selectedFragment != null && fragment.getClass().getSimpleName().equals(selectedFragment.getClass().getSimpleName())) {
-            return;
-        }
-
-        selectedFragment = fragment;
-
-        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, fragment, fragment.getClass().getSimpleName()).commit();
+        FragmentSwitcher.switchFragment(this, fragmentSettings);
     }
 
     private void loadProfileInfo() {
