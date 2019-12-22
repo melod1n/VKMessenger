@@ -28,6 +28,11 @@
     <string name="message_attachment_voice">Voice message</string>
     <string name="message_attachment_poll">Poll</string>
 
+    <string name="message_attachment_photos">%d Photos</string>
+    <string name="message_attachment_videos">%d Videos</string>
+    <string name="message_attachment_audios">%d Audios</string>
+    <string name="message_attachment_docs">%d Documents</string>
+
     <string name="fragment_login">Login</string>
 
     <string name="navigation_search">Search</string>

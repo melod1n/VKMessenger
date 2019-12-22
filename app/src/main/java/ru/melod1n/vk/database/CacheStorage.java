@@ -250,6 +250,8 @@ public class CacheStorage {
     }
 
     public static VKGroup getGroup(int id) {
+        if (id < 0) id = -id;
+
         Cursor cursor = selectCursor(TABLE_GROUPS, GROUP_ID, id);
 
         if (cursor.getCount() == 0) return null;

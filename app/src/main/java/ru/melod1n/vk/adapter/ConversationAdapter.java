@@ -613,7 +613,37 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
 
             if (!ArrayUtil.isEmpty(attachments)) {
                 if (attachments.size() > 1) {
-                    return getContext().getString(R.string.message_attachments_many);
+
+                    boolean oneType = true;
+
+                    String className = attachments.get(0).getClass().getSimpleName();
+
+                    for (VKModel model : attachments) {
+                        if (!model.getClass().getSimpleName().equals(className)) {
+                            oneType = false;
+                            break;
+                        }
+                    }
+
+                    if (oneType) {
+                        Class<? extends VKModel> objectClass = attachments.get(0).getClass();
+
+                        int rId = -1;
+
+                        if (objectClass == VKPhoto.class) {
+                            rId = R.string.message_attachment_photos;
+                        } else if (objectClass == VKVideo.class) {
+                            rId = R.string.message_attachment_videos;
+                        } else if (objectClass == VKAudio.class) {
+                            rId = R.string.message_attachment_audios;
+                        } else if (objectClass == VKDoc.class) {
+                            rId = R.string.message_attachment_docs;
+                        }
+
+                        return rId == -1 ? "Unknown attachments" : getContext().getString(rId, attachments.size()).toLowerCase();
+                    } else {
+                        return getContext().getString(R.string.message_attachments_many);
+                    }
                 } else {
                     VKModel attachment = attachments.get(0);
 
