@@ -34,6 +34,7 @@ import ru.melod1n.vk.api.UserConfig;
 import ru.melod1n.vk.api.VKApi;
 import ru.melod1n.vk.api.model.VKAudio;
 import ru.melod1n.vk.api.model.VKAudioMessage;
+import ru.melod1n.vk.api.model.VKCall;
 import ru.melod1n.vk.api.model.VKConversation;
 import ru.melod1n.vk.api.model.VKDoc;
 import ru.melod1n.vk.api.model.VKGift;
@@ -645,31 +646,32 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
                         return getContext().getString(R.string.message_attachments_many);
                     }
                 } else {
-                    VKModel attachment = attachments.get(0);
+                    Class<? extends VKModel> objectClass = attachments.get(0).getClass();
 
-                    if (attachment instanceof VKPhoto) {
+                    if (objectClass == VKPhoto.class) {
                         resId = R.string.message_attachment_photo;
-                    } else if (attachment instanceof VKAudio) {
+                    } else if (objectClass == VKAudio.class) {
                         resId = R.string.message_attachment_audio;
-                    } else if (attachment instanceof VKVideo) {
+                    } else if (objectClass == VKVideo.class) {
                         resId = R.string.message_attachment_video;
-                    } else if (attachment instanceof VKDoc) {
+                    } else if (objectClass == VKDoc.class) {
                         resId = R.string.message_attachment_doc;
-                    } else if (attachment instanceof VKGraffiti) {
+                    } else if (objectClass == VKGraffiti.class) {
                         resId = R.string.message_attachment_graffiti;
-                    } else if (attachment instanceof VKAudioMessage) {
+                    } else if (objectClass == VKAudioMessage.class) {
                         resId = R.string.message_attachment_voice;
-                    } else if (attachment instanceof VKSticker) {
+                    } else if (objectClass == VKSticker.class) {
                         resId = R.string.message_attachment_sticker;
-                    } else if (attachment instanceof VKGift) {
+                    } else if (objectClass == VKGift.class) {
                         resId = R.string.message_attachment_gift;
-                    } else if (attachment instanceof VKLink) {
+                    } else if (objectClass == VKLink.class) {
                         resId = R.string.message_attachment_link;
-                    } else if (attachment instanceof VKPoll) {
+                    } else if (objectClass == VKPoll.class) {
                         resId = R.string.message_attachment_poll;
+                    } else if (objectClass == VKCall.class) {
+                        resId = R.string.message_attachment_call;
                     } else {
-                        String s = attachments.getClass().getSimpleName();
-                        return s.substring(1);
+                        return "Unknown";
                     }
 
                 }
@@ -685,19 +687,21 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
 
             int resId = -1;
 
-            VKModel attachment = attachments.get(0);
+            Class<? extends VKModel> objectClass = attachments.get(0).getClass();
 
-            if (attachment instanceof VKPhoto) {
+            if (objectClass == VKPhoto.class) {
                 resId = R.drawable.ic_message_attachment_camera;
-            } else if (attachment instanceof VKAudio) {
-            } else if (attachment instanceof VKVideo) {
-            } else if (attachment instanceof VKDoc) {
-            } else if (attachment instanceof VKGraffiti) {
-            } else if (attachment instanceof VKAudioMessage) {
-            } else if (attachment instanceof VKSticker) {
-            } else if (attachment instanceof VKGift) {
-            } else if (attachment instanceof VKLink) {
-            } else if (attachment instanceof VKPoll) {
+            } else if (objectClass == VKAudio.class) {
+            } else if (objectClass == VKVideo.class) {
+            } else if (objectClass == VKDoc.class) {
+            } else if (objectClass == VKGraffiti.class) {
+            } else if (objectClass == VKAudioMessage.class) {
+            } else if (objectClass == VKSticker.class) {
+            } else if (objectClass == VKGift.class) {
+            } else if (objectClass == VKLink.class) {
+            } else if (objectClass == VKPoll.class) {
+            } else if (objectClass == VKCall.class) {
+
             }
 
             if (resId != -1) {

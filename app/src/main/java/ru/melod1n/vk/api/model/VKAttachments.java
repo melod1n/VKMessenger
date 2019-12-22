@@ -76,6 +76,9 @@ public class VKAttachments {
                 case TYPE_POLL:
                     attachments.add(new VKPoll(object));
                     break;
+                case TYPE_CALL:
+                    attachments.add(new VKCall(object));
+                    break;
             }
         }
 
