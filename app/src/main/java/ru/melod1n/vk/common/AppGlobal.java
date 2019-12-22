@@ -48,5 +48,7 @@ public class AppGlobal extends Application {
         colorAccent = getColor(R.color.accent);
 
         UserConfig.restore();
+
+        TimeManager.init();
     }
 }

@@ -1,4 +1,8 @@
 <resources>
 
+    <style name="Toolbar.Title" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">
+        <item name="android:textSize">24sp</item>
+        <item name="android:fontFamily">@font/tt_commons_medium</item>
+    </style>
 
 </resources>

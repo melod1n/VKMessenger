@@ -72,7 +72,7 @@
                     android:maxLines="1"
                     android:singleLine="true"
                     android:textColor="?colorAccent"
-                    android:textSize="22sp"
+                    android:textSize="20sp"
                     tools:text="Unidevs" />
 
             </LinearLayout>

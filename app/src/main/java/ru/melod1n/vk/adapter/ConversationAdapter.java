@@ -50,6 +50,7 @@ import ru.melod1n.vk.api.model.VKVideo;
 import ru.melod1n.vk.common.AppGlobal;
 import ru.melod1n.vk.common.EventInfo;
 import ru.melod1n.vk.common.TaskManager;
+import ru.melod1n.vk.common.TimeManager;
 import ru.melod1n.vk.current.BaseAdapter;
 import ru.melod1n.vk.current.BaseHolder;
 import ru.melod1n.vk.database.CacheStorage;
@@ -59,13 +60,15 @@ import ru.melod1n.vk.fragment.FragmentConversations;
 import ru.melod1n.vk.util.ArrayUtil;
 import ru.melod1n.vk.widget.CircleImageView;
 
-public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapter.ViewHolder> {
+public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapter.ViewHolder> implements TimeManager.OnMinuteChangeListener {
 
     private FragmentConversations conversations;
 
     public ConversationAdapter(FragmentConversations conversations, ArrayList<VKDialog> values) {
         super(conversations.requireContext(), values);
         this.conversations = conversations;
+
+        TimeManager.addOnMinuteChangeListener(this);
 
         EventBus.getDefault().register(this);
     }
@@ -307,6 +310,11 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
         }
 
         return -1;
+    }
+
+    @Override
+    public void onMinuteChange(int currentMinute) {
+        AppGlobal.handler.post(this::notifyDataSetChanged);
     }
 
     class ViewHolder extends BaseHolder {

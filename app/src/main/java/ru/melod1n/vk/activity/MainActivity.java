@@ -1,7 +1,6 @@
 package ru.melod1n.vk.activity;
 
 import android.content.Intent;
-import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.text.SpannableString;
@@ -16,7 +15,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.graphics.drawable.DrawerArrowDrawable;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.content.res.ResourcesCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
@@ -42,7 +40,6 @@ import ru.melod1n.vk.fragment.FragmentConversations;
 import ru.melod1n.vk.fragment.FragmentLogin;
 import ru.melod1n.vk.fragment.FragmentSettings;
 import ru.melod1n.vk.service.LongPollService;
-import ru.melod1n.vk.util.ViewUtil;
 import ru.melod1n.vk.widget.CircleImageView;
 
 public class MainActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener {
@@ -110,11 +107,6 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
 
     private void prepareToolbar() {
         setSupportActionBar(toolbar);
-        Typeface font = ResourcesCompat.getFont(this, R.font.tt_commons_medium);
-
-        if (font == null) return;
-
-        ViewUtil.changeToolbarTitleFont(toolbar, font);
     }
 
     private void prepareNavigationView() {
