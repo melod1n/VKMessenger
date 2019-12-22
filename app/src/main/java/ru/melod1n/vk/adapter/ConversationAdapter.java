@@ -628,19 +628,19 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
                     if (oneType) {
                         Class<? extends VKModel> objectClass = attachments.get(0).getClass();
 
-                        int rId = -1;
-
                         if (objectClass == VKPhoto.class) {
-                            rId = R.string.message_attachment_photos;
+                            resId = R.string.message_attachment_photos;
                         } else if (objectClass == VKVideo.class) {
-                            rId = R.string.message_attachment_videos;
+                            resId = R.string.message_attachment_videos;
                         } else if (objectClass == VKAudio.class) {
-                            rId = R.string.message_attachment_audios;
+                            resId = R.string.message_attachment_audios;
                         } else if (objectClass == VKDoc.class) {
-                            rId = R.string.message_attachment_docs;
+                            resId = R.string.message_attachment_docs;
+                        } else {
+                            resId = -1;
                         }
 
-                        return rId == -1 ? "Unknown attachments" : getContext().getString(rId, attachments.size()).toLowerCase();
+                        return resId == -1 ? "Unknown attachments" : getContext().getString(resId, attachments.size()).toLowerCase();
                     } else {
                         return getContext().getString(R.string.message_attachments_many);
                     }
