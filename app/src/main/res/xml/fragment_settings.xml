@@ -3,9 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <PreferenceScreen
-        app:icon="@drawable/ic_exit_to_app"
-        app:key="account_logout"
-        app:title="@string/pref_account_logout_title" />
+        app:icon="@drawable/ic_account_circle"
+        app:key="account"
+        app:title="@string/prefs_account" />
 
     <PreferenceScreen
         app:icon="@drawable/ic_info_outline"

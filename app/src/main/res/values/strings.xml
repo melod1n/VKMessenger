@@ -13,8 +13,8 @@
     <string name="message_action_unpinned_message">%s Unpinned message</string>
     <string name="message_action_invited_by_link">%s Invited by link</string>
 
-    <string name="message_fwd_one">Message</string>
-    <string name="message_fwd_many">Messages</string>
+    <string name="message_fwd_one">Forwarded message</string>
+    <string name="message_fwd_many">%d Forwarded messages</string>
 
     <string name="message_attachments_many">Attachments</string>
     <string name="message_attachment_photo">Photo</string>
@@ -57,5 +57,6 @@
     <string name="prefs_about_app_version_title">Application version</string>
     <string name="prefs_about_app_chiefs_title">Application chiefs and helpers</string>
     <string name="prefs_about">About</string>
+    <string name="prefs_account">Account</string>
 
 </resources>

@@ -3,10 +3,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <PreferenceScreen
+        app:iconSpaceReserved="false"
         app:key="app_chiefs"
         app:title="@string/prefs_about_app_chiefs_title" />
 
     <PreferenceScreen
+        app:iconSpaceReserved="false"
         app:key="app_version"
         app:title="@string/prefs_about_app_version_title" />
 

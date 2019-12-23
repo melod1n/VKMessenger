@@ -717,7 +717,11 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
 
         private String getFwdText(ArrayList<VKMessage> forwardedMessages) {
             if (!ArrayUtil.isEmpty(forwardedMessages)) {
-                return getContext().getString(forwardedMessages.size() > 1 ? R.string.message_fwd_many : R.string.message_fwd_one);
+                if (forwardedMessages.size() > 1) {
+                    return getContext().getString(R.string.message_fwd_many, forwardedMessages.size()).toLowerCase();
+                } else {
+                    return getContext().getString(R.string.message_fwd_one);
+                }
             }
 
             return "";

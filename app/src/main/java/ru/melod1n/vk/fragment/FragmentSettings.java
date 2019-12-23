@@ -19,6 +19,7 @@ import ru.melod1n.vk.database.DatabaseHelper;
 public class FragmentSettings extends PreferenceFragmentCompat implements Preference.OnPreferenceClickListener {
 
     private static final String CATEGORY_ABOUT = "about";
+    private static final String CATEGORY_ACCOUNT = "account";
 
     private static final String KEY_ACCOUNT_LOGOUT = "account_logout";
 
@@ -50,6 +51,11 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Prefer
         setTitle();
         setNavigationIcon();
         setPreferencesFromResource(currentPreferenceLayout, null);
+
+        Preference account = findPreference(CATEGORY_ACCOUNT);
+        if (account != null) {
+            account.setOnPreferenceClickListener(this::changeRootLayout);
+        }
 
         Preference logout = findPreference(KEY_ACCOUNT_LOGOUT);
         if (logout != null) {
@@ -84,6 +90,9 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Prefer
             case R.xml.fragment_settings_about:
                 title = R.string.prefs_about;
                 break;
+            case R.xml.fragment_settings_account:
+                title = R.string.prefs_account;
+                break;
         }
 
         requireActivity().setTitle(title);
@@ -93,6 +102,9 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Prefer
         switch (preference.getKey()) {
             case CATEGORY_ABOUT:
                 currentPreferenceLayout = R.xml.fragment_settings_about;
+                break;
+            case CATEGORY_ACCOUNT:
+                currentPreferenceLayout = R.xml.fragment_settings_account;
                 break;
         }
 
