@@ -2,6 +2,7 @@ package ru.melod1n.vk.activity;
 
 import android.content.Intent;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.MenuItem;
@@ -10,6 +11,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.graphics.drawable.DrawerArrowDrawable;
 import androidx.appcompat.widget.Toolbar;
@@ -53,10 +55,12 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
     Toolbar toolbar;
 
     private DrawerArrowDrawable toggleDrawable;
+    private View.OnClickListener toggleClick;
 
     private final FragmentConversations fragmentConversations = new FragmentConversations(R.string.navigation_conversations);
     private final FragmentSettings fragmentSettings = new FragmentSettings();
     private final FragmentLogin fragmentLogin = new FragmentLogin(R.string.fragment_login);
+
 
     private int selectedId;
 
@@ -84,6 +88,8 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
 
         toggle.setDrawerSlideAnimationEnabled(false);
         toggle.syncState();
+
+        toggleClick = v -> drawerLayout.openDrawer(navigationView);
     }
 
     private void prepareToolbar() {
@@ -210,6 +216,14 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
 
         toolbar.setNavigationIcon(accessed ? toggleDrawable : null);
         drawerLayout.setDrawerLockMode((accessed ? DrawerLayout.LOCK_MODE_UNLOCKED : DrawerLayout.LOCK_MODE_LOCKED_CLOSED), navigationView);
+    }
+
+    public void setNavigationIcon(@Nullable Drawable drawable) {
+        toolbar.setNavigationIcon(drawable == null ? toggleDrawable : drawable);
+    }
+
+    public void setNavigationClick(@Nullable View.OnClickListener listener) {
+        toolbar.setNavigationOnClickListener(listener == null ? toggleClick : listener);
     }
 
     @Override

@@ -1,7 +1,9 @@
 package ru.melod1n.vk.fragment;
 
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.preference.Preference;
@@ -46,6 +48,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Prefer
 
     private void init() {
         setTitle();
+        setNavigationIcon();
         setPreferencesFromResource(currentPreferenceLayout, null);
 
         Preference logout = findPreference(KEY_ACCOUNT_LOGOUT);
@@ -60,6 +63,18 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Prefer
         }
 
         applyTintInPreferenceScreen(getPreferenceScreen());
+    }
+
+    private void setNavigationIcon() {
+        Drawable drawable = currentPreferenceLayout == R.xml.fragment_settings ? null : requireContext().getDrawable(R.drawable.ic_arrow_back);
+        if (drawable != null) {
+            drawable.setTint(AppGlobal.colorAccent);
+        }
+
+        ((MainActivity) requireActivity()).setNavigationIcon(drawable);
+        ((MainActivity) requireActivity()).setNavigationClick(drawable == null ? null : (View.OnClickListener) v -> {
+            onBackPressed();
+        });
     }
 
     private void setTitle() {
