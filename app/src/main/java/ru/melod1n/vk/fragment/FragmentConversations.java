@@ -182,6 +182,9 @@ public class FragmentConversations extends BaseFragment implements BaseContract.
         if (adapter != null) {
             adapter.changeItems(values);
             adapter.notifyDataSetChanged();
+
+            if (recyclerView.getAdapter() == null)
+                recyclerView.setAdapter(adapter);
             return;
         }
 

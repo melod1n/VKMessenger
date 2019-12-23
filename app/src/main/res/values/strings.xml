@@ -54,5 +54,8 @@
     <string name="time_format_week">%dw</string>
     <string name="time_format_month">%dm</string>
     <string name="time_format_year">%dy</string>
+    <string name="prefs_about_app_version_title">Application version</string>
+    <string name="prefs_about_app_chiefs_title">Application chiefs and helpers</string>
+    <string name="prefs_about">About</string>
 
 </resources>

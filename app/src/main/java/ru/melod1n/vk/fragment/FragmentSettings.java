@@ -16,7 +16,11 @@ import ru.melod1n.vk.database.DatabaseHelper;
 
 public class FragmentSettings extends PreferenceFragmentCompat implements Preference.OnPreferenceClickListener {
 
+    private static final String CATEGORY_ABOUT = "about";
+
     private static final String KEY_ACCOUNT_LOGOUT = "account_logout";
+
+    private int currentPreferenceLayout;
 
     @Override
     public void onResume() {
@@ -33,17 +37,52 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Prefer
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
-        setPreferencesFromResource(R.xml.prefs, rootKey);
-        init(savedInstanceState, rootKey);
+        setPreferencesFromResource(R.xml.fragment_settings, rootKey);
+
+        currentPreferenceLayout = R.xml.fragment_settings;
+
+        init();
     }
 
-    private void init(Bundle savedInstanceState, String rootKey) {
+    private void init() {
+        setTitle();
+        setPreferencesFromResource(currentPreferenceLayout, null);
+
         Preference logout = findPreference(KEY_ACCOUNT_LOGOUT);
         if (logout != null) {
             logout.setOnPreferenceClickListener(this);
         }
 
+
+        Preference about = findPreference(CATEGORY_ABOUT);
+        if (about != null) {
+            about.setOnPreferenceClickListener(this::changeRootLayout);
+        }
+
         applyTintInPreferenceScreen(getPreferenceScreen());
+    }
+
+    private void setTitle() {
+        int title = R.string.navigation_settings;
+
+        switch (currentPreferenceLayout) {
+            case R.xml.fragment_settings_about:
+                title = R.string.prefs_about;
+                break;
+        }
+
+        requireActivity().setTitle(title);
+    }
+
+    private boolean changeRootLayout(@NonNull Preference preference) {
+        switch (preference.getKey()) {
+            case CATEGORY_ABOUT:
+                currentPreferenceLayout = R.xml.fragment_settings_about;
+                break;
+        }
+
+        init();
+        return true;
     }
 
     private void applyTintInPreferenceScreen(@NonNull PreferenceScreen rootScreen) {
@@ -70,6 +109,17 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Prefer
         }
 
         return false;
+    }
+
+    public boolean onBackPressed() {
+        if (currentPreferenceLayout == R.xml.fragment_settings) {
+            return true;
+        } else {
+            currentPreferenceLayout = R.xml.fragment_settings;
+            init();
+
+            return false;
+        }
     }
 
     private void logout() {

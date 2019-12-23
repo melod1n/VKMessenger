@@ -23,7 +23,14 @@ public class FragmentSwitcher {
     public static FragmentMessages fragmentMessages = new FragmentMessages();
 
     public static void switchFragment(AppCompatActivity parentActivity, @Nullable Fragment parentFragment, @NonNull Fragment fragment, @Nullable Bundle extraData, boolean withBackStack) {
+        boolean fromFragment = parentFragment != null;
+
+        FragmentManager manager = fromFragment ? parentFragment.requireFragmentManager() : parentActivity.getSupportFragmentManager();
+
         if (currentFragment != null && fragment.getClass().getSimpleName().equals(currentFragment.getClass().getSimpleName())) {
+            if (!currentFragment.isAdded()) {
+                manager.beginTransaction().add(R.id.fragment_container, currentFragment, currentFragment.getClass().getSimpleName()).commit();
+            }
             return;
         }
 
@@ -37,10 +44,6 @@ public class FragmentSwitcher {
                 break;
             }
         }
-
-        boolean fromFragment = parentFragment != null;
-
-        FragmentManager manager = fromFragment ? parentFragment.requireFragmentManager() : parentActivity.getSupportFragmentManager();
 
         for (Fragment f : manager.getFragments()) {
             if (f.getClass().getSimpleName().equals(fragment.getClass().getSimpleName())) {
@@ -108,4 +111,7 @@ public class FragmentSwitcher {
         switchFragment(parentActivity, null, fragment, null, false);
     }
 
+    public static Fragment getCurrentFragment() {
+        return currentFragment;
+    }
 }

@@ -3,9 +3,7 @@ package ru.melod1n.vk.activity;
 import android.content.Intent;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
-import android.text.SpannableString;
 import android.text.TextUtils;
-import android.text.style.AbsoluteSizeSpan;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
@@ -17,6 +15,7 @@ import androidx.appcompat.graphics.drawable.DrawerArrowDrawable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.Fragment;
 
 import com.google.android.material.navigation.NavigationView;
 import com.squareup.picasso.Picasso;
@@ -72,24 +71,6 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         prepareDrawerToggle();
         checkExtraData();
         checkLogin(savedInstanceState);
-    }
-
-    @Override
-    public void setTitle(int titleId) {
-        setTitle(getString(titleId));
-    }
-
-    @Override
-    public void setTitle(CharSequence title) {
-        //TODO: переделать
-        TextView textView = null;//ViewUtil.getToolbarTitleTextView(toolbar);
-        if (textView != null) {
-            SpannableString string = new SpannableString(title);
-            string.setSpan(new AbsoluteSizeSpan(24, true), 0, string.length(), 0);
-            textView.setText(string);
-        } else {
-            super.setTitle(title);
-        }
     }
 
     private void prepareDrawerToggle() {
@@ -229,5 +210,20 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
 
         toolbar.setNavigationIcon(accessed ? toggleDrawable : null);
         drawerLayout.setDrawerLockMode((accessed ? DrawerLayout.LOCK_MODE_UNLOCKED : DrawerLayout.LOCK_MODE_LOCKED_CLOSED), navigationView);
+    }
+
+    @Override
+    public void onBackPressed() {
+        Fragment currentFragment = FragmentSwitcher.getCurrentFragment();
+        if (currentFragment != null && currentFragment.getClass() == FragmentSettings.class && ((FragmentSettings) currentFragment).onBackPressed()) {
+            super.onBackPressed();
+        } else {
+            if (drawerLayout.isDrawerOpen(navigationView)) {
+                drawerLayout.closeDrawer(navigationView);
+            } else {
+                if (currentFragment != null && currentFragment.getClass() != FragmentSettings.class)
+                    super.onBackPressed();
+            }
+        }
     }
 }

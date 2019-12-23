@@ -7,4 +7,9 @@
         app:key="account_logout"
         app:title="@string/pref_account_logout_title" />
 
+    <PreferenceScreen
+        app:icon="@drawable/ic_info_outline"
+        app:key="about"
+        app:title="@string/prefs_about" />
+
 </PreferenceScreen>

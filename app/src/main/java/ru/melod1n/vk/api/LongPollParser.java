@@ -80,7 +80,7 @@ public class LongPollParser {
         int messageId = item.optInt(1);
         int peerId = item.optInt(3);
 
-        sendEvent(new EventInfo(EventInfo.MESSAGE_READ, new int[]{messageId, peerId}), true);
+        sendEvent(new EventInfo(EventInfo.MESSAGE_READ, new int[]{messageId, peerId}));
     }
 
     private void messageClearFlags(JSONArray item) {
