@@ -64,6 +64,7 @@ import ru.melod1n.vk.widget.CircleImageView;
 public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapter.ViewHolder> implements TimeManager.OnMinuteChangeListener {
 
     private FragmentConversations conversations;
+    private ItemTouchHelperAdapter itemTouchHelperAdapter;
 
     public ConversationAdapter(FragmentConversations conversations, ArrayList<VKDialog> values) {
         super(conversations.requireContext(), values);
@@ -72,6 +73,14 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
         TimeManager.addOnMinuteChangeListener(this);
 
         EventBus.getDefault().register(this);
+    }
+
+    public void setItemTouchHelperAdapter(ItemTouchHelperAdapter itemTouchHelperAdapter) {
+        this.itemTouchHelperAdapter = itemTouchHelperAdapter;
+    }
+
+    public ItemTouchHelperAdapter getItemTouchHelperAdapter() {
+        return itemTouchHelperAdapter;
     }
 
     @NonNull
@@ -832,6 +841,10 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
         if (conversation.getChatSettings().getPhoto() == null) return null;
 
         return conversation.getChatSettings().getPhoto().getPhoto200();
+    }
+
+    public interface ItemTouchHelperAdapter {
+        void onSwiped(int position);
     }
 
     @Override

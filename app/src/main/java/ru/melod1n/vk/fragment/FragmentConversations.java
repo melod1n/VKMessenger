@@ -1,5 +1,7 @@
 package ru.melod1n.vk.fragment;
 
+import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.util.Log;
@@ -12,6 +14,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -51,6 +54,8 @@ public class FragmentConversations extends BaseFragment implements BaseContract.
     private ConversationAdapter adapter;
 
     private BaseContract.Presenter<VKDialog> presenter;
+
+    private ItemTouchHelper.Callback swipeCallback;
 
     private final int CONVERSATIONS_COUNT = 30;
 
@@ -183,14 +188,69 @@ public class FragmentConversations extends BaseFragment implements BaseContract.
             adapter.changeItems(values);
             adapter.notifyDataSetChanged();
 
-            if (recyclerView.getAdapter() == null)
+            if (recyclerView.getAdapter() == null) {
                 recyclerView.setAdapter(adapter);
+                setupSwipeToRead();
+            }
             return;
         }
 
         adapter = new ConversationAdapter(this, values);
         adapter.setOnItemClickListener(this);
         recyclerView.setAdapter(adapter);
+        setupSwipeToRead();
+    }
+
+    private void setupSwipeToRead() {
+        if (swipeCallback == null) {
+            swipeCallback = new ItemTouchHelper.Callback() {
+                @Override
+                public int getMovementFlags(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
+                    int swipeFlags = ItemTouchHelper.START;
+                    return makeMovementFlags(0, swipeFlags);
+                }
+
+                @Override
+                public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                    return false;
+                }
+
+                @Override
+                public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+
+                }
+
+                @Override
+                public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
+                    if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
+                        View itemView = viewHolder.itemView;
+
+                        int left = itemView.getLeft();
+                        int top = itemView.getTop();
+                        int right = itemView.getRight();
+                        int bottom = itemView.getBottom();
+
+                        Log.d("DX", "dX: " + dX + "; left: " + left + "; top: " + top + "; right: " + right + "; bottom: " + bottom);
+
+                        Paint p = new Paint();
+
+                        int maxOffset = (int) (dX / 4);
+
+                        int offset = (int) (right + dX);
+                        if (offset > maxOffset) {
+                            offset = maxOffset;
+                        }
+
+                        c.drawRect(offset, top, right, bottom, p);
+
+                        super.onChildDraw(c, recyclerView, viewHolder, dX / 4, dY, actionState, isCurrentlyActive);
+                    }
+                }
+            };
+        }
+
+        ItemTouchHelper helper = new ItemTouchHelper(swipeCallback);
+        helper.attachToRecyclerView(recyclerView);
     }
 
     @Override
@@ -207,5 +267,6 @@ public class FragmentConversations extends BaseFragment implements BaseContract.
     public void onDetach() {
         if (adapter != null) adapter.destroy();
         super.onDetach();
+
     }
 }
