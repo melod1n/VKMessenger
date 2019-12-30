@@ -15,6 +15,7 @@ import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -22,6 +23,7 @@ import ru.melod1n.vk.R;
 import ru.melod1n.vk.activity.MainActivity;
 import ru.melod1n.vk.api.UserConfig;
 import ru.melod1n.vk.api.VKAuth;
+import ru.melod1n.vk.common.AppGlobal;
 import ru.melod1n.vk.current.BaseFragment;
 
 public class FragmentLogin extends BaseFragment {
@@ -32,11 +34,15 @@ public class FragmentLogin extends BaseFragment {
     @BindView(R.id.progressBar)
     ProgressBar progressBar;
 
+    @BindView(R.id.swipeRefreshLayout)
+    SwipeRefreshLayout refreshLayout;
+
     public FragmentLogin(int titleRes) {
         super(titleRes);
     }
 
     public FragmentLogin() {
+        super();
     }
 
     @Nullable
@@ -58,6 +64,12 @@ public class FragmentLogin extends BaseFragment {
 
         CookieManager cookieManager = CookieManager.getInstance();
         cookieManager.setAcceptCookie(true);
+
+        refreshLayout.setColorSchemeColors(AppGlobal.colorAccent);
+        refreshLayout.setOnRefreshListener(() -> {
+            webView.reload();
+            refreshLayout.setRefreshing(false);
+        });
 
         String url = VKAuth.getUrl(UserConfig.API_ID, VKAuth.getSettings());
         webView.loadUrl(url);
