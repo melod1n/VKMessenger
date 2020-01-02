@@ -16,12 +16,14 @@ import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.graphics.drawable.DrawerArrowDrawable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
+import androidx.customview.widget.ViewDragHelper;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.navigation.NavigationView;
 import com.squareup.picasso.Picasso;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 
 import butterknife.BindView;
@@ -61,7 +63,6 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
     private final FragmentSettings fragmentSettings = new FragmentSettings();
     private final FragmentLogin fragmentLogin = new FragmentLogin(R.string.fragment_login);
 
-
     private int selectedId;
 
     @Override
@@ -75,6 +76,24 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         prepareDrawerToggle();
         checkExtraData();
         checkLogin(savedInstanceState);
+        prepareHalfScreenSwipe();
+    }
+
+    private void prepareHalfScreenSwipe() {
+        try {
+            Field mDragger = drawerLayout.getClass().getDeclaredField("mLeftDragger");
+            mDragger.setAccessible(true);
+            ViewDragHelper draggerObj = (ViewDragHelper) mDragger.get(drawerLayout);
+
+            if (draggerObj == null) return;
+
+            Field mEdgeSize = draggerObj.getClass().getDeclaredField("mEdgeSize");
+            mEdgeSize.setAccessible(true);
+
+            mEdgeSize.setInt(draggerObj, (int) (getResources().getDisplayMetrics().widthPixels * 0.55));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void prepareDrawerToggle() {

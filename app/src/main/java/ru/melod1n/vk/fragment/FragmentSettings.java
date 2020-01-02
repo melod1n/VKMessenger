@@ -78,9 +78,7 @@ public class FragmentSettings extends PreferenceFragmentCompat implements Prefer
         }
 
         ((MainActivity) requireActivity()).setNavigationIcon(drawable);
-        ((MainActivity) requireActivity()).setNavigationClick(drawable == null ? null : (View.OnClickListener) v -> {
-            onBackPressed();
-        });
+        ((MainActivity) requireActivity()).setNavigationClick(drawable == null ? null : (View.OnClickListener) v -> onBackPressed());
     }
 
     private void setTitle() {

@@ -75,13 +75,13 @@ public class ConversationAdapter extends BaseAdapter<VKDialog, ConversationAdapt
         EventBus.getDefault().register(this);
     }
 
-    public void setItemTouchHelperAdapter(ItemTouchHelperAdapter itemTouchHelperAdapter) {
-        this.itemTouchHelperAdapter = itemTouchHelperAdapter;
-    }
-
-    public ItemTouchHelperAdapter getItemTouchHelperAdapter() {
-        return itemTouchHelperAdapter;
-    }
+//    public void setItemTouchHelperAdapter(ItemTouchHelperAdapter itemTouchHelperAdapter) {
+//        this.itemTouchHelperAdapter = itemTouchHelperAdapter;
+//    }
+//
+//    public ItemTouchHelperAdapter getItemTouchHelperAdapter() {
+//        return itemTouchHelperAdapter;
+//    }
 
     @NonNull
     @Override

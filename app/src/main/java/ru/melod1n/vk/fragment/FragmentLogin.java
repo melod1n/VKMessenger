@@ -51,12 +51,20 @@ public class FragmentLogin extends BaseFragment {
         return inflater.inflate(R.layout.fragment_login, container, false);
     }
 
-    @SuppressLint("SetJavaScriptEnabled")
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ButterKnife.bind(this, view);
 
+        prepareSettings();
+        prepareRefreshLayout();
+
+        String url = VKAuth.getUrl(UserConfig.API_ID, VKAuth.getSettings());
+        webView.loadUrl(url);
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
+    private void prepareSettings() {
         webView.getSettings().setJavaScriptEnabled(true);
         webView.clearCache(true);
 
@@ -64,15 +72,14 @@ public class FragmentLogin extends BaseFragment {
 
         CookieManager cookieManager = CookieManager.getInstance();
         cookieManager.setAcceptCookie(true);
+    }
 
+    private void prepareRefreshLayout() {
         refreshLayout.setColorSchemeColors(AppGlobal.colorAccent);
         refreshLayout.setOnRefreshListener(() -> {
             webView.reload();
             refreshLayout.setRefreshing(false);
         });
-
-        String url = VKAuth.getUrl(UserConfig.API_ID, VKAuth.getSettings());
-        webView.loadUrl(url);
     }
 
     private class VKWebClient extends WebViewClient {
