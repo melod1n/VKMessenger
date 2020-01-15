@@ -58,5 +58,6 @@
     <string name="prefs_about_app_chiefs_title">Application chiefs and helpers</string>
     <string name="prefs_about">About</string>
     <string name="prefs_account">Account</string>
+    <string name="chat_message_hint">Type&#8230;</string>
 
 </resources>

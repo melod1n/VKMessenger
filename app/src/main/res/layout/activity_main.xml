@@ -26,7 +26,7 @@
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        app:headerLayout="@layout/drawer_header"
+        app:headerLayout="@layout/activity_main_drawer_header"
         app:itemBackground="@drawable/navigation_view_item_background_selector"
         app:itemIconTint="@drawable/navigation_view_item_icon_colors"
         app:itemTextColor="@drawable/navigation_view_item_text_colors"

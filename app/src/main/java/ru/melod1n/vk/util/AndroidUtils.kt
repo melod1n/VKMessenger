@@ -1,0 +1,20 @@
+package ru.melod1n.vk.util
+
+import android.util.DisplayMetrics
+import ru.melod1n.vk.common.AppGlobal
+
+object AndroidUtils {
+    fun px(dp: Float): Int {
+        return (dp * (AppGlobal.resources.displayMetrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT)).toInt()
+    }
+
+    fun dp(px: Float): Int {
+        return (px / (AppGlobal.resources.displayMetrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT)).toInt()
+    }
+
+    fun hasConnection(): Boolean {
+        val manager = AppGlobal.connectivityManager
+        val info = manager.activeNetworkInfo
+        return info != null && info.isConnected
+    }
+}
