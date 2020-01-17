@@ -92,7 +92,7 @@ object CacheStorage {
         return cursor.getInt(cursor.getColumnIndex(columnName))
     }
 
-    private fun getString(cursor: Cursor, columnName: String): String {
+    private fun getString(cursor: Cursor, columnName: String): String? {
         return cursor.getString(cursor.getColumnIndex(columnName))
     }
 

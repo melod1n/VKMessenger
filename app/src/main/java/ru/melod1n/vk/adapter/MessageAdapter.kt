@@ -34,7 +34,9 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>) : BaseAdapt
         return values[if (position == values.size) position - 1 else position]
     }
 
-    override fun destroy() {}
+    override fun destroy() {
+
+    }
 
     inner class ViewHolder(v: View) : RecyclerHolder(v) {
         var textView: TextView = v.findViewById(R.id.text)

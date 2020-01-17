@@ -9,9 +9,7 @@ import ru.melod1n.vk.api.model.VKGroup
 import ru.melod1n.vk.api.model.VKMessage
 import ru.melod1n.vk.api.model.VKUser
 import ru.melod1n.vk.concurrent.LowThread
-import ru.melod1n.vk.database.CacheStorage.insertConversation
 import ru.melod1n.vk.database.CacheStorage.insertGroup
-import ru.melod1n.vk.database.CacheStorage.insertMessage
 import ru.melod1n.vk.database.CacheStorage.insertUser
 import java.util.*
 import kotlin.math.abs
@@ -97,7 +95,7 @@ object TaskManager {
         addProcedure(setter, VKMessage::class.java, EventInfo<Any>(EventInfo.MESSAGE_UPDATE, messageId), object : OnResponseListener<VKMessage> {
             override fun onSuccess(models: ArrayList<VKMessage>) {
                 currentTasksIds.remove(messageId)
-                insertMessage(models[0])
+//                insertMessage(models[0]) //TODO: по идее, тут тоже краш
                 listener?.onSuccess(models)
             }
 
@@ -120,7 +118,7 @@ object TaskManager {
         addProcedure(setter, VKConversation::class.java, EventInfo<Any>(EventInfo.CONVERSATION_UPDATE, peerId), object : OnResponseListener<VKConversation> {
             override fun onSuccess(models: ArrayList<VKConversation>) {
                 currentTasksIds.remove(peerId)
-                insertConversation(models[0]) //TODO: тут краш
+//                insertConversation(models[0]) //TODO: тут краш
                 listener?.onSuccess(models)
             }
 

@@ -58,6 +58,14 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
         presenter!!.onRequestLoadValues(peerId, 0, MESSAGES_COUNT)
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+
+        adapter?.destroy()
+        presenter = null
+
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_messages)
@@ -71,7 +79,7 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
         prepareRefreshLayout()
         prepareRecyclerView()
         prepareActionButton()
-
+        prepareHalfScreenSwipe()
 
         val viewedDialogs = MainActivity.viewedDialogs
         if (AndroidUtils.hasConnection() && !viewedDialogs.contains(peerId)) {
@@ -80,6 +88,10 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
         } else {
             presenter!!.onRequestLoadCachedValues(peerId, 0, MESSAGES_COUNT)
         }
+    }
+
+    private fun prepareHalfScreenSwipe() {
+        ViewUtils.setDrawerEdgeSize(drawerLayout, (resources.displayMetrics.widthPixels / 2.5).toInt())
     }
 
     private fun prepareNavigationView() {

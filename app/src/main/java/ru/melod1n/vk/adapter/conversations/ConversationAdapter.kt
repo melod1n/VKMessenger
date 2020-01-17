@@ -530,7 +530,7 @@ class ConversationAdapter(fragmentConversations: FragmentConversations, values: 
                     }
 
                     return if (oneType) {
-                        val objectClass: Class<out VKModel> = attachments[0].javaClass
+                        val objectClass: Class<VKModel> = attachments[0].javaClass
                         resId = when (objectClass) {
                             VKPhoto::class.java -> {
                                 R.string.message_attachment_photos
@@ -553,7 +553,7 @@ class ConversationAdapter(fragmentConversations: FragmentConversations, values: 
                         context.getString(R.string.message_attachments_many)
                     }
                 } else {
-                    val objectClass: Class<out VKModel> = attachments[0].javaClass
+                    val objectClass: Class<VKModel> = attachments[0].javaClass
 
                     resId = when (objectClass) {
                         VKPhoto::class.java -> {
@@ -610,24 +610,34 @@ class ConversationAdapter(fragmentConversations: FragmentConversations, values: 
                     resId = R.drawable.ic_message_attachment_camera
                 }
                 VKAudio::class.java -> {
+                    resId = R.drawable.ic_message_attachment_audio
                 }
                 VKVideo::class.java -> {
+                    resId = R.drawable.ic_message_attachment_video
                 }
                 VKDoc::class.java -> {
+                    resId = R.drawable.ic_message_attachment_doc
                 }
                 VKGraffiti::class.java -> {
+                    resId = R.drawable.ic_message_attachment_graffiti
                 }
                 VKAudioMessage::class.java -> {
+                    resId = R.drawable.ic_message_attachment_audio_message
                 }
                 VKSticker::class.java -> {
+                    resId = R.drawable.ic_message_attachment_sticker
                 }
                 VKGift::class.java -> {
+                    resId = R.drawable.ic_message_attachment_gift
                 }
                 VKLink::class.java -> {
+                    resId = R.drawable.ic_message_attachment_link
                 }
                 VKPoll::class.java -> {
+                    resId = R.drawable.ic_message_attachment_poll
                 }
                 VKCall::class.java -> {
+                    resId = R.drawable.ic_message_attachment_call
                 }
             }
 

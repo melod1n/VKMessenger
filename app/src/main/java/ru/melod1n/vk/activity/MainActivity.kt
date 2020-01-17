@@ -30,6 +30,7 @@ import ru.melod1n.vk.fragment.FragmentConversations
 import ru.melod1n.vk.fragment.FragmentLogin
 import ru.melod1n.vk.fragment.FragmentSettings
 import ru.melod1n.vk.service.LongPollService
+import ru.melod1n.vk.util.ViewUtils
 import ru.melod1n.vk.util.ViewUtils.prepareNavigationHeader
 import java.util.*
 
@@ -51,6 +52,11 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         prepareDrawerToggle()
         checkExtraData()
         checkLogin(savedInstanceState)
+        prepareHalfScreenSwipe()
+    }
+
+    private fun prepareHalfScreenSwipe() {
+        ViewUtils.setDrawerEdgeSize(drawerLayout, (resources.displayMetrics.widthPixels / 2.5).toInt())
     }
 
     private fun prepareDrawerToggle() {

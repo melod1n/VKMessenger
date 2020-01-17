@@ -3,6 +3,8 @@ package ru.melod1n.vk.util
 import android.graphics.drawable.ColorDrawable
 import android.text.TextUtils
 import android.widget.TextView
+import androidx.customview.widget.ViewDragHelper
+import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.material.navigation.NavigationView
 import com.squareup.picasso.Picasso
 import ru.melod1n.vk.R
@@ -11,6 +13,8 @@ import ru.melod1n.vk.api.model.VKUser
 import ru.melod1n.vk.common.AppGlobal
 import ru.melod1n.vk.database.MemoryCache
 import ru.melod1n.vk.widget.CircleImageView
+import java.lang.reflect.Field
+
 
 object ViewUtils {
 
@@ -35,6 +39,23 @@ object ViewUtils {
             Picasso.get().load(profile.photo200).into(profileAvatar)
         } else {
             profileAvatar.setImageDrawable(ColorDrawable(AppGlobal.colorAccent))
+        }
+    }
+
+    fun setDrawerEdgeSize(drawerLayout: DrawerLayout, edgeSize: Int) {
+        drawerLayout.setOnLongClickListener { false }
+
+        try {
+            val mDragger: Field = drawerLayout.javaClass.getDeclaredField("mLeftDragger")
+            mDragger.isAccessible = true
+            val draggerObj = mDragger.get(drawerLayout) as ViewDragHelper
+
+            val mEdgeSize: Field = draggerObj.javaClass.getDeclaredField("mEdgeSize")
+            mEdgeSize.isAccessible = true
+            mEdgeSize.setInt(draggerObj, edgeSize)
+
+        } catch (e: Exception) {
+            throw RuntimeException("В либе произошли изменения.")
         }
     }
 }
