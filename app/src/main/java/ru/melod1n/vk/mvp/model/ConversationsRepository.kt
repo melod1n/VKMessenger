@@ -8,25 +8,18 @@ import ru.melod1n.vk.api.model.VKMessage
 import ru.melod1n.vk.api.model.VKUser
 import ru.melod1n.vk.common.AppGlobal
 import ru.melod1n.vk.common.TaskManager
-import ru.melod1n.vk.database.CacheStorage.getConversations
-import ru.melod1n.vk.database.CacheStorage.getMessageByPeerId
-import ru.melod1n.vk.database.CacheStorage.insertConversations
-import ru.melod1n.vk.database.CacheStorage.insertGroups
-import ru.melod1n.vk.database.CacheStorage.insertMessages
-import ru.melod1n.vk.database.CacheStorage.insertUsers
+import ru.melod1n.vk.database.CacheStorage
 import ru.melod1n.vk.mvp.contract.BaseContract
 import ru.melod1n.vk.util.ArrayUtil
-import java.util.*
-import kotlin.collections.ArrayList
 
 class ConversationsRepository : BaseContract.Repository<VKConversation>() {
     override fun loadCachedValues(id: Int, offset: Int, count: Int): ArrayList<VKConversation> {
-        val conversations = ArrayUtil.manipulate(getConversations(count), offset, count)
+        val conversations = ArrayUtil.manipulate(CacheStorage.getConversations(count), offset, count)
         val dialogs = ArrayList<VKConversation>(conversations.size)
 
         conversations.sortWith(Comparator { o1: VKConversation, o2: VKConversation ->
-            val m1 = getMessageByPeerId(o1.id)
-            val m2 = getMessageByPeerId(o2.id)
+            val m1 = CacheStorage.getMessage(o1.lastMessageId)
+            val m2 = CacheStorage.getMessage(o2.lastMessageId)
 
             if (m1 == null || m2 == null) return@Comparator 0
 
@@ -34,11 +27,12 @@ class ConversationsRepository : BaseContract.Repository<VKConversation>() {
             val y = m2.date
 
             y - x
+//            if (x > y) -1 else if (x == y) 1 else 0
         })
 
         for (i in conversations.indices) {
             val conversation = conversations[i].apply {
-                lastMessage = getMessageByPeerId(id)
+                lastMessage = CacheStorage.getMessage(lastMessageId)
             }
 
             dialogs.add(conversation)
@@ -58,8 +52,8 @@ class ConversationsRepository : BaseContract.Repository<VKConversation>() {
                         .execute(VKConversation::class.java)!!
 
                 insertDataInDatabase(models)
-                AppGlobal.handler.post(SuccessCallback(listener, models))
 
+                AppGlobal.handler.post(SuccessCallback(listener, models))
             } catch (e: Exception) {
                 e.printStackTrace()
                 AppGlobal.handler.post(VKApi.ErrorCallback(listener, e))
@@ -74,9 +68,9 @@ class ConversationsRepository : BaseContract.Repository<VKConversation>() {
             messages.add(conversation.lastMessage!!)
         }
 
-        insertMessages(messages)
-        insertConversations(models)
-        insertUsers(models[0].profiles)
-        insertGroups(models[0].groups)
+        CacheStorage.insertMessages(messages)
+        CacheStorage.insertConversations(models)
+        CacheStorage.insertUsers(models[0].profiles)
+        CacheStorage.insertGroups(models[0].groups)
     }
 }

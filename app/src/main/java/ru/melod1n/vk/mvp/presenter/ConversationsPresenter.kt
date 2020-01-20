@@ -18,14 +18,15 @@ class ConversationsPresenter(private val view: BaseContract.View<VKConversation>
     override fun readyForLoading() {
         view.showNoInternetView(false)
         view.showNoItemsView(false)
-        view.showRefreshLayout(false)
+        view.showProgressBar(false)
         view.hideErrorView()
     }
 
     override fun onRequestLoadCachedValues(id: Int, offset: Int, count: Int) {
         readyForLoading()
         cachedValues = repository.loadCachedValues(0, offset, count)
-        onValuesLoaded(offset, cachedValues ?: ArrayList())
+
+        onValuesLoaded(offset, cachedValues!!, true)
     }
 
     override fun onRequestLoadValues(id: Int, offset: Int, count: Int) {
@@ -33,7 +34,7 @@ class ConversationsPresenter(private val view: BaseContract.View<VKConversation>
         repository.loadValues(id, offset, count, object : OnResponseListener<VKConversation> {
             override fun onSuccess(models: ArrayList<VKConversation>) {
                 loadedValues = models
-                onValuesLoaded(offset, loadedValues ?: ArrayList())
+                onValuesLoaded(offset, loadedValues!!, false)
             }
 
             override fun onError(e: Exception) {
@@ -43,7 +44,7 @@ class ConversationsPresenter(private val view: BaseContract.View<VKConversation>
     }
 
     override fun onValuesLoading() {
-        view.showProgressBar(true)
+        view.showRefreshLayout(true)
     }
 
     override fun onValuesErrorLoading(e: Exception) {
@@ -59,13 +60,13 @@ class ConversationsPresenter(private val view: BaseContract.View<VKConversation>
         Log.d(TAG, "onValuesErrorLoading: " + e.toString() + ": " + Log.getStackTraceString(e))
     }
 
-    override fun onValuesLoaded(offset: Int, values: ArrayList<VKConversation>) {
+    override fun onValuesLoaded(offset: Int, values: ArrayList<VKConversation>, isCache: Boolean) {
         view.hideErrorView()
         view.showNoItemsView(false)
         view.showRefreshLayout(false)
         view.showProgressBar(false)
         view.showNoItemsView(ArrayUtil.isEmpty(values))
-        view.loadValuesIntoList(offset, values)
+        view.loadValuesIntoList(offset, values, isCache)
     }
 
     override fun onRequestClearList() {

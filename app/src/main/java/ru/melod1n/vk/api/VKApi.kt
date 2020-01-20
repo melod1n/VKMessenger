@@ -44,7 +44,7 @@ object VKApi {
             return null
         }
         if (cls == VKLongPollServer::class.java) {
-            val server = VKLongPollServer(json.optJSONObject("response"))
+            val server = VKLongPollServer(json.optJSONObject("response")!!)
             return ArrayUtil.singletonList(server) as ArrayList<T>
         }
         if (cls == Boolean::class.java) {
@@ -96,10 +96,9 @@ object VKApi {
             for (i in 0 until array.length()) {
                 val source = array.optJSONObject(i)
                 val oConversation = source.optJSONObject("conversation") ?: return null
-                val oLastMessage = source.optJSONObject("last_message")
+                val oLastMessage = source.optJSONObject("last_message") ?: return null
 
-                val conversation = VKConversation(oConversation)
-                val lastMessage = VKMessage(oLastMessage)
+                val conversation = VKConversation(oConversation, oLastMessage)
 
                 val response = json.optJSONObject("response") ?: return null
 
@@ -120,8 +119,6 @@ object VKApi {
                     }
                     conversation.groups = groups
                 }
-
-                conversation.apply { this.lastMessage = lastMessage }
 
                 models.add(conversation as T)
             }

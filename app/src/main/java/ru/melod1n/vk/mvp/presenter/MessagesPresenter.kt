@@ -10,10 +10,12 @@ import ru.melod1n.vk.mvp.model.MessagesRepository
 import ru.melod1n.vk.util.ArrayUtil
 import java.util.*
 
+
 class MessagesPresenter(private val view: BaseContract.View<VKMessage>) : Presenter<VKMessage> {
     private val repository: BaseContract.Repository<VKMessage>
     private var loadedValues: ArrayList<VKMessage>? = null
     private var cachedValues: ArrayList<VKMessage>? = null
+
     override fun readyForLoading() {
         view.showNoInternetView(false)
         view.showNoItemsView(false)
@@ -24,7 +26,7 @@ class MessagesPresenter(private val view: BaseContract.View<VKMessage>) : Presen
     override fun onRequestLoadCachedValues(id: Int, offset: Int, count: Int) {
         readyForLoading()
         cachedValues = repository.loadCachedValues(id, offset, count)
-        onValuesLoaded(offset, cachedValues!!)
+        onValuesLoaded(offset, cachedValues!!, true)
     }
 
     override fun onRequestLoadValues(id: Int, offset: Int, count: Int) {
@@ -32,7 +34,7 @@ class MessagesPresenter(private val view: BaseContract.View<VKMessage>) : Presen
         repository.loadValues(id, offset, count, object : OnResponseListener<VKMessage> {
             override fun onSuccess(models: ArrayList<VKMessage>) {
                 loadedValues = models
-                onValuesLoaded(offset, loadedValues!!)
+                onValuesLoaded(offset, loadedValues!!, false)
             }
 
             override fun onError(e: Exception) {
@@ -50,21 +52,23 @@ class MessagesPresenter(private val view: BaseContract.View<VKMessage>) : Presen
         view.showProgressBar(false)
         view.showNoItemsView(false)
         view.showRefreshLayout(false)
+
         if (e is VKException) {
             view.showErrorView(e.toString(), e.message)
         } else {
             view.showErrorView(e.toString(), Log.getStackTraceString(e))
         }
+
         Log.d(TAG, "onValuesErrorLoading: " + e.toString() + ": " + Log.getStackTraceString(e))
     }
 
-    override fun onValuesLoaded(offset: Int, values: ArrayList<VKMessage>) {
+    override fun onValuesLoaded(offset: Int, values: ArrayList<VKMessage>, isCache: Boolean) {
         view.hideErrorView()
         view.showNoItemsView(false)
         view.showRefreshLayout(false)
         view.showProgressBar(false)
         view.showNoItemsView(ArrayUtil.isEmpty(values))
-        view.loadValuesIntoList(offset, values)
+        view.loadValuesIntoList(offset, values, isCache)
     }
 
     override fun onRequestClearList() {

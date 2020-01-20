@@ -25,7 +25,7 @@ class MessagesRepository : BaseContract.Repository<VKMessage>() {
             try {
                 val models = VKApi.messages()
                         .history
-                        .peerId(id.toLong())
+                        .peerId(id)
                         .rev(0)
                         .extended(true)
                         .fields(VKUser.DEFAULT_FIELDS + "," + VKGroup.DEFAULT_FIELDS)

@@ -1,4 +1,4 @@
-package ru.melod1n.vk.adapter.conversations
+package ru.melod1n.vk.adapter
 
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
@@ -11,10 +11,9 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
-import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.squareup.picasso.Picasso
 import ru.melod1n.vk.R
-import ru.melod1n.vk.adapter.RecyclerHolder
 import ru.melod1n.vk.api.UserConfig
 import ru.melod1n.vk.api.VKApi.OnResponseListener
 import ru.melod1n.vk.api.VKLongPollParser
@@ -31,10 +30,9 @@ import ru.melod1n.vk.fragment.FragmentConversations
 import ru.melod1n.vk.util.ArrayUtil
 import ru.melod1n.vk.widget.CircleImageView
 import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.math.abs
 
-class ConversationAdapter(fragmentConversations: FragmentConversations, values: ArrayList<VKConversation>) : BaseAdapter<VKConversation>(fragmentConversations.requireContext(), values),
+class ConversationAdapter(var fragmentConversations: FragmentConversations, values: ArrayList<VKConversation>) : BaseAdapter<VKConversation, ConversationAdapter.ViewHolder>(fragmentConversations.requireContext(), values),
         OnMinuteChangeListener,
         VKLongPollParser.OnMessagesListener,
         VKLongPollParser.OnEventListener {
@@ -44,20 +42,13 @@ class ConversationAdapter(fragmentConversations: FragmentConversations, values: 
         VKLongPollParser.addOnEventListener(this)
     }
 
-    override fun destroy() {
+    override fun onDestroy() {
         VKLongPollParser.removeOnMessagesListener(this)
         VKLongPollParser.removeOnEventListener(this)
     }
 
-    override fun changeItems(items: ArrayList<VKConversation>) {
-        val callback = ConversationsDiffUtilCallback(values, items)
-        val result = DiffUtil.calculateDiff(callback, false)
-        super.changeItems(items)
-        result.dispatchUpdatesTo(this)
-    }
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        return ViewHolder(inflater.inflate(R.layout.item_dialog, parent, false))
+    override fun onCreateViewHolder(viewGroup: ViewGroup, type: Int): ViewHolder {
+        return ViewHolder(inflater.inflate(R.layout.item_conversation, viewGroup, false))
     }
 
     override fun onEvent(info: EventInfo<*>) {
@@ -142,7 +133,7 @@ class ConversationAdapter(fragmentConversations: FragmentConversations, values: 
                     val conversation = models[0]
                     if (conversation.lastMessageId == 0) {
                         CacheStorage.delete(DatabaseHelper.TABLE_CONVERSATIONS, DatabaseHelper.PEER_ID, peerId)
-                        remove(index)
+                        values.removeAt(index)
                         notifyItemRemoved(index)
                         notifyItemRangeChanged(0, itemCount, 0)
                     } else {
@@ -181,21 +172,36 @@ class ConversationAdapter(fragmentConversations: FragmentConversations, values: 
     private fun addMessage(message: VKMessage) {
         val index = searchConversationIndex(message.peerId)
 
-        val dialogs = ArrayList(values)
+        val layoutManager = fragmentConversations.getRecyclerView().layoutManager as LinearLayoutManager
 
         if (index >= 0) {
+            val conversation = getItem(index)
+            val prepared = prepareConversation(conversation, message)
+
             if (index == 0) {
-                val dialog = getItem(0)
-                dialogs[0] = prepareConversation(dialog, message)
+                notifyItemRangeChanged(0, 1)
             } else {
-                val conversation = getItem(index)
-                dialogs.removeAt(index)
-                dialogs.add(0, prepareConversation(conversation, message))
+                val maxPosition = layoutManager.findLastCompletelyVisibleItemPosition() - layoutManager.findFirstCompletelyVisibleItemPosition()
+
+                if (index > maxPosition) {
+                    notifyItemRemoved(index)
+
+                    values.removeAt(index)
+
+                    notifyItemInserted(0)
+
+                    values.add(0, prepared)
+                } else {
+                    notifyItemMoved(index, 0)
+
+                    values.removeAt(index)
+                    values.add(0, prepared)
+                }
             }
         } else {
             val conversation = CacheStorage.getConversation(message.peerId)
             if (conversation != null) {
-                dialogs.add(0, prepareConversation(conversation, message))
+                values.add(0, prepareConversation(conversation, message))
             } else {
                 val temp = VKConversation().apply {
                     id = message.peerId
@@ -204,22 +210,31 @@ class ConversationAdapter(fragmentConversations: FragmentConversations, values: 
                     lastMessage = message
                 }
 
-                dialogs.add(0, temp)
+                values.add(0, temp)
             }
+
+            notifyItemInserted(0)
         }
 
-        changeItems(dialogs)
+        if (layoutManager.findFirstVisibleItemPosition() < 2) {
+            layoutManager.scrollToPosition(0)
+        }
+
     }
 
     private fun prepareConversation(conversation: VKConversation, newMessage: VKMessage): VKConversation {
+        if (conversation.lastMessage != newMessage)
+            conversation.lastMessage = newMessage
+
         conversation.lastMessageId = newMessage.id
+
         if (newMessage.isOut) {
             conversation.unreadCount = 0
             newMessage.isRead = false
         } else {
             conversation.unreadCount = conversation.unreadCount + 1
         }
-        if (newMessage.peerId == newMessage.fromId && newMessage.fromId == UserConfig.getUserId()) { //для лс
+        if (newMessage.peerId == newMessage.fromId && newMessage.fromId == UserConfig.userId) { //для лс
             conversation.outRead = newMessage.id
         }
         return conversation
@@ -265,7 +280,7 @@ class ConversationAdapter(fragmentConversations: FragmentConversations, values: 
         restoreMessage(message)
     }
 
-    inner class ViewHolder(v: View) : RecyclerHolder(v) {
+    inner class ViewHolder(v: View) : BaseAdapter.Holder(v) {
 
         private var text = v.findViewById<TextView>(R.id.dialogText)
         private var title = v.findViewById<TextView>(R.id.dialogTitle)
@@ -283,7 +298,7 @@ class ConversationAdapter(fragmentConversations: FragmentConversations, values: 
         override fun bind(position: Int) {
             val conversation = getItem(position)
 
-            val lastMessage = conversation.lastMessage!!
+            val lastMessage = CacheStorage.getMessage(conversation.lastMessageId) ?: conversation.lastMessage!!
 
             val peerUser = searchPeerUser(lastMessage)
             val fromUser = searchFromUser(lastMessage)
@@ -301,13 +316,13 @@ class ConversationAdapter(fragmentConversations: FragmentConversations, values: 
 
             if ((conversation.isChat || lastMessage.isOut) && !conversation.isGroupChannel) {
                 userAvatar!!.visibility = View.VISIBLE
-                loadImage(getUserAvatar(lastMessage, fromUser, fromGroup), userAvatar)
+                loadImage(getUserAvatar(lastMessage, fromUser, fromGroup) ?: "", userAvatar)
             } else {
                 userAvatar!!.visibility = View.GONE
                 userAvatar!!.setImageDrawable(null)
             }
 
-            loadImage(getAvatar(conversation, peerUser, peerGroup), avatar)
+            loadImage(getAvatar(conversation, peerUser, peerGroup) ?: "", avatar)
 
             val dDialogType = getDialogType(conversation)
 
@@ -672,11 +687,11 @@ class ConversationAdapter(fragmentConversations: FragmentConversations, values: 
             }
         }
 
-        private fun loadImage(imageUrl: String?, imageView: ImageView?) {
+        private fun loadImage(imageUrl: String, imageView: ImageView) {
             if (!TextUtils.isEmpty(imageUrl)) { //TODO: переделать
                 Picasso.get().load(imageUrl).priority(Picasso.Priority.LOW).placeholder(placeholderNormal).into(imageView)
             } else {
-                imageView!!.setImageDrawable(placeholderNormal)
+                imageView.setImageDrawable(placeholderNormal)
             }
         }
 
@@ -749,5 +764,13 @@ class ConversationAdapter(fragmentConversations: FragmentConversations, values: 
             return peerGroup?.photo200
         }
         return conversation.photo200
+    }
+
+    override fun viewHolder(view: View, type: Int): ViewHolder {
+        return ViewHolder(view)
+    }
+
+    override fun layoutId(type: Int): Int {
+        return R.layout.item_conversation
     }
 }

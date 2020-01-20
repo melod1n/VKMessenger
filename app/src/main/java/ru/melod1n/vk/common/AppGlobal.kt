@@ -15,6 +15,7 @@ import ru.melod1n.vk.database.DatabaseHelper
 import java.util.*
 
 class AppGlobal : Application() {
+
     override fun onCreate() {
         super.onCreate()
         preferences = PreferenceManager.getDefaultSharedPreferences(this)

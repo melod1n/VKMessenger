@@ -48,7 +48,7 @@ class MessageMethodSetter(name: String?) : MethodSetter(name!!) {
         return this
     }
 
-    fun peerId(value: Long): MessageMethodSetter {
+    fun peerId(value: Int): MessageMethodSetter {
         put("peer_id", value)
         return this
     }

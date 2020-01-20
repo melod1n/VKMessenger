@@ -11,7 +11,7 @@ class BaseContract {
         fun hideErrorView()
         fun showRefreshLayout(visible: Boolean)
         fun showProgressBar(visible: Boolean)
-        fun loadValuesIntoList(offset: Int, values: ArrayList<T>)
+        fun loadValuesIntoList(offset: Int, values: ArrayList<T>, isCache: Boolean)
         fun clearList()
     }
 
@@ -21,7 +21,7 @@ class BaseContract {
         fun onRequestLoadValues(id: Int, offset: Int, count: Int)
         fun onValuesLoading()
         fun onValuesErrorLoading(e: Exception)
-        fun onValuesLoaded(offset: Int, values: ArrayList<T>)
+        fun onValuesLoaded(offset: Int, values: ArrayList<T>, isCache: Boolean)
         fun onRequestClearList()
     }
 

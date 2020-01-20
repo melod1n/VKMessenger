@@ -39,7 +39,7 @@ class DatabaseHelper private constructor(context: Context?) : SQLiteOpenHelper(c
     companion object {
 
         private const val DB_NAME = "cache.db"
-        private const val DB_VERSION = 15
+        private const val DB_VERSION = 31
 
         const val TYPE = "type"
         const val PEER_ID = "peer_id"
@@ -105,8 +105,8 @@ class DatabaseHelper private constructor(context: Context?) : SQLiteOpenHelper(c
         const val TABLE_GROUPS = "groups"
 
         private const val CREATE_MESSAGES = "create table if not exists " + TABLE_MESSAGES + " (" +
-                MESSAGE_ID + " integer primary key on conflict replace, " +
-                DATE + " integer, " +
+                DATE + " integer primary key on conflict replace, " +
+                MESSAGE_ID + " integer, " +
                 PEER_ID + " integer, " +
                 FROM_ID + " integer, " +
                 EDIT_TIME + " integer, " +
@@ -123,8 +123,7 @@ class DatabaseHelper private constructor(context: Context?) : SQLiteOpenHelper(c
                 ");"
 
         private const val CREATE_CONVERSATIONS = "create table if not exists " + TABLE_CONVERSATIONS + " (" +
-                CONVERSATION_ID + " integer primary key on conflict replace, " +
-                PEER_ID + " integer, " +
+                PEER_ID + " integer primary key on conflict replace, " +
                 IS_ALLOWED + " integer default 1, " +
                 LAST_MESSAGE_ID + " integer, " +
                 REASON + " integer default -1, " +
@@ -137,7 +136,7 @@ class DatabaseHelper private constructor(context: Context?) : SQLiteOpenHelper(c
                 IS_DISABLED_FOREVER + " integer default 0, " +
                 IS_NO_SOUND + " integer default 0, " +
                 MEMBERS_COUNT + " integer, " +
-                TITLE + " text, " +
+                TITLE + " varchar(255), " +
                 PINNED_MESSAGE + " blob, " +
                 STATE + " text, " +
                 ACTIVE_IDS + " blob, " +
@@ -189,7 +188,7 @@ class DatabaseHelper private constructor(context: Context?) : SQLiteOpenHelper(c
         private const val DROP_FRIENDS = "drop table if exists $TABLE_FRIENDS"
         private const val DROP_GROUPS = "drop table if exists $TABLE_GROUPS"
 
-        fun getInstance(context: Context?): DatabaseHelper {
+        fun getInstance(context: Context): DatabaseHelper {
             return DatabaseHelper(context)
         }
     }

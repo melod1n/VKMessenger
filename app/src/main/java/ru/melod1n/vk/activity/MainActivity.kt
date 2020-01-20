@@ -4,11 +4,16 @@ import android.app.Activity
 import android.content.Intent
 import android.graphics.drawable.Drawable
 import android.os.Bundle
+import android.text.InputType
+import android.text.TextUtils
 import android.view.MenuItem
 import android.view.View
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.graphics.drawable.DrawerArrowDrawable
+import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import butterknife.ButterKnife
@@ -30,7 +35,6 @@ import ru.melod1n.vk.fragment.FragmentConversations
 import ru.melod1n.vk.fragment.FragmentLogin
 import ru.melod1n.vk.fragment.FragmentSettings
 import ru.melod1n.vk.service.LongPollService
-import ru.melod1n.vk.util.ViewUtils
 import ru.melod1n.vk.util.ViewUtils.prepareNavigationHeader
 import java.util.*
 
@@ -52,11 +56,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         prepareDrawerToggle()
         checkExtraData()
         checkLogin(savedInstanceState)
-        prepareHalfScreenSwipe()
-    }
-
-    private fun prepareHalfScreenSwipe() {
-        ViewUtils.setDrawerEdgeSize(drawerLayout, (resources.displayMetrics.widthPixels / 2.5).toInt())
     }
 
     private fun prepareDrawerToggle() {
@@ -76,6 +75,53 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
     private fun prepareToolbar() {
         setSupportActionBar(toolbar)
+
+        toolbar.setOnLongClickListener {
+            val currentFragment = FragmentSwitcher.getCurrentFragment(supportFragmentManager)
+            if (currentFragment is FragmentLogin) {
+                AlertDialog.Builder(this).apply {
+                    setTitle(R.string.custom_data)
+
+                    val userId = AppCompatEditText(this@MainActivity).apply {
+                        inputType = InputType.TYPE_CLASS_NUMBER
+                        setHint(R.string.user_id)
+                        maxLines = 1
+                    }
+
+                    val token = AppCompatEditText(this@MainActivity).apply {
+                        setHint(R.string.token)
+                        maxLines = 1
+                    }
+
+                    val layout = LinearLayout(this@MainActivity).also {
+                        it.orientation = LinearLayout.VERTICAL
+                        it.addView(userId)
+                        it.addView(token)
+                    }
+
+                    setView(layout)
+                    setPositiveButton(android.R.string.ok) { _, _ ->
+                        val id = userId.text.toString().toInt()
+                        val accessToken = token.text.toString()
+
+                        if (id < 1 || TextUtils.isEmpty(accessToken)) return@setPositiveButton
+
+                        UserConfig.apply {
+                            this.userId = userId.text.toString().toInt()
+                            this.token = token.text.toString()
+                        }.save()
+
+                        finish()
+                        startActivity(Intent(this@MainActivity, MainActivity::class.java))
+                    }
+
+                    setCancelable(false)
+                    setNegativeButton(android.R.string.cancel, null)
+                }.show()
+            }
+
+            false
+        }
     }
 
     private fun prepareNavigationView() {
@@ -87,8 +133,8 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         if (intent.hasExtra("token")) {
             val token = intent.getStringExtra("token")
             val userId = intent.getIntExtra("user_id", -1)
-            UserConfig.setToken(token)
-            UserConfig.setUserId(userId)
+            UserConfig.token = token
+            UserConfig.userId = userId
             UserConfig.save()
         }
     }
@@ -131,7 +177,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 }
 
                 override fun onError(e: Exception) {
-                    val cachedUser = getUser(UserConfig.getUserId())
+                    val cachedUser = getUser(UserConfig.userId)
                     if (cachedUser != null) {
                         prepareNavigationHeader(navigationView!!, cachedUser)
                     } else {

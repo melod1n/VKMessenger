@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.MenuItem
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -18,16 +19,20 @@ import kotlinx.android.synthetic.main.recycler_view.*
 import kotlinx.android.synthetic.main.toolbar.*
 import ru.melod1n.vk.R
 import ru.melod1n.vk.adapter.MessageAdapter
+import ru.melod1n.vk.api.UserConfig
+import ru.melod1n.vk.api.VKApi
 import ru.melod1n.vk.api.model.VKConversation
 import ru.melod1n.vk.api.model.VKMessage
 import ru.melod1n.vk.common.AppGlobal
+import ru.melod1n.vk.common.TaskManager
 import ru.melod1n.vk.current.BaseAdapter
+import ru.melod1n.vk.database.CacheStorage
 import ru.melod1n.vk.mvp.contract.BaseContract
 import ru.melod1n.vk.mvp.contract.BaseContract.Presenter
 import ru.melod1n.vk.mvp.presenter.MessagesPresenter
 import ru.melod1n.vk.util.AndroidUtils
 import ru.melod1n.vk.util.ViewUtils
-import java.util.*
+import kotlin.random.Random
 
 class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, BaseAdapter.OnItemClickListener, NavigationView.OnNavigationItemSelectedListener {
 
@@ -61,7 +66,7 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
     override fun onDestroy() {
         super.onDestroy()
 
-        adapter?.destroy()
+        adapter?.onDestroy()
         presenter = null
 
     }
@@ -79,7 +84,6 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
         prepareRefreshLayout()
         prepareRecyclerView()
         prepareActionButton()
-        prepareHalfScreenSwipe()
 
         val viewedDialogs = MainActivity.viewedDialogs
         if (AndroidUtils.hasConnection() && !viewedDialogs.contains(peerId)) {
@@ -88,10 +92,6 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
         } else {
             presenter!!.onRequestLoadCachedValues(peerId, 0, MESSAGES_COUNT)
         }
-    }
-
-    private fun prepareHalfScreenSwipe() {
-        ViewUtils.setDrawerEdgeSize(drawerLayout, (resources.displayMetrics.widthPixels / 2.5).toInt())
     }
 
     private fun prepareNavigationView() {
@@ -111,7 +111,14 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
     }
 
     private fun prepareActionButton() {
-        chatSend.setOnClickListener { }
+        chatSend.setOnClickListener {
+            val message = chatMessage.text.toString().trim()
+            if (message.isEmpty()) {
+                return@setOnClickListener
+            } else {
+                sendMessage(message)
+            }
+        }
     }
 
     private fun prepareRefreshLayout() {
@@ -119,7 +126,10 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
     }
 
     private fun prepareRecyclerView() {
-        recyclerView.layoutManager = LinearLayoutManager(this, RecyclerView.VERTICAL, false)
+        val layoutManager = LinearLayoutManager(this, RecyclerView.VERTICAL, false)
+        layoutManager.stackFromEnd = true
+
+        recyclerView.layoutManager = layoutManager
     }
 
     private fun initExtraData() {
@@ -128,6 +138,42 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
         avatar = intent.getStringExtra(TAG_EXTRA_AVATAR)
 
         peerId = conversation.id
+    }
+
+    private fun sendMessage(text: String) {
+        adapter ?: return
+
+        val message = VKMessage().apply {
+            this.date = (System.currentTimeMillis() / 1000).toInt()
+            this.text = text
+            this.isOut = true
+            this.peerId = this@MessagesActivity.peerId
+            this.fromId = UserConfig.userId
+            this.randomId = Random.nextInt()
+        }
+
+        adapter!!.notifyItemInserted(adapter!!.itemCount - 1)
+        adapter!!.add(message)
+
+        recyclerView.smoothScrollToPosition(adapter!!.realItemCount - 1)
+
+        TaskManager.execute {
+            VKApi.messages().send()
+                    .peerId(peerId)
+                    .message(text)
+                    .randomId(message.randomId)
+                    .execute(Int::class.java, object : VKApi.OnResponseListener<Int> {
+                        override fun onSuccess(models: ArrayList<Int>) {
+                            message.id = models[0]
+
+                            CacheStorage.insertMessage(message)
+                        }
+
+                        override fun onError(e: Exception) {
+                            e.printStackTrace()
+                        }
+                    })
+        }
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
@@ -172,31 +218,48 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
         findViewById<ProgressBar>(R.id.progressBar).visibility = if (visible) View.VISIBLE else View.GONE
     }
 
-    override fun loadValuesIntoList(offset: Int, values: ArrayList<VKMessage>) {
+    override fun loadValuesIntoList(offset: Int, values: ArrayList<VKMessage>, isCache: Boolean) {
         Log.d(TAG, "loadValuesIntoList: " + offset + ", " + values.size)
         if (values.isEmpty()) return
 
         values.reverse()
 
         if (adapter == null) {
-            adapter = MessageAdapter(this, values)
-            adapter!!.setOnItemClickListener(this)
+            adapter = MessageAdapter(this, values).also {
+                it.onItemClickListener = this
+            }
+
+            adapter!!.addFooter(generateEmptyView())
+
             recyclerView!!.adapter = adapter
             return
         }
+
         if (recyclerView!!.adapter == null) {
             recyclerView!!.adapter = adapter
         }
+
         if (offset == 0) {
             recyclerView!!.scrollToPosition(adapter!!.itemCount - 1)
         }
+
         if (offset > 0) {
             adapter!!.addAll(values)
-            adapter!!.notifyDataSetChanged()
+            adapter!!.notifyItemRangeInserted(offset, values.size)
             return
         }
-        adapter!!.changeItems(values)
+
+        adapter!!.values = values
         adapter!!.notifyDataSetChanged()
+    }
+
+    private fun generateEmptyView(): View {
+        return View(this).apply {
+            isFocusable = false
+            isClickable = false
+            isEnabled = false
+            layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, AndroidUtils.px(96f))
+        }
     }
 
     override fun clearList() {

@@ -63,8 +63,6 @@ import ru.melod1n.vk.database.DatabaseHelper.Companion.UNREAD_COUNT
 import ru.melod1n.vk.database.DatabaseHelper.Companion.USER_ID
 import ru.melod1n.vk.database.DatabaseHelper.Companion.VERIFIED
 import ru.melod1n.vk.util.Util
-import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.math.abs
 
 @Suppress("UNCHECKED_CAST")
@@ -103,11 +101,11 @@ object CacheStorage {
     private fun insert(table: String, values: ArrayList<*>) {
         AppGlobal.database.beginTransaction()
 
-        val cv = ContentValues()
-
         for (i in values.indices) {
+            val cv = ContentValues()
 
             val item = values[i] as VKModel
+
             when (table) {
                 TABLE_MESSAGES -> putValues(item as VKMessage, cv)
                 TABLE_CONVERSATIONS -> putValues(item as VKConversation, cv)
@@ -136,26 +134,7 @@ object CacheStorage {
 
     fun getMessage(id: Int): VKMessage? {
         val cursor = selectCursor(TABLE_MESSAGES, MESSAGE_ID, id)
-        if (cursor.count == 0) return null
-        cursor.moveToFirst()
-        val message = parseMessage(cursor)
-        cursor.close()
-        return message
-    }
 
-    val messages: ArrayList<VKMessage>
-        get() {
-            val cursor = selectCursor(TABLE_MESSAGES)
-            val messages = ArrayList<VKMessage>(cursor.count)
-            while (cursor.moveToNext()) {
-                messages.add(parseMessage(cursor))
-            }
-            cursor.close()
-            return messages
-        }
-
-    fun getMessageByPeerId(id: Int): VKMessage? {
-        val cursor = selectCursor(TABLE_MESSAGES, PEER_ID, id)
         if (cursor.count == 0) return null
 
         cursor.moveToFirst()
@@ -163,30 +142,34 @@ object CacheStorage {
         val message = parseMessage(cursor)
 
         cursor.close()
+
         return message
     }
 
     fun getMessages(peerId: Int): ArrayList<VKMessage> {
         val cursor = selectCursor(TABLE_MESSAGES, PEER_ID, peerId)
+
         val messages = ArrayList<VKMessage>(cursor.count)
+
         while (cursor.moveToNext()) {
             messages.add(parseMessage(cursor))
         }
+
         cursor.close()
-        messages.sortWith(Comparator { o1: VKMessage, o2: VKMessage ->
-            val x = o1.date
-            val y = o2.date
-            y - x
-        })
         return messages
     }
 
     fun getConversation(peerId: Int): VKConversation? {
         val cursor = selectCursor(TABLE_CONVERSATIONS, DatabaseHelper.CONVERSATION_ID, peerId)
+
         if (cursor.count == 0) return null
+
         cursor.moveToFirst()
+
         val conversation = parseConversation(cursor)
+
         cursor.close()
+
         return conversation
     }
 
@@ -324,101 +307,82 @@ object CacheStorage {
     }
 
     private fun putValues(message: VKMessage, values: ContentValues) {
-        values.apply {
-            put(MESSAGE_ID, message.id)
-            put(DATE, message.date)
-            put(PEER_ID, message.peerId)
-            put(FROM_ID, message.fromId)
-            put(EDIT_TIME, message.editTime)
-            put(OUT, if (message.isOut) 1 else 0)
-            put(CONVERSATION_MESSAGE_ID, message.conversationMessageId)
-            put(TEXT, message.text)
-            put(RANDOM_ID, message.randomId)
-            put(READ, message.isRead)
-            put(IMPORTANT, message.isImportant)
-        }
-
-        if (message.attachments != null) {
-            values.put(ATTACHMENTS, Util.serialize(message.attachments))
-        }
-
-        if (message.fwdMessages != null) {
-            values.put(FWD_MESSAGES, Util.serialize(message.fwdMessages))
-        }
-
-        if (message.replyMessage != null) {
-            values.put(REPLY_MESSAGE, Util.serialize(message.replyMessage))
-        }
-
-        if (message.action != null) {
-            values.put(ACTION, Util.serialize(message.action))
-        }
+        values.put(MESSAGE_ID, message.id)
+        values.put(DATE, message.date)
+        values.put(PEER_ID, message.peerId)
+        values.put(FROM_ID, message.fromId)
+        values.put(EDIT_TIME, message.editTime)
+        values.put(OUT, if (message.isOut) 1 else 0)
+        values.put(CONVERSATION_MESSAGE_ID, message.conversationMessageId)
+        values.put(TEXT, message.text)
+        values.put(RANDOM_ID, message.randomId)
+        values.put(READ, message.isRead)
+        values.put(IMPORTANT, message.isImportant)
+        values.put(ATTACHMENTS, Util.serialize(message.attachments))
+        values.put(FWD_MESSAGES, Util.serialize(message.fwdMessages))
+        values.put(REPLY_MESSAGE, Util.serialize(message.replyMessage))
+        values.put(ACTION, Util.serialize(message.action))
     }
 
     private fun putValues(conversation: VKConversation, values: ContentValues) {
-        values.apply {
-            put(PEER_ID, conversation.id)
-            put(IN_READ, conversation.inRead)
-            put(OUT_READ, conversation.outRead)
-            put(UNREAD_COUNT, conversation.unreadCount)
-            put(TYPE, conversation.type)
-            put(LOCAL_ID, conversation.localId)
-            put(DISABLED_UNTIL, conversation.disabledUntil)
-            put(IS_DISABLED_FOREVER, conversation.isDisabledForever)
-            put(IS_NO_SOUND, conversation.isNoSound)
-            put(MEMBERS_COUNT, conversation.membersCount)
-            put(TITLE, conversation.title)
-            put(PINNED_MESSAGE, Util.serialize(conversation.pinnedMessage ?: VKPinnedMessage()))
-            put(STATE, conversation.state)
-            put(ACTIVE_IDS, Util.serialize(conversation.activeIds ?: arrayOf<Int>()))
-            put(IS_GROUP_CHANNEL, conversation.isGroupChannel)
-            put(PHOTO_50, conversation.photo50)
-            put(PHOTO_100, conversation.photo100)
-            put(PHOTO_200, conversation.photo200)
-        }
+        values.put(PEER_ID, conversation.id)
+        values.put(IN_READ, conversation.inRead)
+        values.put(OUT_READ, conversation.outRead)
+        values.put(UNREAD_COUNT, conversation.unreadCount)
+        values.put(TYPE, conversation.type)
+        values.put(LOCAL_ID, conversation.localId)
+        values.put(DISABLED_UNTIL, conversation.disabledUntil)
+        values.put(IS_DISABLED_FOREVER, conversation.isDisabledForever)
+        values.put(IS_NO_SOUND, conversation.isNoSound)
+        values.put(MEMBERS_COUNT, conversation.membersCount)
+        values.put(TITLE, conversation.title ?: "")
+        values.put(PINNED_MESSAGE, Util.serialize(conversation.pinnedMessage))
+        values.put(STATE, conversation.state)
+        values.put(ACTIVE_IDS, Util.serialize(conversation.activeIds))
+        values.put(IS_GROUP_CHANNEL, conversation.isGroupChannel)
+        values.put(PHOTO_50, conversation.photo50)
+        values.put(PHOTO_100, conversation.photo100)
+        values.put(PHOTO_200, conversation.photo200)
+        values.put(LAST_MESSAGE_ID, conversation.lastMessageId)
     }
 
     private fun putValues(user: VKUser, values: ContentValues, isFriend: Boolean) {
         if (isFriend) {
-            values.put(USER_ID, UserConfig.getUserId())
+            values.put(USER_ID, UserConfig.userId)
             values.put(FRIEND_ID, user.id)
             return
         }
-        values.apply {
-            put(USER_ID, user.id)
-            put(FIRST_NAME, user.firstName)
-            put(LAST_NAME, user.lastName)
-            put(DEACTIVATED, user.deactivated)
-            put(CLOSED, user.isClosed)
-            put(CAN_ACCESS_CLOSED, user.isCanAccessClosed)
-            put(SEX, user.sex)
-            put(SCREEN_NAME, user.screenName)
-            put(PHOTO_50, user.photo50)
-            put(PHOTO_100, user.photo100)
-            put(PHOTO_200, user.photo200)
-            put(ONLINE, user.isOnline)
-            put(ONLINE_MOBILE, user.isOnlineMobile)
-            put(STATUS, user.status)
-        }
+        values.put(USER_ID, user.id)
+        values.put(FIRST_NAME, user.firstName)
+        values.put(LAST_NAME, user.lastName)
+        values.put(DEACTIVATED, user.deactivated)
+        values.put(CLOSED, user.isClosed)
+        values.put(CAN_ACCESS_CLOSED, user.isCanAccessClosed)
+        values.put(SEX, user.sex)
+        values.put(SCREEN_NAME, user.screenName)
+        values.put(PHOTO_50, user.photo50)
+        values.put(PHOTO_100, user.photo100)
+        values.put(PHOTO_200, user.photo200)
+        values.put(ONLINE, user.isOnline)
+        values.put(ONLINE_MOBILE, user.isOnlineMobile)
+        values.put(STATUS, user.status)
 
         if (user.lastSeen != null) {
-            values.put(LAST_SEEN, Util.serialize(user.lastSeen ?: VKUser.LastSeen()))
+            values.put(LAST_SEEN, Util.serialize(user.lastSeen))
         }
         values.put(VERIFIED, user.isVerified)
     }
 
     private fun putValues(group: VKGroup, values: ContentValues) {
-        values.apply {
-            put(GROUP_ID, abs(group.id))
-            put(NAME, group.name)
-            put(SCREEN_NAME, group.screenName)
-            put(IS_CLOSED, group.isClosed)
-            put(DEACTIVATED, group.deactivated)
-            put(TYPE, group.type)
-            put(PHOTO_50, group.photo50)
-            put(PHOTO_100, group.photo100)
-            put(PHOTO_200, group.photo200)
-        }
+        values.put(GROUP_ID, abs(group.id))
+        values.put(NAME, group.name)
+        values.put(SCREEN_NAME, group.screenName)
+        values.put(IS_CLOSED, group.isClosed)
+        values.put(DEACTIVATED, group.deactivated)
+        values.put(TYPE, group.type)
+        values.put(PHOTO_50, group.photo50)
+        values.put(PHOTO_100, group.photo100)
+        values.put(PHOTO_200, group.photo200)
     }
 
     fun insertMessages(messages: ArrayList<VKMessage>) {

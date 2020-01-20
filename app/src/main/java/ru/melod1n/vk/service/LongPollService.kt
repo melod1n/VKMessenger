@@ -7,6 +7,7 @@ import android.util.ArrayMap
 import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
+import ru.melod1n.vk.api.UserConfig
 import ru.melod1n.vk.api.VKApi.messages
 import ru.melod1n.vk.api.VKLongPollParser
 import ru.melod1n.vk.api.model.VKLongPollServer
@@ -23,11 +24,11 @@ class LongPollService : Service() {
         thread = LowThread(Updater())
     }
 
-    override fun onBind(intent: Intent): IBinder? {
+    override fun onBind(intent: Intent?): IBinder? {
         return null
     }
 
-    override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (flags and START_FLAG_RETRY == 0) {
             Log.w(TAG, "Retry launch!")
         } else {
@@ -51,8 +52,10 @@ class LongPollService : Service() {
 
     private inner class Updater : Runnable {
         override fun run() {
+
             var server: VKLongPollServer? = null
-            while (running) {
+
+            while (running && UserConfig.isLoggedIn) {
                 if (!AndroidUtils.hasConnection()) {
                     try {
                         Thread.sleep(5000)

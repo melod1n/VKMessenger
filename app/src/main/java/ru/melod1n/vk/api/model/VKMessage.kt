@@ -62,10 +62,10 @@ class VKMessage : VKModel, Serializable {
             val text = array.optString(5)
             message.text = text
             val o = array.optJSONObject(6)
-            val fromId = if (hasFlag(flags, "outbox")) UserConfig.getUserId() else o?.optInt("from")
+            val fromId = if (hasFlag(flags, "outbox")) UserConfig.userId else o?.optInt("from")
                     ?: peerId
             message.fromId = fromId
-            val out = hasFlag(flags, "outbox") || fromId == UserConfig.getUserId()
+            val out = hasFlag(flags, "outbox") || fromId == UserConfig.userId
             message.isOut = out
             val editTime = array.optInt(10)
             message.editTime = editTime

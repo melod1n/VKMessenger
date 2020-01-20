@@ -137,6 +137,10 @@ class VKConversation : VKModel, Serializable {
         }
     }
 
+    constructor(oConversation: JSONObject, oMessage: JSONObject) : this(oConversation) {
+        lastMessage = VKMessage(oMessage)
+    }
+
     val isChat: Boolean
         get() = type == TYPE_CHAT
 

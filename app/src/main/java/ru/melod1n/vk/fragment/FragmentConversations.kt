@@ -17,7 +17,7 @@ import kotlinx.android.synthetic.main.recycler_view.*
 import ru.melod1n.vk.R
 import ru.melod1n.vk.activity.MainActivity
 import ru.melod1n.vk.activity.MessagesActivity
-import ru.melod1n.vk.adapter.conversations.ConversationAdapter
+import ru.melod1n.vk.adapter.ConversationAdapter
 import ru.melod1n.vk.api.model.VKConversation
 import ru.melod1n.vk.common.AppGlobal
 import ru.melod1n.vk.current.BaseAdapter
@@ -42,9 +42,7 @@ class FragmentConversations : BaseFragment, BaseContract.View<VKConversation>, O
     constructor()
 
     override fun onRefresh() {
-        presenter.onValuesLoading()
-        presenter.onRequestClearList()
-        presenter.onRequestLoadValues(0, 0, CONVERSATIONS_COUNT)
+        refreshData()
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -57,11 +55,28 @@ class FragmentConversations : BaseFragment, BaseContract.View<VKConversation>, O
         prepareRefreshLayout()
         prepareRecyclerView()
 
+
+        //TODO: переписать этот шлак
+        loadCachedData()
+
         if (AndroidUtils.hasConnection()) {
-            onRefresh()
-        } else {
-            presenter.onRequestLoadCachedValues(0, 0, CONVERSATIONS_COUNT)
+            refreshData()
         }
+
+        // /TODO: переписать этот шлак
+    }
+
+    private fun refreshData() {
+        if (AndroidUtils.hasConnection()) {
+            presenter.onValuesLoading()
+            presenter.onRequestLoadValues(0, 0, CONVERSATIONS_COUNT)
+        } else {
+            swipeRefreshLayout.isRefreshing = false
+        }
+    }
+
+    private fun loadCachedData() {
+        presenter.onRequestLoadCachedValues(0, 0, CONVERSATIONS_COUNT)
     }
 
     private fun openChat(position: Int) {
@@ -69,11 +84,12 @@ class FragmentConversations : BaseFragment, BaseContract.View<VKConversation>, O
 
         val peerUser = getUser(conversation.id)
         val peerGroup = getGroup(conversation.id)
-        val data = Bundle()
 
-        data.putSerializable(MessagesActivity.TAG_EXTRA_CONVERSATION, conversation)
-        data.putString(MessagesActivity.TAG_EXTRA_TITLE, adapter!!.getTitle(conversation, peerUser, peerGroup))
-        data.putString(MessagesActivity.TAG_EXTRA_AVATAR, adapter!!.getAvatar(conversation, peerUser, peerGroup))
+        val data = Bundle().apply {
+            putSerializable(MessagesActivity.TAG_EXTRA_CONVERSATION, conversation)
+            putString(MessagesActivity.TAG_EXTRA_TITLE, adapter!!.getTitle(conversation, peerUser, peerGroup))
+            putString(MessagesActivity.TAG_EXTRA_AVATAR, adapter!!.getAvatar(conversation, peerUser, peerGroup))
+        }
 
         requireActivity().startActivityForResult(Intent(requireContext(), MessagesActivity::class.java).putExtras(data), MainActivity.REQUEST_CODE_FROM_DRAWER)
     }
@@ -94,6 +110,10 @@ class FragmentConversations : BaseFragment, BaseContract.View<VKConversation>, O
 
         recyclerView.addItemDecoration(decoration)
         recyclerView.layoutManager = manager
+    }
+
+    fun getRecyclerView(): RecyclerView {
+        return recyclerView
     }
 
     override fun onItemClick(position: Int) {
@@ -120,22 +140,20 @@ class FragmentConversations : BaseFragment, BaseContract.View<VKConversation>, O
     }
 
     override fun showRefreshLayout(visible: Boolean) {
-        Log.d(TAG, "showRefreshLayout: $visible")
         swipeRefreshLayout.isRefreshing = visible
     }
 
     override fun showProgressBar(visible: Boolean) {
-        Log.d(TAG, "showProgressBar: $visible")
         progressBar.visibility = if (visible) View.VISIBLE else View.GONE
     }
 
-    override fun loadValuesIntoList(offset: Int, values: ArrayList<VKConversation>) {
-        Log.d(TAG, "loadValuesIntoList: $offset, ${values.size}")
+    override fun loadValuesIntoList(offset: Int, values: ArrayList<VKConversation>, isCache: Boolean) {
+        Log.d(TAG, "loadValuesIntoList: $offset, ${values.size}, isCache: $isCache")
 
         if (values.isEmpty()) return
 
         if (adapter == null) {
-            adapter = ConversationAdapter(this, values).also { it.setOnItemClickListener(this) }
+            adapter = ConversationAdapter(this, values).also { it.onItemClickListener = this }
             recyclerView.adapter = adapter
             return
         }
@@ -148,13 +166,12 @@ class FragmentConversations : BaseFragment, BaseContract.View<VKConversation>, O
             adapter!!.apply {
                 addAll(values)
                 notifyItemRangeInserted(offset, values.size)
-                notifyItemRangeChanged(0, adapter!!.itemCount, 0)
             }
             return
         }
 
-        adapter!!.changeItems(values)
-        adapter!!.notifyItemRangeChanged(0, adapter!!.itemCount, 0)
+        adapter!!.values = values
+        adapter!!.notifyDataSetChanged()
     }
 
     override fun clearList() {
@@ -165,7 +182,7 @@ class FragmentConversations : BaseFragment, BaseContract.View<VKConversation>, O
     }
 
     override fun onDetach() {
-        if (adapter != null) adapter!!.destroy()
+        if (adapter != null) adapter!!.onDestroy()
         super.onDetach()
     }
 }

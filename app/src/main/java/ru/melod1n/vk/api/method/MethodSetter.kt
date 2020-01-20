@@ -3,8 +3,6 @@ package ru.melod1n.vk.api.method
 import android.util.ArrayMap
 import ru.melod1n.vk.api.UserConfig
 import ru.melod1n.vk.api.VKApi
-import ru.melod1n.vk.api.VKApi.OnResponseListener
-import ru.melod1n.vk.api.VKApi.execute
 import ru.melod1n.vk.api.model.VKModel
 import ru.melod1n.vk.util.ArrayUtil
 import java.io.UnsupportedEncodingException
@@ -45,7 +43,7 @@ open class MethodSetter(private val name: String) {
 
     private fun getSignedUrl(isPost: Boolean): String {
         if (!params.containsKey("access_token")) {
-            params["access_token"] = UserConfig.getToken()
+            params["access_token"] = UserConfig.token
         }
         if (!params.containsKey("v")) {
             params["v"] = VKApi.API_VERSION
@@ -76,11 +74,11 @@ open class MethodSetter(private val name: String) {
     }
 
     fun <E> execute(cls: Class<E>): ArrayList<E>? {
-        return execute(signedUrl, cls)
+        return VKApi.execute(signedUrl, cls)
     }
 
-    fun <E> execute(cls: Class<E>, listener: OnResponseListener<E>?) {
-        execute(signedUrl, cls, listener)
+    fun <E> execute(cls: Class<E>, listener: VKApi.OnResponseListener<E>?) {
+        VKApi.execute(signedUrl, cls, listener)
     }
 
     fun <E : VKModel> tryExecute(cls: Class<E>): ArrayList<E>? {
