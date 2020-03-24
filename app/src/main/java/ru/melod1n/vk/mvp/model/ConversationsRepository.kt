@@ -14,7 +14,7 @@ import ru.melod1n.vk.util.ArrayUtil
 
 class ConversationsRepository : BaseContract.Repository<VKConversation>() {
     override fun loadCachedValues(id: Int, offset: Int, count: Int): ArrayList<VKConversation> {
-        val conversations = ArrayUtil.manipulate(CacheStorage.getConversations(count), offset, count)
+        val conversations = ArrayUtil.cut(CacheStorage.getConversations(count), offset, count)
         val dialogs = ArrayList<VKConversation>(conversations.size)
 
         conversations.sortWith(Comparator { o1: VKConversation, o2: VKConversation ->

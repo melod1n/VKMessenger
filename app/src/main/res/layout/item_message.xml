@@ -1,28 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/messageRoot"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:id="@+id/messageRoot"
     android:orientation="vertical"
     tools:gravity="end">
 
-    <TextView
-        android:id="@+id/messageText"
+    <ru.melod1n.vk.widget.BoundedLinearLayout
+        android:id="@+id/messageBubble"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginTop="4dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="4dp"
-        android:paddingStart="14dp"
-        android:paddingTop="10dp"
-        android:paddingEnd="14dp"
-        android:paddingBottom="10dp"
-        tools:background="@drawable/ic_message_bubble_out_simple"
-        tools:gravity="end"
-        tools:text="Some text"
-        tools:textColor="?android:textColorPrimary" />
+        android:gravity="center_horizontal"
+        android:orientation="horizontal"
+        tools:background="@drawable/ic_message_bubble_out_simple">
+
+        <TextView
+            android:id="@+id/messageText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingStart="14dp"
+            android:paddingTop="10dp"
+            android:paddingEnd="14dp"
+            android:paddingBottom="10dp"
+            tools:gravity="end"
+            tools:text="Some text"
+            tools:textColor="?android:textColorPrimary" />
+
+    </ru.melod1n.vk.widget.BoundedLinearLayout>
 
     <TextView
         android:id="@+id/messageDate"
@@ -33,6 +42,7 @@
         android:textColor="?android:textColorSecondary"
         android:textSize="9sp"
         tools:ignore="SmallSp"
-        tools:text="10:15" />
+        tools:text="10:15"
+        tools:visibility="visible" />
 
 </LinearLayout>

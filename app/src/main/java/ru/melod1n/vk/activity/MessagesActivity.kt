@@ -23,6 +23,7 @@ import ru.melod1n.vk.api.UserConfig
 import ru.melod1n.vk.api.VKApi
 import ru.melod1n.vk.api.model.VKConversation
 import ru.melod1n.vk.api.model.VKMessage
+import ru.melod1n.vk.api.util.VKUtil
 import ru.melod1n.vk.common.AppGlobal
 import ru.melod1n.vk.common.TaskManager
 import ru.melod1n.vk.current.BaseAdapter
@@ -51,6 +52,8 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
     private var title: String? = null
     private var avatar: String? = null
 
+    private var lastMessageText = ""
+
     private var peerId = 0
 
     private var presenter: Presenter<VKMessage>? = null
@@ -68,7 +71,6 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
 
         adapter?.onDestroy()
         presenter = null
-
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -90,7 +92,9 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
             viewedDialogs.add(peerId)
             onLoad()
         } else {
-            presenter!!.onRequestLoadCachedValues(peerId, 0, MESSAGES_COUNT)
+
+            onLoad()
+//            presenter!!.onRequestLoadCachedValues(peerId, 0, MESSAGES_COUNT)
         }
     }
 
@@ -143,6 +147,8 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
     private fun sendMessage(text: String) {
         adapter ?: return
 
+        lastMessageText = text
+
         val message = VKMessage().apply {
             this.date = (System.currentTimeMillis() / 1000).toInt()
             this.text = text
@@ -152,10 +158,12 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
             this.randomId = Random.nextInt()
         }
 
-        adapter!!.notifyItemInserted(adapter!!.itemCount - 1)
-        adapter!!.add(message)
+        chatMessage.setText("")
 
-        recyclerView.smoothScrollToPosition(adapter!!.realItemCount - 1)
+        adapter!!.add(message)
+        adapter!!.notifyDataSetChanged()
+
+        recyclerView.smoothScrollToPosition(adapter!!.itemCount - 1)
 
         TaskManager.execute {
             VKApi.messages().send()
@@ -222,7 +230,7 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
         Log.d(TAG, "loadValuesIntoList: " + offset + ", " + values.size)
         if (values.isEmpty()) return
 
-        values.reverse()
+        VKUtil.sortMessagesByDate(values, false)
 
         if (adapter == null) {
             adapter = MessageAdapter(this, values).also {

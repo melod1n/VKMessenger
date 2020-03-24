@@ -31,6 +31,7 @@ class VKLongPollParser {
         }
 
         private const val TAG = "VKLongPollParser"
+
         private val listeners = ArrayList<OnEventListener>()
         private val messagesListeners: MutableList<OnMessagesListener> = ArrayList()
 

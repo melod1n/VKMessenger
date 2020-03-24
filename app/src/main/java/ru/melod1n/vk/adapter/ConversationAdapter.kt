@@ -12,6 +12,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.amulyakhare.textdrawable.TextDrawable
 import com.squareup.picasso.Picasso
 import ru.melod1n.vk.R
 import ru.melod1n.vk.api.UserConfig
@@ -27,10 +28,14 @@ import ru.melod1n.vk.database.CacheStorage
 import ru.melod1n.vk.database.DatabaseHelper
 import ru.melod1n.vk.database.MemoryCache
 import ru.melod1n.vk.fragment.FragmentConversations
+import ru.melod1n.vk.fragment.FragmentSettings
+import ru.melod1n.vk.util.AndroidUtils
 import ru.melod1n.vk.util.ArrayUtil
 import ru.melod1n.vk.widget.CircleImageView
+import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.abs
+import kotlin.math.exp
 
 class ConversationAdapter(var fragmentConversations: FragmentConversations, values: ArrayList<VKConversation>) : BaseAdapter<VKConversation, ConversationAdapter.ViewHolder>(fragmentConversations.requireContext(), values),
         OnMinuteChangeListener,
@@ -38,13 +43,13 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
         VKLongPollParser.OnEventListener {
 
     init {
-        VKLongPollParser.addOnMessagesListener(this)
-        VKLongPollParser.addOnEventListener(this)
+//        VKLongPollParser.addOnMessagesListener(this)
+//        VKLongPollParser.addOnEventListener(this)
     }
 
     override fun onDestroy() {
-        VKLongPollParser.removeOnMessagesListener(this)
-        VKLongPollParser.removeOnEventListener(this)
+//        VKLongPollParser.removeOnMessagesListener(this)
+//        VKLongPollParser.removeOnEventListener(this)
     }
 
     override fun onCreateViewHolder(viewGroup: ViewGroup, type: Int): ViewHolder {
@@ -220,6 +225,8 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
             layoutManager.scrollToPosition(0)
         }
 
+        notifyDataSetChanged()
+
     }
 
     private fun prepareConversation(conversation: VKConversation, newMessage: VKMessage): VKConversation {
@@ -295,17 +302,30 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
         private val placeholderNormal: Drawable = ColorDrawable(Color.TRANSPARENT)
         private val colorHighlight = AppGlobal.colorAccent
 
+        private val isExtended = AppGlobal.preferences.getBoolean(FragmentSettings.KEY_EXTENDED_CONVERSATIONS, false)
+
         override fun bind(position: Int) {
             val conversation = getItem(position)
 
-            val lastMessage = CacheStorage.getMessage(conversation.lastMessageId) ?: conversation.lastMessage!!
+            val lastMessage = CacheStorage.getMessage(conversation.lastMessageId)
+                    ?: conversation.lastMessage!!
 
             val peerUser = searchPeerUser(lastMessage)
             val fromUser = searchFromUser(lastMessage)
             val peerGroup = searchPeerGroup(lastMessage)
             val fromGroup = searchFromGroup(lastMessage)
 
-            title.text = getTitle(conversation, peerUser, peerGroup)
+            val avatarSize = AndroidUtils.px(if (isExtended) 75F else 68F)
+
+            avatar.layoutParams.apply {
+                height = avatarSize
+                width = avatarSize
+            }
+
+            text.maxLines = if (isExtended) 2 else 1
+
+            val dialogTitle = getTitle(conversation, peerUser, peerGroup)
+            title.text = dialogTitle
 
             val onlineIcon = getOnlineIcon(conversation, peerUser)
 
@@ -316,13 +336,19 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
 
             if ((conversation.isChat || lastMessage.isOut) && !conversation.isGroupChannel) {
                 userAvatar!!.visibility = View.VISIBLE
-                loadImage(getUserAvatar(lastMessage, fromUser, fromGroup) ?: "", userAvatar)
+                loadImage(getUserAvatar(lastMessage, fromUser, fromGroup), userAvatar, placeholderNormal)
             } else {
                 userAvatar!!.visibility = View.GONE
                 userAvatar!!.setImageDrawable(null)
             }
 
-            loadImage(getAvatar(conversation, peerUser, peerGroup) ?: "", avatar)
+            val dialogAvatarPlaceholder = TextDrawable
+                    .builder()
+                    .buildRound(if (dialogTitle.isEmpty()) "" else dialogTitle.substring(0, 1), AppGlobal.colorAccent)
+
+            avatar.setImageDrawable(dialogAvatarPlaceholder)
+
+            loadImage(getAvatar(conversation, peerUser, peerGroup), avatar, dialogAvatarPlaceholder)
 
             val dDialogType = getDialogType(conversation)
 
@@ -338,9 +364,14 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
 
             if (lastMessage.action == null) {
                 if (!ArrayUtil.isEmpty(lastMessage.attachments)) {
-                    val attachmentText = getAttachmentText(lastMessage.attachments!!)
+                    val attachmentString = getAttachmentText(lastMessage.attachments!!)
+
+                    val attachmentText = if (lastMessage.text.isNullOrEmpty()) attachmentString else (lastMessage.text + " " + attachmentString)
+
+                    val startIndex = if (lastMessage.text.isNullOrEmpty()) 0 else lastMessage.text!!.length
+
                     val span = SpannableString(attachmentText).apply {
-                        setSpan(ForegroundColorSpan(colorHighlight), 0, attachmentText.length, 0)
+                        setSpan(ForegroundColorSpan(colorHighlight), startIndex, attachmentText.length, 0)
                     }
 
                     val attachmentDrawable = getAttachmentDrawable(lastMessage.attachments!!)
@@ -378,9 +409,11 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
                 text.text = span
             }
 
-            val read = (lastMessage.isOut && conversation.outRead == conversation.lastMessageId || !lastMessage.isOut && conversation.inRead == conversation.lastMessageId) && conversation.lastMessageId == lastMessage.id
+            text.text = if (text.maxLines == 1) text.text.toString().replace("\n", " ") else text.text
 
-            if (read) {
+            val isRead = (lastMessage.isOut && conversation.outRead == conversation.lastMessageId || !lastMessage.isOut && conversation.inRead == conversation.lastMessageId) && conversation.lastMessageId == lastMessage.id
+
+            if (isRead) {
                 dialogCounter.visibility = View.GONE
                 dialogOut.visibility = View.GONE
             } else {
@@ -394,63 +427,108 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
                     dialogCounter.text = conversation.unreadCount.toString()
                 }
             }
+
             dialogDate.text = getTime(lastMessage)
             dialogCounter.background.setTint(if (conversation.isNotificationsDisabled) Color.GRAY else colorHighlight)
         }
 
-        //TODO: переделать
-        private fun getTime(lastMessage: VKMessage?): String {
-            val time = lastMessage!!.date * 1000L
-            val thenCal: Calendar = GregorianCalendar()
-            thenCal.timeInMillis = time
-            val nowCal: Calendar = GregorianCalendar()
-            nowCal.timeInMillis = System.currentTimeMillis()
-            val thisDay = thenCal[Calendar.DAY_OF_YEAR] == nowCal[Calendar.DAY_OF_YEAR]
-            //            boolean thisWeek = thenCal.get(Calendar.WEEK_OF_YEAR) == nowCal.get(Calendar.WEEK_OF_YEAR);
-            val thisMonth = thenCal[Calendar.MONTH] == nowCal[Calendar.MONTH]
-            val thisYear = thenCal[Calendar.YEAR] == nowCal[Calendar.YEAR]
-            val thisHour = thisDay && thenCal[Calendar.HOUR_OF_DAY] == nowCal[Calendar.HOUR_OF_DAY]
-            val thisMinute = thisHour && thenCal[Calendar.MINUTE] == nowCal[Calendar.MINUTE]
-            val isNow = thisMinute && nowCal[Calendar.SECOND] < 59
-            var stringRes = -1
-            var integer = -1
-            if (thisYear) {
-                if (thisMonth) {
-                    if (thisDay) {
-                        if (thisHour) {
-                            if (thisMinute) {
-                                if (isNow) {
-                                    stringRes = R.string.time_format_now
-                                }
-                            } else {
-                                integer = nowCal[Calendar.MINUTE] - thenCal[Calendar.MINUTE]
-                                stringRes = R.string.time_format_minute
-                            }
-                        } else {
-                            integer = nowCal[Calendar.HOUR_OF_DAY] - thenCal[Calendar.HOUR_OF_DAY]
-                            stringRes = R.string.time_format_hour
-                        }
-                    } else {
-                        integer = nowCal[Calendar.DAY_OF_YEAR] - thenCal[Calendar.DAY_OF_YEAR]
-                        if (integer > 6) {
-                            integer /= 7
-                            stringRes = R.string.time_format_week
-                        } else {
-                            stringRes = R.string.time_format_day
-                        }
-                    }
-                } else {
-                    integer = nowCal[Calendar.MONTH] - thenCal[Calendar.MONTH]
-                    stringRes = R.string.time_format_month
-                }
-            } else {
-                integer = nowCal[Calendar.YEAR] - thenCal[Calendar.YEAR]
-                stringRes = R.string.time_format_year
+        private fun getTime(lastMessage: VKMessage): String {
+            val then = lastMessage.date * 1000L
+            val now = System.currentTimeMillis()
+
+            val change = now - then
+
+            val seconds = change / 1000
+
+            if (seconds == 0L) {
+                return context.getString(R.string.time_format_now)
             }
-            return if (stringRes != -1) {
-                val s = context.getString(stringRes)
-                if (integer > 0) String.format(s, integer) else s
-            } else ""
+
+            val minutes = seconds / 60
+
+            if (minutes == 0L) {
+                return context.getString(R.string.time_format_second, seconds)
+            }
+
+            val hours = minutes / 60
+
+            if (hours == 0L) {
+                return context.getString(R.string.time_format_minute, minutes)
+            }
+
+            val days = hours / 24
+
+            if (days == 0L) {
+                return context.getString(R.string.time_format_hour, hours)
+            }
+
+            val months = days / 30
+
+            if (months == 0L) {
+                return context.getString(R.string.time_format_day, days)
+            }
+
+            val years = months / 12
+
+            if (years == 0L) {
+                return context.getString(R.string.time_format_month, months)
+            } else if (years > 0L) {
+                return context.getString(R.string.time_format_year, years)
+            }
+
+            return SimpleDateFormat("HH:mm", Locale.getDefault()).format(then)
+
+//            val time = lastMessage.date * 1000L
+//            val thenCal: Calendar = GregorianCalendar()
+//            thenCal.timeInMillis = time
+//            val nowCal: Calendar = GregorianCalendar()
+//            nowCal.timeInMillis = System.currentTimeMillis()
+//            val thisDay = thenCal[Calendar.DAY_OF_YEAR] == nowCal[Calendar.DAY_OF_YEAR]
+//            //            boolean thisWeek = thenCal.get(Calendar.WEEK_OF_YEAR) == nowCal.get(Calendar.WEEK_OF_YEAR);
+//            val thisMonth = thenCal[Calendar.MONTH] == nowCal[Calendar.MONTH]
+//            val thisYear = thenCal[Calendar.YEAR] == nowCal[Calendar.YEAR]
+//            val thisHour = thisDay && thenCal[Calendar.HOUR_OF_DAY] == nowCal[Calendar.HOUR_OF_DAY]
+//            val thisMinute = thisHour && thenCal[Calendar.MINUTE] == nowCal[Calendar.MINUTE]
+//            val isNow = thisMinute && nowCal[Calendar.SECOND] < 59
+//            var stringRes = -1
+//            var integer = -1
+//            if (thisYear) {
+//                if (thisMonth) {
+//                    if (thisDay) {
+//                        if (thisHour) {
+//                            if (thisMinute) {
+//                                if (isNow) {
+//                                    stringRes = R.string.time_format_now
+//                                }
+//                            } else {
+//                                integer = nowCal[Calendar.MINUTE] - thenCal[Calendar.MINUTE]
+//                                stringRes = R.string.time_format_minute
+//                            }
+//                        } else {
+//                            integer = nowCal[Calendar.HOUR_OF_DAY] - thenCal[Calendar.HOUR_OF_DAY]
+//                            stringRes = R.string.time_format_hour
+//                        }
+//                    } else {
+//                        integer = nowCal[Calendar.DAY_OF_YEAR] - thenCal[Calendar.DAY_OF_YEAR]
+//                        if (integer > 6) {
+//                            integer /= 7
+//                            stringRes = R.string.time_format_week
+//                        } else {
+//                            stringRes = R.string.time_format_day
+//                        }
+//                    }
+//                } else {
+//                    integer = nowCal[Calendar.MONTH] - thenCal[Calendar.MONTH]
+//                    stringRes = R.string.time_format_month
+//                }
+//            } else {
+//                integer = nowCal[Calendar.YEAR] - thenCal[Calendar.YEAR]
+//                stringRes = R.string.time_format_year
+//            }
+//            return if (stringRes != -1) {
+//                val s = context.getString(stringRes)
+//                if (integer > 0) String.format(s, integer) else s
+//            } else ""
             //            DateFormat formatter =
 //                    (thenCal.get(Calendar.YEAR) == nowCal.get(Calendar.YEAR)
 //                            && thenCal.get(Calendar.MONTH) == nowCal.get(Calendar.MONTH)
@@ -687,12 +765,10 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
             }
         }
 
-        private fun loadImage(imageUrl: String, imageView: ImageView) {
-            if (!TextUtils.isEmpty(imageUrl)) { //TODO: переделать
-                Picasso.get().load(imageUrl).priority(Picasso.Priority.LOW).placeholder(placeholderNormal).into(imageView)
-            } else {
-                imageView.setImageDrawable(placeholderNormal)
-            }
+        private fun loadImage(image: String?, imageView: ImageView, placeholder: Drawable) {
+            if (image == null || image.isEmpty()) return
+
+            Picasso.get().load(image).priority(Picasso.Priority.LOW).placeholder(placeholder).into(imageView)
         }
 
         private fun getUserAvatar(message: VKMessage, fromUser: VKUser?, fromGroup: VKGroup?): String? {
@@ -742,6 +818,21 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
         }
     }
 
+    fun getId(conversation: VKConversation, peerUser: VKUser?, peerGroup: VKGroup?): Int {
+        if (conversation.isUser) {
+            if (peerUser != null) {
+                return peerUser.id
+            }
+        } else if (conversation.isGroup) {
+            if (peerGroup != null) {
+                return peerGroup.id
+            }
+        } else {
+            return conversation.id
+        }
+        return -1
+    }
+
     fun getTitle(conversation: VKConversation, peerUser: VKUser?, peerGroup: VKGroup?): String {
         if (conversation.isUser) {
             if (peerUser != null) {
@@ -754,7 +845,7 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
         } else {
             return conversation.title!!
         }
-        return "it\'s title"
+        return ""
     }
 
     fun getAvatar(conversation: VKConversation, peerUser: VKUser?, peerGroup: VKGroup?): String? {

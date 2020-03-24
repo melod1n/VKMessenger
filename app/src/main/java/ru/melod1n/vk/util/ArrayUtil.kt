@@ -162,7 +162,7 @@ object ArrayUtil {
         return false
     }
 
-    fun <E> manipulate(list: ArrayList<E>, offset: Int, count: Int): ArrayList<E> {
+    fun <E> cut(list: ArrayList<E>, offset: Int, count: Int): ArrayList<E> {
         var arrayList = list
 
         if (isEmpty(arrayList)) return arrayList

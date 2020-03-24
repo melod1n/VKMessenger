@@ -7,6 +7,7 @@ import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 
 object Util {
+
     fun serialize(source: Any?): ByteArray? {
         try {
             val bos = BytesOutputStream()

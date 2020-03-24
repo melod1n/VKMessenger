@@ -17,7 +17,7 @@ class MessagesRepository : BaseContract.Repository<VKMessage>() {
 
     override fun loadCachedValues(id: Int, offset: Int, count: Int): ArrayList<VKMessage> {
         val messages = getMessages(id)
-        return ArrayUtil.manipulate(messages, offset, count)
+        return ArrayUtil.cut(messages, offset, count)
     }
 
     override fun loadValues(id: Int, offset: Int, count: Int, listener: OnResponseListener<VKMessage>) {

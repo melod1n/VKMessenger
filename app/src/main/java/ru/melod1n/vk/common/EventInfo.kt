@@ -28,5 +28,6 @@ class EventInfo<T> {
         const val USER_UPDATE = "user_update"
         const val GROUP_UPDATE = "group_update"
         const val CONVERSATION_UPDATE = "conversation_update"
+        const val CONVERSATIONS_REFRESH = "conversations_refresh"
     }
 }

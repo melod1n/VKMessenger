@@ -7,6 +7,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -20,6 +21,7 @@ import ru.melod1n.vk.activity.MessagesActivity
 import ru.melod1n.vk.adapter.ConversationAdapter
 import ru.melod1n.vk.api.model.VKConversation
 import ru.melod1n.vk.common.AppGlobal
+import ru.melod1n.vk.common.EventInfo
 import ru.melod1n.vk.current.BaseAdapter
 import ru.melod1n.vk.current.BaseFragment
 import ru.melod1n.vk.database.MemoryCache.getGroup
@@ -28,7 +30,7 @@ import ru.melod1n.vk.mvp.contract.BaseContract
 import ru.melod1n.vk.mvp.presenter.ConversationsPresenter
 import ru.melod1n.vk.util.AndroidUtils
 
-class FragmentConversations : BaseFragment, BaseContract.View<VKConversation>, OnRefreshListener, BaseAdapter.OnItemClickListener {
+class FragmentConversations : BaseFragment, BaseContract.View<VKConversation>, OnRefreshListener, BaseAdapter.OnItemClickListener, FragmentSettings.OnEventListener {
 
     companion object {
         const val CONVERSATIONS_COUNT = 30
@@ -55,6 +57,7 @@ class FragmentConversations : BaseFragment, BaseContract.View<VKConversation>, O
         prepareRefreshLayout()
         prepareRecyclerView()
 
+        prepareListeners()
 
         //TODO: переписать этот шлак
         loadCachedData()
@@ -64,6 +67,18 @@ class FragmentConversations : BaseFragment, BaseContract.View<VKConversation>, O
         }
 
         // /TODO: переписать этот шлак
+    }
+
+    private fun prepareListeners() {
+        FragmentSettings.addOnEventListener(this)
+    }
+
+    override fun onNewEvent(event: EventInfo<*>) {
+        when (event.key) {
+            EventInfo.CONVERSATIONS_REFRESH -> {
+                //TODO
+            }
+        }
     }
 
     private fun refreshData() {
@@ -179,6 +194,11 @@ class FragmentConversations : BaseFragment, BaseContract.View<VKConversation>, O
         if (adapter == null) return
         adapter!!.clear()
         adapter!!.notifyDataSetChanged()
+    }
+
+    override fun onDestroy() {
+        FragmentSettings.removeOnEventListener(this)
+        super.onDestroy()
     }
 
     override fun onDetach() {

@@ -48,10 +48,10 @@
     <string name="pref_account_logout_title">Logout</string>
 
     <string name="time_format_now">now</string>
+    <string name="time_format_second">%ds</string>
     <string name="time_format_minute">%dm</string>
     <string name="time_format_hour">%dh</string>
     <string name="time_format_day">%dd</string>
-    <string name="time_format_week">%dw</string>
     <string name="time_format_month">%dm</string>
     <string name="time_format_year">%dy</string>
     <string name="prefs_about_app_version_title">Application version</string>
@@ -62,5 +62,6 @@
     <string name="token">Token</string>
     <string name="custom_data">Custom data</string>
     <string name="user_id">User Id</string>
+    <string name="prefs_appearance">Appearance</string>
 
 </resources>

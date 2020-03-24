@@ -1,6 +1,8 @@
 package ru.melod1n.vk.api.util
 
+import ru.melod1n.vk.api.model.VKMessage
 import java.io.*
+import java.util.*
 import java.util.regex.Pattern
 
 object VKUtil {
@@ -44,5 +46,18 @@ object VKUtil {
     fun parseProfileId(text: String?): String? {
         val m = pattern_profile_id.matcher(text)
         return if (!m.find()) null else m.group(2)
+    }
+
+    fun sortMessagesByDate(values: ArrayList<VKMessage>, reverse: Boolean): ArrayList<VKMessage> {
+        values.sortWith(Comparator { m1, m2 ->
+
+            if (reverse) {
+                m2.date - m1.date
+            } else {
+                m1.date - m2.date
+            }
+        })
+
+        return values
     }
 }
