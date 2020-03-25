@@ -17,7 +17,50 @@
             android:layout_marginTop="?actionBarSize"
             android:layout_marginBottom="68dp" />
 
-        <include layout="@layout/toolbar" />
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?actionBarSize"
+            android:gravity="center_vertical"
+            app:contentInsetStart="0dp"
+            app:contentInsetStartWithNavigation="0dp">
+
+            <ru.melod1n.vk.widget.CircleImageView
+                android:id="@+id/chatAvatar"
+                android:layout_width="?actionBarSize"
+                android:layout_height="?actionBarSize"
+                android:adjustViewBounds="true"
+                android:padding="8dp"
+                android:src="?colorAccent" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/chatTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/tt_commons_medium"
+                    android:textAppearance="?android:textAppearanceLarge"
+                    android:textColor="?colorAccent"
+                    tools:text="Title" />
+
+                <TextView
+                    android:id="@+id/chatInfo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:textAppearanceSmall"
+                    android:textColor="?android:textColorSecondary"
+                    tools:text="Offline"
+                    tools:visibility="visible" />
+
+            </LinearLayout>
+
+
+        </androidx.appcompat.widget.Toolbar>
 
         <ProgressBar
             android:id="@+id/progressBar"

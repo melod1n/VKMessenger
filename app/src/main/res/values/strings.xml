@@ -64,5 +64,15 @@
     <string name="user_id">User Id</string>
     <string name="prefs_appearance">Appearance</string>
     <string name="pref_appearance_extended_conversations_title">Conversations type</string>
+    <string name="loading">Loading&#8230;</string>
+
+    <string name="user_online">Online</string>
+    <string name="user_online_mobile">Online from mobile</string>
+    <string name="user_offline">Offline</string>
+    <string name="user_last_seen_at">Last seen at %s</string>
+
+    <string name="chat_members">%d members</string>
+    
+    <string name="group_channel_members">Channel • %d members</string>
 
 </resources>

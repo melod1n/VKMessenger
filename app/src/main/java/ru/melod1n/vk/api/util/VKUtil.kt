@@ -1,7 +1,10 @@
 package ru.melod1n.vk.api.util
 
+import ru.melod1n.vk.R
 import ru.melod1n.vk.activity.MessagesActivity
 import ru.melod1n.vk.api.model.VKMessage
+import ru.melod1n.vk.api.model.VKUser
+import ru.melod1n.vk.common.AppGlobal
 import ru.melod1n.vk.util.Util
 import java.io.*
 import java.text.SimpleDateFormat
@@ -78,5 +81,28 @@ object VKUtil {
                 messages.add(i - 1, MessagesActivity.TimeStamp(SimpleDateFormat("dd MMM", Locale.getDefault()).format(d1)))
             }
         }
+    }
+
+    fun getUserOnline(user: VKUser): String {
+        val r = AppGlobal.resources
+        return if (user.isOnline) {
+            if (user.isOnlineMobile) {
+                r.getString(R.string.user_online_mobile)
+            } else {
+                r.getString(R.string.user_online)
+            }
+        } else {
+            val lastSeen = user.lastSeen
+            if (lastSeen != null) {
+                r.getString(R.string.user_last_seen_at, getLastSeenTime(lastSeen.time * 1000L))
+            } else {
+                r.getString(R.string.user_offline)
+            }
+        }
+    }
+
+    //TODO: нормальное время
+    fun getLastSeenTime(date: Long): String {
+        return SimpleDateFormat("HH:mm", Locale.getDefault()).format(date)
     }
 }

@@ -3,6 +3,7 @@ package ru.melod1n.vk.common
 import android.util.Log
 import ru.melod1n.vk.api.VKApi
 import ru.melod1n.vk.api.VKApi.OnResponseListener
+import ru.melod1n.vk.api.VKLongPollParser
 import ru.melod1n.vk.api.method.MethodSetter
 import ru.melod1n.vk.api.model.VKConversation
 import ru.melod1n.vk.api.model.VKGroup
@@ -18,6 +19,17 @@ object TaskManager {
     private const val TAG = "TaskManager"
     private val currentTasksIds = ArrayList<Int>()
 
+    private val listeners = ArrayList<OnEventListener>()
+
+    fun addOnEventListener(onEventListener: OnEventListener) {
+        listeners.add(onEventListener)
+    }
+
+    fun removeOnEventListener(onEventListener: OnEventListener?) {
+        listeners.remove(onEventListener)
+    }
+
+
     fun execute(runnable: () -> Unit) {
         LowThread(runnable).start()
     }
@@ -31,7 +43,8 @@ object TaskManager {
             methodSetter.execute(className, object : OnResponseListener<T> {
                 override fun onSuccess(models: ArrayList<T>) {
                     onResponseListener?.onSuccess(models)
-                    if (pushInfo != null) { //                    EventBus.getDefault().postSticky(pushInfo);
+                    if (pushInfo != null) {
+                        sendEvent(pushInfo)
                     }
                 }
 
@@ -39,6 +52,14 @@ object TaskManager {
                     onResponseListener?.onError(e)
                 }
             })
+        }
+    }
+
+    private fun sendEvent(info: EventInfo<*>) {
+        AppGlobal.handler.post {
+            for (listener in listeners) {
+                listener.onNewEvent(info)
+            }
         }
     }
 
@@ -127,5 +148,9 @@ object TaskManager {
                 listener?.onError(e)
             }
         })
+    }
+
+    interface OnEventListener {
+        fun onNewEvent(event: EventInfo<*>)
     }
 }
