@@ -27,6 +27,9 @@
             android:enabled="true" />
 
         <activity android:name=".activity.MessagesActivity" />
+        <activity
+            android:name=".activity.StartActivity"
+            android:theme="@style/AppTheme.Start" />
     </application>
 
 </manifest>

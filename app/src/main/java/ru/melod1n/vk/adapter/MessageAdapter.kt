@@ -9,7 +9,6 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import ru.melod1n.vk.R
-import ru.melod1n.vk.activity.MessagesActivity
 import ru.melod1n.vk.api.model.VKMessage
 import ru.melod1n.vk.common.AppGlobal
 import ru.melod1n.vk.current.BaseAdapter
@@ -25,14 +24,14 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>) : BaseAdapt
 
     open inner class BaseHolder(v: View) : BaseAdapter.Holder(v) {
         override fun bind(position: Int) {
-
         }
     }
 
     override fun getItemViewType(position: Int): Int {
-        val type = if (values[position] is MessagesActivity.TimeStamp) TYPE_TIME_STAMP else 0
-
-        return type
+        return when (values[position]) {
+            is TimeStamp -> TYPE_TIME_STAMP
+            else -> 0
+        }
     }
 
     override fun onCreateViewHolder(viewGroup: ViewGroup, type: Int): BaseHolder {
@@ -43,10 +42,12 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>) : BaseAdapt
     }
 
     override fun onBindViewHolder(holder: BaseHolder, position: Int) {
-        if (getItem(position) is MessagesActivity.TimeStamp && holder is TimeStampHolder) holder.bind(position)
+        if (holder is TimeStampHolder) holder.bind(position)
         else
             super.onBindViewHolder(holder, position)
     }
+
+    class TimeStamp(var string: String = "") : VKMessage()
 
     inner class TimeStampHolder(v: View) : BaseHolder(v) {
 
@@ -54,13 +55,13 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>) : BaseAdapt
 
 
         override fun bind(position: Int) {
-            stamp.text = (getItem(position) as MessagesActivity.TimeStamp).string
+            stamp.text = (getItem(position) as TimeStamp).string
         }
     }
 
     open inner class ViewHolder(v: View) : BaseHolder(v) {
-        private val text: TextView = v.findViewById(R.id.messageText)
         private val date: TextView = v.findViewById(R.id.messageDate)
+        private val text: TextView = v.findViewById(R.id.messageText)
         private val root: LinearLayout = v.findViewById(R.id.messageRoot)
         private val bubble: BoundedLinearLayout = v.findViewById(R.id.messageBubble)
 
@@ -85,6 +86,8 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>) : BaseAdapt
             root.gravity = if (message.isOut) Gravity.END else Gravity.START
 
             date.text = SimpleDateFormat("HH:mm", Locale.getDefault()).format(message.date * 1000L)
+
+            date.visibility = if (message.isShowTime) View.VISIBLE else View.GONE
         }
     }
 

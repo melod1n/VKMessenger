@@ -131,6 +131,7 @@ open class VKMessage : VKModel, Serializable {
         }
     }
 
+    var isShowTime = true
     var id = 0
     var date = 0
     var peerId = 0

@@ -42,9 +42,11 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
     private var toggleDrawable: DrawerArrowDrawable? = null
     private var toggleClick: View.OnClickListener? = null
-    private val fragmentConversations = FragmentConversations(R.string.navigation_conversations)
+
+    private val fragmentConversations = FragmentConversations()
     private val fragmentSettings = FragmentSettings()
-    private val fragmentLogin = FragmentLogin(R.string.fragment_login)
+    private val fragmentLogin = FragmentLogin()
+
     private var selectedId = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -136,6 +138,8 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             UserConfig.token = token
             UserConfig.userId = userId
             UserConfig.save()
+        } else if (intent.hasExtra("open_login")) {
+            openLoginScreen()
         }
     }
 
@@ -149,12 +153,19 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 openConversationsScreen()
             }
         } else {
-            openLoginScreen()
+            if (!intent.hasExtra("open_login"))
+                openStartScreen()
         }
     }
 
     private fun startLongPoll() {
         startService(Intent(this, LongPollService::class.java))
+    }
+
+    private fun openStartScreen() {
+        finish()
+        startActivity(Intent(this, StartActivity::class.java))
+        overridePendingTransition(R.anim.activity_close_enter, R.anim.activity_close_exit)
     }
 
     private fun openLoginScreen() {

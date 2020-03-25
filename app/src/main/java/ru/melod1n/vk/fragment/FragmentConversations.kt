@@ -7,13 +7,14 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout.OnRefreshListener
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_messages.*
+import kotlinx.android.synthetic.main.no_internet_view.*
 import kotlinx.android.synthetic.main.recycler_view.*
 import ru.melod1n.vk.R
 import ru.melod1n.vk.activity.MainActivity
@@ -30,7 +31,7 @@ import ru.melod1n.vk.mvp.contract.BaseContract
 import ru.melod1n.vk.mvp.presenter.ConversationsPresenter
 import ru.melod1n.vk.util.AndroidUtils
 
-class FragmentConversations : BaseFragment, BaseContract.View<VKConversation>, OnRefreshListener, BaseAdapter.OnItemClickListener, FragmentSettings.OnEventListener {
+class FragmentConversations : BaseFragment(), BaseContract.View<VKConversation>, OnRefreshListener, BaseAdapter.OnItemClickListener, FragmentSettings.OnEventListener {
 
     companion object {
         const val CONVERSATIONS_COUNT = 30
@@ -40,8 +41,11 @@ class FragmentConversations : BaseFragment, BaseContract.View<VKConversation>, O
     private var adapter: ConversationAdapter? = null
     private lateinit var presenter: ConversationsPresenter
 
-    constructor(titleRes: Int) : super(titleRes)
-    constructor()
+    override fun onResume() {
+        super.onResume()
+
+        requireActivity().setTitle(R.string.navigation_conversations)
+    }
 
     override fun onRefresh() {
         refreshData()
@@ -57,16 +61,25 @@ class FragmentConversations : BaseFragment, BaseContract.View<VKConversation>, O
         prepareRefreshLayout()
         prepareRecyclerView()
 
+        prepareNoInternetView()
+
         prepareListeners()
 
-        //TODO: переписать этот шлак
         loadCachedData()
 
         if (AndroidUtils.hasConnection()) {
             refreshData()
         }
+    }
 
-        // /TODO: переписать этот шлак
+    private fun prepareNoInternetView() {
+        noInternetUpdate.setOnClickListener {
+            if (AndroidUtils.hasConnection()) {
+                refreshData()
+            } else {
+                Snackbar.make(noInternetView, R.string.no_connection, Snackbar.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun prepareListeners() {
@@ -83,9 +96,11 @@ class FragmentConversations : BaseFragment, BaseContract.View<VKConversation>, O
 
     private fun refreshData() {
         if (AndroidUtils.hasConnection()) {
+            showNoInternetView(false)
             presenter.onValuesLoading()
             presenter.onRequestLoadValues(0, 0, CONVERSATIONS_COUNT)
         } else {
+            showNoInternetView(true)
             swipeRefreshLayout.isRefreshing = false
         }
     }
@@ -140,7 +155,22 @@ class FragmentConversations : BaseFragment, BaseContract.View<VKConversation>, O
     }
 
     override fun showNoInternetView(visible: Boolean) {
-        Log.d(TAG, "showNoInternetView: $visible")
+        if (visible) clearList()
+
+        if (visible) {
+            noInternetView.apply {
+                alpha = 0f
+                visibility = View.VISIBLE
+                animate().alpha(1f).setDuration(250).start()
+            }
+        } else {
+            noInternetView.apply {
+                alpha = 1f
+                animate().alpha(0f).setDuration(250).withEndAction { visibility = View.GONE }.start()
+            }
+        }
+//
+//        noInternetView.visibility = if (visible) View.VISIBLE else View.GONE
     }
 
     override fun showErrorView(errorTitle: String, errorDescription: String) {
@@ -164,6 +194,11 @@ class FragmentConversations : BaseFragment, BaseContract.View<VKConversation>, O
 
     override fun loadValuesIntoList(offset: Int, values: ArrayList<VKConversation>, isCache: Boolean) {
         Log.d(TAG, "loadValuesIntoList: $offset, ${values.size}, isCache: $isCache")
+
+        if (isCache && values.isEmpty() && !AndroidUtils.hasConnection()) {
+            showNoInternetView(true)
+            return
+        }
 
         if (values.isEmpty()) return
 

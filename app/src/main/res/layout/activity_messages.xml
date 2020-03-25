@@ -27,10 +27,10 @@
 
             <ru.melod1n.vk.widget.CircleImageView
                 android:id="@+id/chatAvatar"
-                android:layout_width="?actionBarSize"
-                android:layout_height="?actionBarSize"
-                android:adjustViewBounds="true"
-                android:padding="8dp"
+                android:layout_width="45dp"
+                android:layout_height="45dp"
+                android:layout_marginStart="0dp"
+                android:layout_marginEnd="10dp"
                 android:src="?colorAccent" />
 
             <LinearLayout
@@ -69,6 +69,12 @@
             android:layout_gravity="center"
             tools:visibility="gone" />
 
+        <include
+            layout="@layout/no_items_view"
+            android:layout_width="match_parent"
+            android:visibility="gone"
+            android:layout_height="match_parent" />
+
         <LinearLayout
             android:id="@+id/chatPanel"
             android:layout_width="match_parent"
@@ -104,6 +110,12 @@
                 android:tint="?colorAccent" />
 
         </LinearLayout>
+
+        <include
+            layout="@layout/no_internet_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
 
     </FrameLayout>
 

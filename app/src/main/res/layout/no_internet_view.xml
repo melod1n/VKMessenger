@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/noInternetView"
+    android:background="?android:windowBackground"
+    android:gravity="center"
+    android:clickable="false"
+    android:orientation="vertical">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:srcCompat="@drawable/ic_no_internet" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:fontFamily="@font/tt_commons_regular"
+        android:text="@string/no_connection"
+        android:textAppearance="?android:textAppearanceMedium"
+        android:textSize="24sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/noInternetUpdate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:paddingStart="26dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="26dp"
+            android:paddingBottom="8dp"
+            android:text="@string/update"
+            android:textAllCaps="false"
+            android:textAppearance="?android:textAppearanceMedium"
+            app:backgroundTint="?colorAccent"
+            app:elevation="8dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/noInternetSettings"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:paddingStart="26dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="26dp"
+            android:paddingBottom="8dp"
+            android:text="@string/navigation_settings"
+            android:textAppearance="?android:textAppearanceMedium"
+            android:textColor="?colorAccent"
+            app:backgroundTint="@android:color/white"
+            app:elevation="8dp" />
+
+    </LinearLayout>
+
+</LinearLayout>

@@ -25,13 +25,17 @@ class FragmentLogin : BaseFragment {
     constructor(titleRes: Int) : super(titleRes)
     constructor() : super()
 
+    override fun onResume() {
+        super.onResume()
+        requireActivity().setTitle(R.string.fragment_login)
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_login, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        ButterKnife.bind(this, view)
         prepareSettings()
         prepareRefreshLayout()
         val url = VKAuth.getUrl(UserConfig.API_ID, VKAuth.settings)
@@ -89,8 +93,9 @@ class FragmentLogin : BaseFragment {
                     val intent = Intent(requireContext(), MainActivity::class.java)
                     intent.putExtra("token", token)
                     intent.putExtra("user_id", id)
+
+                    requireActivity().finishAffinity()
                     startActivity(intent)
-                    requireActivity().finish()
                 }
             }
         } catch (e: Exception) {

@@ -37,6 +37,7 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.2.0-alpha01'
     implementation 'androidx.cardview:cardview:1.0.0'
 
+    //noinspection AnnotationProcessorOnCompilePath
     implementation 'com.jakewharton:butterknife:10.2.1'
     annotationProcessor 'com.jakewharton:butterknife-compiler:10.2.1'
 
@@ -48,4 +49,6 @@ dependencies {
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.1'
 
     implementation 'com.amulyakhare:com.amulyakhare.textdrawable:1.0.1'
+
+//    implementation 'de.hdodenhof:circleimageview:3.1.0'
 }

@@ -2,7 +2,11 @@ package ru.melod1n.vk.activity
 
 import android.app.Activity
 import android.content.Intent
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.MenuItem
 import android.view.View
@@ -16,6 +20,8 @@ import com.amulyakhare.textdrawable.TextDrawable
 import com.google.android.material.navigation.NavigationView
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_messages.*
+import kotlinx.android.synthetic.main.no_internet_view.*
+import kotlinx.android.synthetic.main.no_items_view.*
 import kotlinx.android.synthetic.main.recycler_view.*
 import ru.melod1n.vk.R
 import ru.melod1n.vk.adapter.MessageAdapter
@@ -23,6 +29,7 @@ import ru.melod1n.vk.api.UserConfig
 import ru.melod1n.vk.api.VKApi
 import ru.melod1n.vk.api.model.VKConversation
 import ru.melod1n.vk.api.model.VKMessage
+import ru.melod1n.vk.api.model.VKModel
 import ru.melod1n.vk.api.util.VKUtil
 import ru.melod1n.vk.common.AppGlobal
 import ru.melod1n.vk.common.EventInfo
@@ -49,12 +56,21 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
         const val TAG_EXTRA_AVATAR = "avatar"
     }
 
+    private var isEdit = false
+
+    private var fabState = FabState.VOICE
+
+    private enum class FabState {
+        VOICE, SEND, EDIT, DELETE, BLOCKED
+    }
+
     private lateinit var conversation: VKConversation
 
     private var title: String? = null
     private var avatar: String? = null
 
     private var lastMessageText = ""
+    private var attachments = ArrayList<VKModel>()
 
     private var peerId = 0
 
@@ -89,7 +105,8 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
         prepareToolbar()
         prepareRefreshLayout()
         prepareRecyclerView()
-        prepareActionButton()
+        prepareEditText()
+        checkAllowedWriting()
 
         val viewedDialogs = MainActivity.viewedDialogs
 
@@ -101,6 +118,52 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
             onLoad()
 //            presenter!!.onRequestLoadCachedValues(peerId, 0, MESSAGES_COUNT)
         }
+
+        refreshFabStyle()
+    }
+
+    private fun checkAllowedWriting() {
+        if (conversation.isAllowed) {
+            fabState = FabState.VOICE
+            chatSend.imageTintList = ColorStateList.valueOf(AppGlobal.colorAccent)
+            chatMessage.isEnabled = true
+            chatPanel.setBackgroundResource(R.drawable.chat_panel_background)
+        } else {
+            fabState = FabState.BLOCKED
+            chatSend.imageTintList = ColorStateList.valueOf(Color.WHITE)
+            chatMessage.isEnabled = false
+            chatMessage.setHintTextColor(Color.WHITE)
+            chatMessage.setHint(R.string.no_access)
+            chatPanel.setBackgroundResource(R.drawable.chat_panel_background_blocked)
+        }
+    }
+
+    private fun prepareEditText() {
+        chatMessage.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(s: Editable?) {
+            }
+
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+            }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                fabState = if (count == 0) {
+                    if (isEdit) {
+                        FabState.DELETE
+                    } else {
+                        FabState.VOICE
+                    }
+                } else {
+                    if (isEdit) {
+                        FabState.EDIT
+                    } else {
+                        FabState.SEND
+                    }
+                }
+
+                refreshFabStyle()
+            }
+        })
     }
 
     override fun onNewEvent(event: EventInfo<*>) {
@@ -109,6 +172,81 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
                 setChatInfoText()
             }
         }
+    }
+
+    private fun refreshFabStyle() {
+        chatSend.isClickable = true
+        when (fabState) {
+            FabState.VOICE -> {
+                chatSend.apply {
+                    setImageResource(R.drawable.ic_mic)
+                    setOnClickListener {
+                        showVoiceTip()
+                    }
+                    setOnLongClickListener {
+                        recordVoice()
+                        true
+                    }
+                }
+            }
+            FabState.SEND -> {
+                chatSend.apply {
+                    setImageResource(R.drawable.ic_send)
+
+                    setOnClickListener {
+                        sendMessage(chatMessage.text.toString(), attachments)
+                    }
+
+                    setOnLongClickListener {
+                        sendMessage(chatMessage.text.toString(), attachments, false)
+                        true
+                    }
+                }
+            }
+            FabState.EDIT -> {
+                chatSend.apply {
+                    setImageResource(R.drawable.ic_done)
+
+                    setOnClickListener {
+                        //editMessage()
+                    }
+
+                    setOnLongClickListener {
+                        performClick()
+                        true
+                    }
+                }
+
+            }
+            FabState.DELETE -> {
+                chatSend.apply {
+                    setImageResource(R.drawable.ic_trash_outline)
+
+                    chatSend.setOnClickListener {
+                        //deleteMessage
+                    }
+
+                    chatSend.setOnLongClickListener {
+                        performClick()
+                        true
+                    }
+                }
+            }
+            FabState.BLOCKED -> {
+                chatSend.apply {
+                    isClickable = false
+                    setImageResource(R.drawable.ic_lock)
+                }
+            }
+        }
+    }
+
+    private fun recordVoice() {
+        Toast.makeText(this, "типо записывается войс (нет)", Toast.LENGTH_LONG).show()
+    }
+
+    private fun showVoiceTip() {
+        Toast.makeText(this, R.string.voice_record_tip, Toast.LENGTH_LONG).show()
     }
 
     private fun setChatInfoText() {
@@ -153,17 +291,6 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
         toolbar.setNavigationOnClickListener { onBackPressed() }
     }
 
-    private fun prepareActionButton() {
-        chatSend.setOnClickListener {
-            val message = chatMessage.text.toString().trim()
-            if (message.isEmpty()) {
-                return@setOnClickListener
-            } else {
-                sendMessage(message)
-            }
-        }
-    }
-
     private fun prepareRefreshLayout() {
         swipeRefreshLayout.isEnabled = false
     }
@@ -183,7 +310,7 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
         peerId = conversation.id
     }
 
-    private fun sendMessage(text: String) {
+    private fun sendMessage(text: String = "", attachments: ArrayList<VKModel>? = null, scrollToBottom: Boolean = true) {
         adapter ?: return
 
         lastMessageText = text
@@ -202,7 +329,8 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
         adapter!!.add(message)
         adapter!!.notifyDataSetChanged()
 
-        recyclerView.smoothScrollToPosition(adapter!!.itemCount - 1)
+        if (scrollToBottom)
+            recyclerView.smoothScrollToPosition(adapter!!.itemCount - 1)
 
         TaskManager.execute {
             VKApi.messages().send()
@@ -241,11 +369,35 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
     }
 
     override fun showNoItemsView(visible: Boolean) {
-        Log.d(TAG, "showNoItemsView: $visible")
+        if (visible) {
+            noItemsView.apply {
+                alpha = 0f
+                visibility = View.VISIBLE
+                animate().alpha(1f).setDuration(250).start()
+            }
+        } else {
+            noItemsView.apply {
+                alpha = 1f
+                animate().alpha(0f).setDuration(250).withEndAction { visibility = View.GONE }.start()
+            }
+        }
     }
 
     override fun showNoInternetView(visible: Boolean) {
-        Log.d(TAG, "showNoInternetView: $visible")
+        if (visible) clearList()
+
+        if (visible) {
+            noInternetView.apply {
+                alpha = 0f
+                visibility = View.VISIBLE
+                animate().alpha(1f).setDuration(250).start()
+            }
+        } else {
+            noInternetView.apply {
+                alpha = 1f
+                animate().alpha(0f).setDuration(250).withEndAction { visibility = View.GONE }.start()
+            }
+        }
     }
 
     override fun showErrorView(errorTitle: String, errorDescription: String) {
@@ -267,12 +419,13 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
 
     override fun loadValuesIntoList(offset: Int, values: ArrayList<VKMessage>, isCache: Boolean) {
         Log.d(TAG, "loadValuesIntoList: " + offset + ", " + values.size)
+
+        setChatInfoText()
+
         if (values.isEmpty()) return
 
         VKUtil.sortMessagesByDate(values, false)
         VKUtil.prepareList(values)
-
-        setChatInfoText()
 
         if (adapter == null) {
             adapter = MessageAdapter(this, values).also {
@@ -343,7 +496,6 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
 //        }
 //    }
 
-    class TimeStamp(var string: String = "") : VKMessage()
 
     override fun clearList() {
         Log.d(TAG, "clearList")

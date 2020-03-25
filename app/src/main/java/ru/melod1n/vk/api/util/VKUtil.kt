@@ -1,7 +1,7 @@
 package ru.melod1n.vk.api.util
 
 import ru.melod1n.vk.R
-import ru.melod1n.vk.activity.MessagesActivity
+import ru.melod1n.vk.adapter.MessageAdapter
 import ru.melod1n.vk.api.model.VKMessage
 import ru.melod1n.vk.api.model.VKUser
 import ru.melod1n.vk.common.AppGlobal
@@ -74,11 +74,13 @@ object VKUtil {
             val m1 = messages[i]
             val m2 = messages[i - 1]
 
+            //TODO: время показывается у последнего сообщения или если разница между сообщениями > 1 минуты
+
             val d1 = Util.removeTime(Date(m1.date * 1000L))
             val d2 = Util.removeTime(Date(m2.date * 1000L))
 
             if (d1 > d2) {
-                messages.add(i - 1, MessagesActivity.TimeStamp(SimpleDateFormat("dd MMM", Locale.getDefault()).format(d1)))
+                messages.add(i - 1, MessageAdapter.TimeStamp(SimpleDateFormat("dd MMM", Locale.getDefault()).format(d1)))
             }
         }
     }

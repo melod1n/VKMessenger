@@ -35,7 +35,6 @@ import ru.melod1n.vk.widget.CircleImageView
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.abs
-import kotlin.math.exp
 
 class ConversationAdapter(var fragmentConversations: FragmentConversations, values: ArrayList<VKConversation>) : BaseAdapter<VKConversation, ConversationAdapter.ViewHolder>(fragmentConversations.requireContext(), values),
         OnMinuteChangeListener,
@@ -302,7 +301,8 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
         private val placeholderNormal: Drawable = ColorDrawable(Color.TRANSPARENT)
         private val colorHighlight = AppGlobal.colorAccent
 
-        private val isExtended = Integer.parseInt(AppGlobal.preferences.getString(FragmentSettings.KEY_EXTENDED_CONVERSATIONS, "1") ?: "1") == 2
+        private val isExtended = Integer.parseInt(AppGlobal.preferences.getString(FragmentSettings.KEY_EXTENDED_CONVERSATIONS, "1")
+                ?: "1") == 2
 
         override fun bind(position: Int) {
             val conversation = getItem(position)
@@ -346,6 +346,7 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
                     .builder()
                     .buildRound(if (dialogTitle.isEmpty()) "" else dialogTitle.substring(0, 1), AppGlobal.colorAccent)
 
+
             avatar.setImageDrawable(dialogAvatarPlaceholder)
 
             loadImage(getAvatar(conversation, peerUser, peerGroup), avatar, dialogAvatarPlaceholder)
@@ -366,7 +367,7 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
                 if (!ArrayUtil.isEmpty(lastMessage.attachments)) {
                     val attachmentString = getAttachmentText(lastMessage.attachments!!)
 
-                    val attachmentText = if (lastMessage.text.isNullOrEmpty()) attachmentString else (lastMessage.text + " " + attachmentString)
+                    val attachmentText = if (lastMessage.text.isNullOrEmpty()) attachmentString else (lastMessage.text ?: "")
 
                     val startIndex = if (lastMessage.text.isNullOrEmpty()) 0 else lastMessage.text!!.length
 
@@ -389,7 +390,7 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
 
                     text.text = span
                 } else {
-                    text.text = lastMessage.text
+                    text.text = if (text.maxLines == 1) lastMessage.text.toString().replace("\n", " ") else lastMessage.text
                 }
             } else {
                 val actionText = getActionText(lastMessage)
@@ -408,8 +409,6 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
 
                 text.text = span
             }
-
-            text.text = if (text.maxLines == 1) text.text.toString().replace("\n", " ") else text.text
 
             val isRead = (lastMessage.isOut && conversation.outRead == conversation.lastMessageId || !lastMessage.isOut && conversation.inRead == conversation.lastMessageId) && conversation.lastMessageId == lastMessage.id
 
@@ -430,6 +429,10 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
 
             dialogDate.text = getTime(lastMessage)
             dialogCounter.background.setTint(if (conversation.isNotificationsDisabled) Color.GRAY else colorHighlight)
+        }
+
+        private fun replaceText(text: TextView) {
+            text.text = if (text.maxLines == 1) text.text.toString().replace("\n", " ") else text.text
         }
 
         private fun getTime(lastMessage: VKMessage): String {
@@ -477,99 +480,6 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
             }
 
             return SimpleDateFormat("HH:mm", Locale.getDefault()).format(then)
-
-//            val time = lastMessage.date * 1000L
-//            val thenCal: Calendar = GregorianCalendar()
-//            thenCal.timeInMillis = time
-//            val nowCal: Calendar = GregorianCalendar()
-//            nowCal.timeInMillis = System.currentTimeMillis()
-//            val thisDay = thenCal[Calendar.DAY_OF_YEAR] == nowCal[Calendar.DAY_OF_YEAR]
-//            //            boolean thisWeek = thenCal.get(Calendar.WEEK_OF_YEAR) == nowCal.get(Calendar.WEEK_OF_YEAR);
-//            val thisMonth = thenCal[Calendar.MONTH] == nowCal[Calendar.MONTH]
-//            val thisYear = thenCal[Calendar.YEAR] == nowCal[Calendar.YEAR]
-//            val thisHour = thisDay && thenCal[Calendar.HOUR_OF_DAY] == nowCal[Calendar.HOUR_OF_DAY]
-//            val thisMinute = thisHour && thenCal[Calendar.MINUTE] == nowCal[Calendar.MINUTE]
-//            val isNow = thisMinute && nowCal[Calendar.SECOND] < 59
-//            var stringRes = -1
-//            var integer = -1
-//            if (thisYear) {
-//                if (thisMonth) {
-//                    if (thisDay) {
-//                        if (thisHour) {
-//                            if (thisMinute) {
-//                                if (isNow) {
-//                                    stringRes = R.string.time_format_now
-//                                }
-//                            } else {
-//                                integer = nowCal[Calendar.MINUTE] - thenCal[Calendar.MINUTE]
-//                                stringRes = R.string.time_format_minute
-//                            }
-//                        } else {
-//                            integer = nowCal[Calendar.HOUR_OF_DAY] - thenCal[Calendar.HOUR_OF_DAY]
-//                            stringRes = R.string.time_format_hour
-//                        }
-//                    } else {
-//                        integer = nowCal[Calendar.DAY_OF_YEAR] - thenCal[Calendar.DAY_OF_YEAR]
-//                        if (integer > 6) {
-//                            integer /= 7
-//                            stringRes = R.string.time_format_week
-//                        } else {
-//                            stringRes = R.string.time_format_day
-//                        }
-//                    }
-//                } else {
-//                    integer = nowCal[Calendar.MONTH] - thenCal[Calendar.MONTH]
-//                    stringRes = R.string.time_format_month
-//                }
-//            } else {
-//                integer = nowCal[Calendar.YEAR] - thenCal[Calendar.YEAR]
-//                stringRes = R.string.time_format_year
-//            }
-//            return if (stringRes != -1) {
-//                val s = context.getString(stringRes)
-//                if (integer > 0) String.format(s, integer) else s
-//            } else ""
-            //            DateFormat formatter =
-//                    (thenCal.get(Calendar.YEAR) == nowCal.get(Calendar.YEAR)
-//                            && thenCal.get(Calendar.MONTH) == nowCal.get(Calendar.MONTH)
-//                            && thenCal.get(Calendar.DAY_OF_MONTH) == nowCal.get(Calendar.DAY_OF_MONTH))
-//
-//                            ? DateFormat.getTimeInstance(DateFormat.SHORT) :
-//                            (thenCal.get(Calendar.YEAR) == nowCal.get(Calendar.YEAR)
-//                                    && thenCal.get(Calendar.MONTH) == nowCal.get(Calendar.MONTH)
-//                                    && nowCal.get(Calendar.DAY_OF_MONTH) - thenCal.get(Calendar.DAY_OF_MONTH) < 7)
-//
-//                                    ? new SimpleDateFormat("EEE", Locale.getDefault())
-//                                    : DateFormat.getDateInstance(DateFormat.SHORT);
-//            return formatter.format(thenCal.getTime());
-//            Calendar nowTime = Calendar.getInstance();
-//            nowTime.setTimeInMillis(System.currentTimeMillis());
-//
-//            Calendar thenTime = (Calendar) nowTime.clone();
-//            thenTime.setTimeInMillis(time * 1000L);
-//
-//            int nowYear = nowTime.get(Calendar.YEAR);
-//            int thenYear = thenTime.get(Calendar.YEAR);
-//
-//            int nowMonth = nowTime.get(Calendar.MONTH);
-//            int thenMonth = thenTime.get(Calendar.MONTH);
-//
-//            int nowDay = nowTime.get(Calendar.DAY_OF_MONTH);
-//            int thenDay = thenTime.get(Calendar.DAY_OF_MONTH);
-//
-//            if (nowYear > thenYear) {
-//                return Util.yearFormatter.format(time * 1000L);
-//            } else if (nowMonth > thenMonth) {
-//                return Util.monthFormatter.format(time * 1000L);
-//            } else {
-//                if (nowDay - thenDay == 1) {
-//                    return getContext().getString(R.string.message_date_yesterday);
-//                } else if (nowDay - thenDay > 1) {
-//                    return Util.monthFormatter.format(time * 1000L);
-//                }
-//            }
-//
-//            return Util.timeFormatter.format(time * 1000L);
         }
 
         private fun getOnlineIcon(conversation: VKConversation, peerUser: VKUser?): Drawable? {

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <FrameLayout
+        android:id="@+id/avatar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="64dp">
+
+        <ru.melod1n.vk.widget.CircleImageView
+            android:layout_width="128dp"
+            android:layout_height="128dp"
+            android:layout_gravity="center"
+            android:src="@android:color/white" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="160dp"
+            android:layout_height="160dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_launcher_foreground" />
+
+    </FrameLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/avatar"
+        android:layout_centerHorizontal="true"
+        android:fontFamily="@font/tt_commons_bold"
+        android:text="@string/project_vkm"
+        android:textAppearance="?android:textAppearanceLarge"
+        android:textColor="@android:color/white"
+        android:textSize="36sp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/enter"
+        android:layout_width="match_parent"
+        android:layout_height="66dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_margin="16dp"
+        android:fontFamily="@font/tt_commons_medium"
+        android:gravity="start|center"
+        android:text="@string/enter"
+        android:textAppearance="?android:textAppearanceLarge"
+        android:textColor="?colorAccent"
+        app:backgroundTint="@android:color/white"
+        app:cornerRadius="28dp"
+        app:icon="@drawable/ic_arrow_end"
+        app:iconGravity="end"
+        app:iconTint="?colorAccent" />
+
+</RelativeLayout>

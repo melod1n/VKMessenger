@@ -74,5 +74,12 @@
     <string name="chat_members">%d members</string>
     
     <string name="group_channel_members">Channel • %d members</string>
+    <string name="voice_record_tip"><![CDATA[Press & hold to record voice]]></string>
+    <string name="no_connection">No connection</string>
+    <string name="update">Update</string>
+    <string name="project_vkm">Project.VKM</string>
+    <string name="enter">Enter</string>
+    <string name="no_access">No access</string>
+    <string name="dialog_is_empty">Dialog is empty</string>
 
 </resources>
