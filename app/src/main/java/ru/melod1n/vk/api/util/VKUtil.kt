@@ -65,19 +65,16 @@ object VKUtil {
         return values
     }
 
-    //TODO: переписать
     fun prepareList(messages: ArrayList<VKMessage>) {
-        val size = messages.size - 1
-        var notIncluded = 0
         var toSkip = -1
 
-        for (i in 0 until size) {
+        for (i in messages.size - 1 downTo 1) {
             if (toSkip == i) {
                 continue
             }
 
             val m1 = messages[i]
-            val m2 = messages[i + 1]
+            val m2 = messages[i - 1]
 
             val d1 = Date(m1.date * 1000L)
             val d2 = Date(m2.date * 1000L)
@@ -85,30 +82,9 @@ object VKUtil {
             val day1 = Integer.parseInt(SimpleDateFormat("dd", Locale.getDefault()).format(d1))
             val day2 = Integer.parseInt(SimpleDateFormat("dd", Locale.getDefault()).format(d2))
 
-            if (day1 < day2) {
-                messages.add(i + 1, MessagesActivity.TimeStamp(SimpleDateFormat("dd MMM", Locale.getDefault()).format(d2)))
-                notIncluded++
-                toSkip = i + 1
-            }
-        }
-
-        for (i in size until size + notIncluded) {
-            if (toSkip == i) {
-                continue
-            }
-
-            val m1 = messages[i]
-            val m2 = messages[i + 1]
-
-            val d1 = Date(m1.date * 1000L)
-            val d2 = Date(m2.date * 1000L)
-
-            val day1 = Integer.parseInt(SimpleDateFormat("dd", Locale.getDefault()).format(d1))
-            val day2 = Integer.parseInt(SimpleDateFormat("dd", Locale.getDefault()).format(d2))
-
-            if (day1 < day2) {
-                messages.add(i + 1, MessagesActivity.TimeStamp(SimpleDateFormat("dd MMM", Locale.getDefault()).format(d2)))
-                toSkip = i + 1
+            if (day1 > day2) {
+                messages.add(i - 1, MessagesActivity.TimeStamp(SimpleDateFormat("dd MMM", Locale.getDefault()).format(d1)))
+                toSkip = i - 1
             }
         }
     }
