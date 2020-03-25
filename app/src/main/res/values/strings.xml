@@ -63,5 +63,6 @@
     <string name="custom_data">Custom data</string>
     <string name="user_id">User Id</string>
     <string name="prefs_appearance">Appearance</string>
+    <string name="pref_appearance_extended_conversations_title">Conversations type</string>
 
 </resources>

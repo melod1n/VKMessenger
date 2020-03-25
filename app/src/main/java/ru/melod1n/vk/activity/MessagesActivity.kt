@@ -40,7 +40,7 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
     companion object {
         const val TAG = "MessagesActivity"
 
-        const val MESSAGES_COUNT = 30
+        const val MESSAGES_COUNT = 100
 
         const val TAG_EXTRA_CONVERSATION = "dialog"
         const val TAG_EXTRA_TITLE = "title"
@@ -92,7 +92,6 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
             viewedDialogs.add(peerId)
             onLoad()
         } else {
-
             onLoad()
 //            presenter!!.onRequestLoadCachedValues(peerId, 0, MESSAGES_COUNT)
         }
@@ -231,13 +230,16 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
         if (values.isEmpty()) return
 
         VKUtil.sortMessagesByDate(values, false)
+        VKUtil.prepareList(values)
+
+        val i = 0
 
         if (adapter == null) {
             adapter = MessageAdapter(this, values).also {
                 it.onItemClickListener = this
             }
 
-            adapter!!.addFooter(generateEmptyView())
+//            adapter!!.addFooter(generateEmptyView())
 
             recyclerView!!.adapter = adapter
             return
@@ -266,9 +268,11 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
             isFocusable = false
             isClickable = false
             isEnabled = false
-            layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, AndroidUtils.px(96f))
+            layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, AndroidUtils.px(96F))
         }
     }
+
+    class TimeStamp(var string: String = "") : VKMessage()
 
     override fun clearList() {
         Log.d(TAG, "clearList")

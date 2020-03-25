@@ -65,7 +65,7 @@ class FragmentSettings : PreferenceFragmentCompat(), Preference.OnPreferenceClic
 
         val account = findPreference<Preference>(CATEGORY_ACCOUNT)
         if (account != null) {
-            account.onPreferenceClickListener = Preference.OnPreferenceClickListener { preference -> changeRootLayout(preference) }
+            account.onPreferenceClickListener = Preference.OnPreferenceClickListener { changeRootLayout(it) }
         }
 
         val logout = findPreference<Preference>(KEY_ACCOUNT_LOGOUT)
@@ -75,12 +75,12 @@ class FragmentSettings : PreferenceFragmentCompat(), Preference.OnPreferenceClic
 
         val about = findPreference<Preference>(CATEGORY_ABOUT)
         if (about != null) {
-            about.onPreferenceClickListener = Preference.OnPreferenceClickListener { preference -> changeRootLayout(preference) }
+            about.onPreferenceClickListener = Preference.OnPreferenceClickListener { changeRootLayout(it) }
         }
 
         val appearance = findPreference<Preference>(CATEGORY_APPEARANCE)
         if (appearance != null) {
-            appearance.onPreferenceClickListener = Preference.OnPreferenceClickListener { preference -> changeRootLayout(preference) }
+            appearance.onPreferenceClickListener = Preference.OnPreferenceClickListener { changeRootLayout(it) }
         }
 
         val extendedConversations = findPreference<Preference>(KEY_EXTENDED_CONVERSATIONS)
@@ -145,7 +145,7 @@ class FragmentSettings : PreferenceFragmentCompat(), Preference.OnPreferenceClic
     override fun onPreferenceChange(preference: Preference, newValue: Any?): Boolean {
         when (preference.key) {
             KEY_EXTENDED_CONVERSATIONS -> {
-                sendEvent(EventInfo<Any>(EventInfo.CONVERSATIONS_REFRESH))
+//                sendEvent(EventInfo<Any>(EventInfo.CONVERSATIONS_REFRESH))
                 return true
             }
         }

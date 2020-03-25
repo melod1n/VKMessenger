@@ -302,7 +302,7 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
         private val placeholderNormal: Drawable = ColorDrawable(Color.TRANSPARENT)
         private val colorHighlight = AppGlobal.colorAccent
 
-        private val isExtended = AppGlobal.preferences.getBoolean(FragmentSettings.KEY_EXTENDED_CONVERSATIONS, false)
+        private val isExtended = Integer.parseInt(AppGlobal.preferences.getString(FragmentSettings.KEY_EXTENDED_CONVERSATIONS, "1") ?: "1") == 2
 
         override fun bind(position: Int) {
             val conversation = getItem(position)

@@ -29,12 +29,6 @@ abstract class BaseAdapter<T, VH : BaseAdapter.Holder>(var context: Context, var
     var onItemClickListener: OnItemClickListener? = null
     var onItemLongClickListener: OnItemLongClickListener? = null
 
-    private val spanSizeLookup: SpanSizeLookup = object : SpanSizeLookup() {
-        override fun getSpanSize(position: Int): Int {
-            return getGridSpan(position)
-        }
-    }
-
     open fun onDestroy() {}
 
     val realItemCount: Int
@@ -47,55 +41,30 @@ abstract class BaseAdapter<T, VH : BaseAdapter.Holder>(var context: Context, var
     fun add(position: Int, item: T) {
         values.add(position, item)
         notifyItemInserted(position)
-        val positionStart = position + headersCount
+        val positionStart = position
         val itemCount = values.size - position
         notifyItemRangeChanged(positionStart, itemCount)
     }
 
     fun add(item: T) {
         values.add(item)
-        notifyItemInserted(values.size - 1 + headersCount)
+        notifyItemInserted(values.size - 1)
     }
 
     fun addAll(items: List<T>) {
         val size = values.size
         values.addAll(items)
-        notifyItemRangeInserted(size + headersCount, items.size)
+        notifyItemRangeInserted(size, items.size)
     }
 
     fun addAll(position: Int, items: List<T>) {
         values.addAll(position, items)
-        notifyItemRangeInserted(position + headersCount, items.size)
+        notifyItemRangeInserted(position, items.size)
     }
 
     operator fun set(position: Int, item: T) {
         values[position] = item
-        notifyItemChanged(position + headersCount)
-    }
-
-    fun removeChild(position: Int) {
-        values.removeAt(position)
-        notifyItemRemoved(position + headersCount)
-        val positionStart = position + headersCount
-        val itemCount = values.size - position
-        notifyItemRangeChanged(positionStart, itemCount)
-    }
-
-    fun clear() {
-        val size = values.size
-        values.clear()
-        notifyItemRangeRemoved(headersCount, size)
-    }
-
-    fun moveChildTo(fromPosition: Int, toPosition: Int) {
-        if (toPosition != -1 && toPosition < values.size) {
-            val item = values.removeAt(fromPosition)
-            values.add(toPosition, item)
-            notifyItemMoved(headersCount + fromPosition, headersCount + toPosition)
-            val positionStart = if (fromPosition < toPosition) fromPosition else toPosition
-            val itemCount = abs(fromPosition - toPosition) + 1
-            notifyItemRangeChanged(positionStart + headersCount, itemCount)
-        }
+        notifyItemChanged(position)
     }
 
     fun indexOf(`object`: T): Int {
@@ -131,23 +100,8 @@ abstract class BaseAdapter<T, VH : BaseAdapter.Holder>(var context: Context, var
     }
 
     override fun onBindViewHolder(holder: VH, position: Int) {
-        when {
-            isHeader(position) -> {
-                val v = headers[position]
-                //add our view to a header view and display it
-                prepareHeaderFooter(holder as HeaderFooterViewHolder, v)
-            }
-            isFooter(position) -> {
-                val v = footers[position - realItemCount - headersCount]
-                //add our view to a footer view and display it
-                prepareHeaderFooter(holder as HeaderFooterViewHolder, v)
-            }
-            else -> { //it's one of our values, display as required
-                onBindItemViewHolder(holder, position - headers.size, getItemType(position))
-            }
-        }
+        onBindItemViewHolder(holder, position, getItemType(position))
     }
-
 
     protected fun initListeners(itemView: View, position: Int) {
         itemView.setOnClickListener { if (onItemClickListener != null) onItemClickListener!!.onItemClick(position) }
@@ -157,47 +111,16 @@ abstract class BaseAdapter<T, VH : BaseAdapter.Holder>(var context: Context, var
         }
     }
 
-    private fun prepareHeaderFooter(vh: HeaderFooterViewHolder, view: View) { //if it's a staggered grid, span the whole layout
-        if (manager is StaggeredGridLayoutManager) {
-            val layoutParams = StaggeredGridLayoutManager.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-            layoutParams.isFullSpan = true
-            vh.itemView.layoutParams = layoutParams
-        }
-        //if the view already belongs to another layout, remove it
-        if (view.parent != null) {
-            (view.parent as ViewGroup).removeView(view)
-        }
-        //empty out our FrameLayout and replace with our header/footer
-        (vh.itemView as ViewGroup).removeAllViews()
-        vh.itemView.addView(view)
-    }
-
-    private fun isHeader(position: Int): Boolean {
-        return position < headers.size
-    }
-
-    private fun isFooter(position: Int): Boolean {
-        return footers.size > 0 && position >= headersCount + realItemCount
-    }
-
     protected fun onCreateItemViewHolder(parent: ViewGroup?, type: Int): VH {
         return viewHolder(inflater.inflate(layoutId(type), parent, false), type)
     }
 
     override fun getItemCount(): Int {
-        return headers.size + realItemCount + footers.size
+        return realItemCount
     }
 
-    override fun getItemViewType(position: Int): Int { //check what type our position is, based on the assumption that the order is headers > values > footers
-        if (isHeader(position)) {
-            return TYPE_HEADER
-        } else if (isFooter(position)) {
-            return TYPE_FOOTER
-        }
-        val type = getItemType(position - headersCount)
-        require(!(type == TYPE_HEADER || type == TYPE_FOOTER)) { "Item type cannot equal $TYPE_HEADER or $TYPE_FOOTER" }
-        return type
+    override fun getItemViewType(position: Int): Int {
+        return getItemType(position)
     }
 
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
@@ -210,85 +133,9 @@ abstract class BaseAdapter<T, VH : BaseAdapter.Holder>(var context: Context, var
 
     private fun setManager(manager: RecyclerView.LayoutManager?) {
         this.manager = manager
-        if (this.manager is GridLayoutManager) {
-            (this.manager as GridLayoutManager?)!!.spanSizeLookup = spanSizeLookup
-        } else if (this.manager is StaggeredGridLayoutManager) {
+        if (this.manager is StaggeredGridLayoutManager) {
             (this.manager as StaggeredGridLayoutManager?)!!.gapStrategy = StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS
         }
-    }
-
-    protected fun getGridSpan(p: Int): Int {
-        var position = p
-
-        if (isHeader(position) || isFooter(position)) {
-            return maxGridSpan
-        }
-
-        position -= headers.size
-        return if (getItem(position) is SpanItemInterface) {
-            (getItem(position) as SpanItemInterface).gridSpan
-        } else 1
-    }
-
-    protected val maxGridSpan: Int
-        get() {
-            if (manager is GridLayoutManager) {
-                return (manager as GridLayoutManager).spanCount
-            } else if (manager is StaggeredGridLayoutManager) {
-                return (manager as StaggeredGridLayoutManager).spanCount
-            }
-            return 1
-        }
-
-    //add a header to the adapter
-    open fun addHeader(header: View) {
-        if (!headers.contains(header)) {
-            headers.add(header)
-            //animate
-
-            notifyDataSetChanged()
-//            notifyItemInserted(headers.size - 1)
-        }
-    }
-
-    //remove header from adapter
-    fun removeHeader(header: View?) {
-        if (headers.contains(header)) { //animate
-            notifyItemRemoved(headers.indexOf(header))
-            headers.remove(header)
-        }
-    }
-
-    //add a footer to the adapter
-    open fun addFooter(footer: View) {
-        if (!footers.contains(footer)) {
-            footers.add(footer)
-            //animate
-            notifyDataSetChanged()
-//            notifyItemInserted(headers.size + itemCount + footers.size - 1)
-        }
-    }
-
-    //remove footer from adapter
-    fun removeFooter(footer: View?) {
-        if (footers.contains(footer)) { //animate
-            notifyItemRemoved(headers.size + itemCount + footers.indexOf(footer))
-            footers.remove(footer)
-        }
-    }
-
-    val headersCount: Int
-        get() = headers.size
-
-    fun getHeader(location: Int): View {
-        return headers[location]
-    }
-
-    val footersCount: Int
-        get() = footers.size
-
-    fun getFooter(location: Int): View {
-        return footers[location]
     }
 
     protected fun getItemType(position: Int): Int {
@@ -321,6 +168,10 @@ abstract class BaseAdapter<T, VH : BaseAdapter.Holder>(var context: Context, var
         }
     }
 
+    fun clear() {
+        values.clear()
+    }
+
     interface SpanItemInterface {
         val gridSpan: Int
     }
@@ -345,6 +196,7 @@ abstract class BaseAdapter<T, VH : BaseAdapter.Holder>(var context: Context, var
     companion object {
         const val TYPE_HEADER = 7898
         const val TYPE_FOOTER = 7899
+
         private const val P_ITEMS = "BaseAdapter.values"
         private const val P_HEADERS = "BaseAdapter.headers"
         private const val P_FOOTERS = "BaseAdapter.footers"

@@ -14,4 +14,16 @@
         <item>@string/message_attachment_voice</item>
     </string-array>
 
+    <string-array name="conversations_type_entries">
+        <item>Minimal</item>
+        <item>Normal</item>
+        <item>Extended</item>
+    </string-array>
+
+    <string-array name="conversations_type_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+
 </resources>

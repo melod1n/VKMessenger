@@ -7,7 +7,7 @@ import ru.melod1n.vk.api.UserConfig
 import java.io.Serializable
 import java.util.*
 
-class VKMessage : VKModel, Serializable {
+open class VKMessage : VKModel, Serializable {
     companion object {
         private const val serialVersionUID = 1L
 
