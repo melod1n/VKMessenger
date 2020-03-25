@@ -67,12 +67,12 @@ object VKUtil {
     }
 
     fun prepareList(messages: ArrayList<VKMessage>) {
-        var toSkip = -1
+//        var toSkip = -1
 
         for (i in messages.size - 1 downTo 1) {
-            if (toSkip == i) {
-                continue
-            }
+//            if (toSkip == i) {
+//                continue
+//            }
 
             val m1 = messages[i]
             val m2 = messages[i - 1]
@@ -82,7 +82,7 @@ object VKUtil {
 
             if (d1 > d2) {
                 messages.add(i - 1, MessagesActivity.TimeStamp(SimpleDateFormat("dd MMM", Locale.getDefault()).format(d1)))
-                toSkip = i - 1
+//                toSkip = i - 1
             }
         }
     }
