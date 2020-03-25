@@ -2,6 +2,7 @@ package ru.melod1n.vk.api.util
 
 import ru.melod1n.vk.activity.MessagesActivity
 import ru.melod1n.vk.api.model.VKMessage
+import ru.melod1n.vk.util.Util
 import java.io.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -76,13 +77,10 @@ object VKUtil {
             val m1 = messages[i]
             val m2 = messages[i - 1]
 
-            val d1 = Date(m1.date * 1000L)
-            val d2 = Date(m2.date * 1000L)
+            val d1 = Util.removeTime(Date(m1.date * 1000L))
+            val d2 = Util.removeTime(Date(m2.date * 1000L))
 
-            val day1 = Integer.parseInt(SimpleDateFormat("dd", Locale.getDefault()).format(d1))
-            val day2 = Integer.parseInt(SimpleDateFormat("dd", Locale.getDefault()).format(d2))
-
-            if (day1 > day2) {
+            if (d1 > d2) {
                 messages.add(i - 1, MessagesActivity.TimeStamp(SimpleDateFormat("dd MMM", Locale.getDefault()).format(d1)))
                 toSkip = i - 1
             }

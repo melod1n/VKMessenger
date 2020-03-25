@@ -5,6 +5,7 @@ import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
+import java.util.*
 
 object Util {
 
@@ -35,5 +36,15 @@ object Util {
             e.printStackTrace()
         }
         return null
+    }
+
+    fun removeTime(date: Date): Long {
+        return Calendar.getInstance().apply {
+            time = date
+            this[Calendar.HOUR_OF_DAY] = 0
+            this[Calendar.MINUTE] = 0
+            this[Calendar.SECOND] = 0
+            this[Calendar.MILLISECOND] = 0
+        }.timeInMillis
     }
 }
