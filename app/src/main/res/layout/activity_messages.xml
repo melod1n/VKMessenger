@@ -14,8 +14,7 @@
             layout="@layout/recycler_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginTop="?actionBarSize"
-            android:layout_marginBottom="68dp" />
+            android:layout_marginTop="?actionBarSize" />
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
@@ -37,13 +36,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:paddingStart="0dp"
+                android:paddingEnd="12dp">
 
                 <TextView
                     android:id="@+id/chatTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/tt_commons_medium"
+                    android:singleLine="true"
                     android:textAppearance="?android:textAppearanceLarge"
                     android:textColor="?colorAccent"
                     tools:text="Title" />
@@ -52,6 +54,7 @@
                     android:id="@+id/chatInfo"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:singleLine="true"
                     android:textAppearance="?android:textAppearanceSmall"
                     android:textColor="?android:textColorSecondary"
                     tools:text="Offline"
@@ -72,8 +75,8 @@
         <include
             layout="@layout/no_items_view"
             android:layout_width="match_parent"
-            android:visibility="gone"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"
+            android:visibility="gone" />
 
         <LinearLayout
             android:id="@+id/chatPanel"

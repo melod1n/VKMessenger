@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/messageRoot"
     android:layout_width="match_parent"
@@ -15,18 +16,23 @@
         android:layout_marginTop="4dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="4dp"
-        android:gravity="center_horizontal"
-        android:orientation="horizontal"
+        android:orientation="vertical"
         tools:background="@drawable/ic_message_bubble_out_simple">
 
-        <TextView
+        <ru.melod1n.vk.widget.WrapTextView
             android:id="@+id/messageText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp"
+            android:autoLink="all"
+            android:gravity="start|center"
+            android:linksClickable="true"
             android:paddingStart="14dp"
             android:paddingTop="10dp"
             android:paddingEnd="14dp"
             android:paddingBottom="10dp"
+            app:fixWrap="true"
             tools:gravity="end"
             tools:text="Some text"
             tools:textColor="?android:textColorPrimary" />

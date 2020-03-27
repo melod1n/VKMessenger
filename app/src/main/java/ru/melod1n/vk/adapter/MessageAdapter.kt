@@ -12,9 +12,12 @@ import ru.melod1n.vk.R
 import ru.melod1n.vk.api.model.VKMessage
 import ru.melod1n.vk.common.AppGlobal
 import ru.melod1n.vk.current.BaseAdapter
+import ru.melod1n.vk.util.AndroidUtils
 import ru.melod1n.vk.widget.BoundedLinearLayout
+import java.sql.Timestamp
 import java.text.SimpleDateFormat
 import java.util.*
+
 
 class MessageAdapter(context: Context, values: ArrayList<VKMessage>) : BaseAdapter<VKMessage, MessageAdapter.BaseHolder>(context, values) {
 
@@ -27,24 +30,46 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>) : BaseAdapt
         }
     }
 
+
+    override fun getItemCount(): Int {
+        return values.size + 1
+    }
+
+//    override fun getItem(position: Int): VKMessage {
+//        return if (position == 0)  super.getItem(0)
+//        else super.getItem(position - 1)
+//    }
+
     override fun getItemViewType(position: Int): Int {
-        return when (values[position]) {
-            is TimeStamp -> TYPE_TIME_STAMP
+        return when {
+            position == values.size -> TYPE_FOOTER
+            getItem(position) is Timestamp -> TYPE_TIME_STAMP
             else -> 0
         }
     }
 
     override fun onCreateViewHolder(viewGroup: ViewGroup, type: Int): BaseHolder {
-        return if (type == TYPE_TIME_STAMP) {
-            TimeStampHolder(inflater.inflate(R.layout.item_message_timestamp, viewGroup, false))
-        } else
-            ViewHolder(inflater.inflate(R.layout.item_message, viewGroup, false))
+        return when (type) {
+            TYPE_TIME_STAMP -> {
+                TimeStampHolder(inflater.inflate(R.layout.item_message_timestamp, viewGroup, false))
+            }
+            TYPE_FOOTER -> {
+                HeaderFooterHolder(generateEmptyView())
+            }
+//            TYPE_HEADER -> {
+//                HeaderFooterHolder(generateEmptyView())
+//            }
+            else -> ViewHolder(inflater.inflate(R.layout.item_message, viewGroup, false))
+        }
     }
 
     override fun onBindViewHolder(holder: BaseHolder, position: Int) {
-        if (holder is TimeStampHolder) holder.bind(position)
-        else
-            super.onBindViewHolder(holder, position)
+        if (holder is HeaderFooterHolder) return
+
+        when (holder) {
+            is TimeStampHolder -> holder.bind(position)
+            else -> super.onBindViewHolder(holder, position)
+        }
     }
 
     class TimeStamp(var string: String = "") : VKMessage()
@@ -58,6 +83,17 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>) : BaseAdapt
             stamp.text = (getItem(position) as TimeStamp).string
         }
     }
+
+    private fun generateEmptyView(): View {
+        return View(context).also {
+            it.isFocusable = false
+            it.isClickable = false
+            it.isEnabled = false
+            it.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, AndroidUtils.px(100F))
+        }
+    }
+
+    inner class HeaderFooterHolder(v: View) : BaseHolder(v)
 
     open inner class ViewHolder(v: View) : BaseHolder(v) {
         private val date: TextView = v.findViewById(R.id.messageDate)
@@ -79,7 +115,6 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>) : BaseAdapt
             text.apply {
                 text = message.text
                 background = if (message.isOut) outBackground else inBackground
-                gravity = if (message.isOut) Gravity.END else Gravity.START
                 setTextColor(if (message.isOut) outTextColor else inTextColor)
             }
 
@@ -87,7 +122,7 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>) : BaseAdapt
 
             date.text = SimpleDateFormat("HH:mm", Locale.getDefault()).format(message.date * 1000L)
 
-            date.visibility = if (message.isShowTime) View.VISIBLE else View.GONE
+
         }
     }
 

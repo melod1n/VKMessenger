@@ -10,6 +10,7 @@ import android.text.TextWatcher
 import android.util.Log
 import android.view.MenuItem
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -49,7 +50,7 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
     companion object {
         const val TAG = "MessagesActivity"
 
-        const val MESSAGES_COUNT = 100
+        const val MESSAGES_COUNT = 30
 
         const val TAG_EXTRA_CONVERSATION = "dialog"
         const val TAG_EXTRA_TITLE = "title"
@@ -486,16 +487,6 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
             VKUtil.getUserOnline(user)
         }
     }
-
-//    private fun generateEmptyView(): View {
-//        return View(this).apply {
-//            isFocusable = false
-//            isClickable = false
-//            isEnabled = false
-//            layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, AndroidUtils.px(96F))
-//        }
-//    }
-
 
     override fun clearList() {
         Log.d(TAG, "clearList")
