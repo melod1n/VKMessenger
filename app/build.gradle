@@ -7,20 +7,16 @@ android {
     buildToolsVersion "29.0.2"
     defaultConfig {
         applicationId "ru.melod1n.vk"
-        minSdkVersion 21
+        minSdkVersion 23
         targetSdkVersion 29
         versionCode 1
-        versionName "0.1"
+        versionName "Pre-Alpha 0.1"
 
     }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
-
-        debug {
-            versionNameSuffix ' (debug)'
         }
     }
     compileOptions {
@@ -49,6 +45,5 @@ dependencies {
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.1'
 
     implementation 'com.amulyakhare:com.amulyakhare.textdrawable:1.0.1'
-
 //    implementation 'de.hdodenhof:circleimageview:3.1.0'
 }

@@ -10,6 +10,7 @@
     <PreferenceScreen
         app:iconSpaceReserved="false"
         app:key="app_version"
+        app:summary="@string/prefs_about_app_version_summary"
         app:title="@string/prefs_about_app_version_title" />
 
 

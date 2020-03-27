@@ -3,12 +3,14 @@ package ru.melod1n.vk.common
 import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.database.sqlite.SQLiteDatabase
 import android.net.ConnectivityManager
 import android.os.Handler
 import android.view.WindowManager
 import androidx.core.content.ContextCompat
+import androidx.core.content.pm.PackageInfoCompat
 import androidx.preference.PreferenceManager
 import ru.melod1n.vk.R
 import ru.melod1n.vk.api.UserConfig
@@ -28,6 +30,11 @@ class AppGlobal : Application() {
         lateinit var database: SQLiteDatabase
         lateinit var packageName: String
 
+        var packageNameString = ""
+
+        var appVersionName = ""
+        var appVersionCode = 0L
+
         var screenWidth = 0
         var screenHeight = 0
 
@@ -41,6 +48,12 @@ class AppGlobal : Application() {
         preferences = PreferenceManager.getDefaultSharedPreferences(this)
         handler = Handler(mainLooper)
         locale = Locale.getDefault()
+
+        val info = packageManager.getPackageInfo(this.packageName, PackageManager.GET_ACTIVITIES)
+        appVersionName = info.versionName
+        appVersionCode = PackageInfoCompat.getLongVersionCode(info)
+
+        packageNameString = packageName
 
         Companion.resources = resources
 
@@ -58,7 +71,8 @@ class AppGlobal : Application() {
 
         UserConfig.restore()
         TimeManager.init()
-    }
 
+
+    }
 
 }

@@ -29,12 +29,11 @@ object TaskManager {
         listeners.remove(onEventListener)
     }
 
-
-    fun execute(runnable: () -> Unit) {
+    fun execute(runnable: Runnable) {
         LowThread(runnable).start()
     }
 
-    fun execute(runnable: Runnable) {
+    fun execute(runnable: () -> Unit) {
         LowThread(runnable).start()
     }
 

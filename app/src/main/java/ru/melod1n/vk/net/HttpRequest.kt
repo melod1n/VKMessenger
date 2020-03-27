@@ -13,6 +13,7 @@ import java.net.URLEncoder
 
 class HttpRequest(private val url: String, private val method: String, private val params: ArrayMap<String, String>?) {
     private var connection: HttpURLConnection? = null
+
     @Throws(IOException::class)
     fun asString(): String {
         val input = stream

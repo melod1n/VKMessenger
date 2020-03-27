@@ -55,6 +55,7 @@
     <string name="time_format_month">%dm</string>
     <string name="time_format_year">%dy</string>
     <string name="prefs_about_app_version_title">Application version</string>
+    <string name="prefs_about_app_version_summary">Tap to check updates</string>
     <string name="prefs_about_app_chiefs_title">Application chiefs and helpers</string>
     <string name="prefs_about">About</string>
     <string name="prefs_account">Account</string>
@@ -81,5 +82,16 @@
     <string name="enter">Enter</string>
     <string name="no_access">No access</string>
     <string name="dialog_is_empty">Dialog is empty</string>
+
+    <string name="update_state_downloading">Downloading&#8230;</string>
+    <string name="update_state_checking">Checking&#8230;</string>
+    <string name="update_state_no_updates">No updates</string>
+    <string name="update_current_version">Current version: %s</string>
+    <string name="update_last_check_time">Last update check in %s</string>
+    <string name="update_changelog">Changelog: %s</string>
+    <string name="update_check_updates">Check updates</string>
+    <string name="update_state_update_available">Update is available</string>
+    <string name="update_new_version">Version: %s</string>
+    <string name="update_download">Download</string>
 
 </resources>

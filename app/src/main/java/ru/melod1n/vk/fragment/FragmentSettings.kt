@@ -8,6 +8,7 @@ import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceScreen
 import ru.melod1n.vk.R
 import ru.melod1n.vk.activity.MainActivity
+import ru.melod1n.vk.activity.UpdateActivity
 import ru.melod1n.vk.api.UserConfig
 import ru.melod1n.vk.common.AppGlobal
 import ru.melod1n.vk.common.EventInfo
@@ -31,6 +32,7 @@ class FragmentSettings : PreferenceFragmentCompat(), Preference.OnPreferenceClic
         const val KEY_EXTENDED_CONVERSATIONS = "appearance_extended_conversations"
 
         const val CATEGORY_ABOUT = "about"
+        const val KEY_APP_VERSION = "app_version"
 
         const val CATEGORY_ACCOUNT = "account"
         const val KEY_ACCOUNT_LOGOUT = "account_logout"
@@ -64,29 +66,22 @@ class FragmentSettings : PreferenceFragmentCompat(), Preference.OnPreferenceClic
         setPreferencesFromResource(currentPreferenceLayout, null)
 
         val account = findPreference<Preference>(CATEGORY_ACCOUNT)
-        if (account != null) {
-            account.onPreferenceClickListener = Preference.OnPreferenceClickListener { changeRootLayout(it) }
-        }
+        account?.onPreferenceClickListener = Preference.OnPreferenceClickListener { changeRootLayout(it) }
 
         val logout = findPreference<Preference>(KEY_ACCOUNT_LOGOUT)
-        if (logout != null) {
-            logout.onPreferenceClickListener = this
-        }
+        logout?.onPreferenceClickListener = this
 
         val about = findPreference<Preference>(CATEGORY_ABOUT)
-        if (about != null) {
-            about.onPreferenceClickListener = Preference.OnPreferenceClickListener { changeRootLayout(it) }
-        }
+        about?.onPreferenceClickListener = Preference.OnPreferenceClickListener { changeRootLayout(it) }
+
+        val appVersion = findPreference<Preference>(KEY_APP_VERSION)
+        appVersion?.onPreferenceClickListener = this
 
         val appearance = findPreference<Preference>(CATEGORY_APPEARANCE)
-        if (appearance != null) {
-            appearance.onPreferenceClickListener = Preference.OnPreferenceClickListener { changeRootLayout(it) }
-        }
+        appearance?.onPreferenceClickListener = Preference.OnPreferenceClickListener { changeRootLayout(it) }
 
         val extendedConversations = findPreference<Preference>(KEY_EXTENDED_CONVERSATIONS)
-        if (extendedConversations != null) {
-            extendedConversations.onPreferenceChangeListener = this
-        }
+        extendedConversations?.onPreferenceChangeListener = this
 
         applyTintInPreferenceScreen(preferenceScreen)
     }
@@ -101,6 +96,7 @@ class FragmentSettings : PreferenceFragmentCompat(), Preference.OnPreferenceClic
     private fun setTitle() {
         var title = R.string.navigation_settings
         when (currentPreferenceLayout) {
+            R.xml.fragment_settings_appearance -> title = R.string.prefs_appearance
             R.xml.fragment_settings_about -> title = R.string.prefs_about
             R.xml.fragment_settings_account -> title = R.string.prefs_account
         }
@@ -138,8 +134,16 @@ class FragmentSettings : PreferenceFragmentCompat(), Preference.OnPreferenceClic
                 logout()
                 return true
             }
+            KEY_APP_VERSION -> {
+                openUpdateScreen()
+                return true
+            }
         }
         return false
+    }
+
+    private fun openUpdateScreen() {
+        startActivity(Intent(requireContext(), UpdateActivity::class.java))
     }
 
     override fun onPreferenceChange(preference: Preference, newValue: Any?): Boolean {
