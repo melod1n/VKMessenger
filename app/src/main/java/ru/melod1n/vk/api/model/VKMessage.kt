@@ -155,15 +155,19 @@ open class VKMessage : VKModel, Serializable {
         peerId = o.optInt("peer_id", -1)
         fromId = o.optInt("from_id", -1)
         isOut = o.optInt("out") == 1
+
         text = o.optString("text")
         randomId = o.optInt("random_id", -1)
         conversationMessageId = o.optInt("conversation_message_id", -1)
         editTime = o.optInt("edit_time")
+
         val oAttachments = o.optJSONArray("attachments")
         if (oAttachments != null) {
             attachments = VKAttachments.parse(oAttachments)
         }
+
         isImportant = o.optBoolean("important")
+
         val oFwdMessages = o.optJSONArray("fwd_messages")
         if (oFwdMessages != null) {
             val fwdMessages = ArrayList<VKMessage>(oFwdMessages.length())
@@ -172,10 +176,12 @@ open class VKMessage : VKModel, Serializable {
             }
             this.fwdMessages = fwdMessages
         }
+
         val oReplyMessage = o.optJSONObject("reply_message")
         if (oReplyMessage != null) {
             replyMessage = VKMessage(oReplyMessage)
         }
+
         val oAction = o.optJSONObject("action")
         if (oAction != null) {
             action = Action(oAction)

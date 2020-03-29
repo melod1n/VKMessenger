@@ -75,10 +75,12 @@ class FragmentLogin : BaseFragment {
             parseUrl(url)
         }
 
-        override fun onPageFinished(view: WebView, url: String) {
-            super.onPageFinished(view, url)
+        override fun onPageFinished(wview: WebView, url: String) {
+            super.onPageFinished(wview, url)
+            if (view == null) return
+
             requireView().findViewById<View>(R.id.progressBar).visibility = View.GONE
-            view.visibility = View.VISIBLE
+            wview.visibility = View.VISIBLE
         }
     }
 

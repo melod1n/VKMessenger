@@ -94,7 +94,7 @@
                     tools:src="?colorAccent"
                     tools:visibility="visible" />
 
-                <TextView
+                <ru.melod1n.vk.widget.WrapTextView
                     android:id="@+id/dialogText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

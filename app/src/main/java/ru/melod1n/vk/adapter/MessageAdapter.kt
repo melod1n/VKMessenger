@@ -2,19 +2,25 @@ package ru.melod1n.vk.adapter
 
 import android.content.Context
 import android.graphics.Color
+import android.graphics.drawable.Drawable
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import com.squareup.picasso.Picasso
 import ru.melod1n.vk.R
+import ru.melod1n.vk.api.model.VKGroup
 import ru.melod1n.vk.api.model.VKMessage
+import ru.melod1n.vk.api.util.VKUtil
 import ru.melod1n.vk.common.AppGlobal
 import ru.melod1n.vk.current.BaseAdapter
+import ru.melod1n.vk.database.MemoryCache
 import ru.melod1n.vk.util.AndroidUtils
 import ru.melod1n.vk.widget.BoundedLinearLayout
-import java.sql.Timestamp
+import ru.melod1n.vk.widget.CircleImageView
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -30,20 +36,14 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>) : BaseAdapt
         }
     }
 
-
     override fun getItemCount(): Int {
         return values.size + 1
     }
 
-//    override fun getItem(position: Int): VKMessage {
-//        return if (position == 0)  super.getItem(0)
-//        else super.getItem(position - 1)
-//    }
-
     override fun getItemViewType(position: Int): Int {
         return when {
             position == values.size -> TYPE_FOOTER
-            getItem(position) is Timestamp -> TYPE_TIME_STAMP
+            getItem(position) is TimeStamp -> TYPE_TIME_STAMP
             else -> 0
         }
     }
@@ -54,17 +54,14 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>) : BaseAdapt
                 TimeStampHolder(inflater.inflate(R.layout.item_message_timestamp, viewGroup, false))
             }
             TYPE_FOOTER -> {
-                HeaderFooterHolder(generateEmptyView())
+                FooterHolder(generateEmptyView())
             }
-//            TYPE_HEADER -> {
-//                HeaderFooterHolder(generateEmptyView())
-//            }
             else -> ViewHolder(inflater.inflate(R.layout.item_message, viewGroup, false))
         }
     }
 
     override fun onBindViewHolder(holder: BaseHolder, position: Int) {
-        if (holder is HeaderFooterHolder) return
+        if (holder is FooterHolder) return
 
         when (holder) {
             is TimeStampHolder -> holder.bind(position)
@@ -93,13 +90,19 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>) : BaseAdapt
         }
     }
 
-    inner class HeaderFooterHolder(v: View) : BaseHolder(v)
+    inner class FooterHolder(v: View) : BaseHolder(v) {
+        override fun bind(position: Int) {
+
+        }
+    }
 
     open inner class ViewHolder(v: View) : BaseHolder(v) {
         private val date: TextView = v.findViewById(R.id.messageDate)
         private val text: TextView = v.findViewById(R.id.messageText)
         private val root: LinearLayout = v.findViewById(R.id.messageRoot)
         private val bubble: BoundedLinearLayout = v.findViewById(R.id.messageBubble)
+        private val avatar: CircleImageView = v.findViewById(R.id.messageAvatar)
+        private val container: LinearLayout = v.findViewById(R.id.messageContainer)
 
         private val inBackground = ContextCompat.getDrawable(context, R.drawable.ic_message_bubble_in_simple)
         private val outBackground = ContextCompat.getDrawable(context, R.drawable.ic_message_bubble_out_simple)
@@ -112,18 +115,38 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>) : BaseAdapt
 
             bubble.maxWidth = AppGlobal.screenWidth - AppGlobal.screenWidth / 4
 
-            text.apply {
-                text = message.text
-                background = if (message.isOut) outBackground else inBackground
-                setTextColor(if (message.isOut) outTextColor else inTextColor)
-            }
+            text.background = if (message.isOut) outBackground else inBackground
+            text.setTextColor(if (message.isOut) outTextColor else inTextColor)
+            text.text = message.text
 
-            root.gravity = if (message.isOut) Gravity.END else Gravity.START
+            val gravity = if (message.isOut) Gravity.END else Gravity.START
+
+            root.gravity = gravity
+            container.gravity = gravity or Gravity.CENTER_VERTICAL
 
             date.text = SimpleDateFormat("HH:mm", Locale.getDefault()).format(message.date * 1000L)
 
+            avatar.visibility = if (message.isOut) View.GONE else View.VISIBLE
 
+            val user = MemoryCache.getUser(message.fromId)
+            val group = if (VKGroup.isGroupId(message.fromId)) MemoryCache.getGroup(message.fromId) else null
+
+            val dialogTitle = if (group == null) user.toString() else group.name
+
+            val avatarPlaceholder = VKUtil.getAvatarPlaceholder(dialogTitle)
+
+            avatar.setImageDrawable(avatarPlaceholder)
+
+            val avatarString = if (group == null) user?.photo100 else group.photo100
+
+            loadImage(avatarString, avatar, avatarPlaceholder)
         }
+    }
+
+    private fun loadImage(image: String?, imageView: ImageView, placeholder: Drawable) {
+        if (image == null || image.isEmpty()) return
+
+        Picasso.get().load(image).priority(Picasso.Priority.LOW).placeholder(placeholder).into(imageView)
     }
 
     override fun viewHolder(view: View, type: Int): ViewHolder {

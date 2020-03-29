@@ -1,5 +1,6 @@
 package ru.melod1n.vk.api.util
 
+import com.amulyakhare.textdrawable.TextDrawable
 import ru.melod1n.vk.R
 import ru.melod1n.vk.adapter.MessageAdapter
 import ru.melod1n.vk.api.model.VKMessage
@@ -104,5 +105,9 @@ object VKUtil {
     //TODO: нормальное время
     fun getLastSeenTime(date: Long): String {
         return SimpleDateFormat("HH:mm", Locale.getDefault()).format(date)
+    }
+
+    fun getAvatarPlaceholder(dialogTitle: String?): TextDrawable {
+        return TextDrawable.builder().buildRound(if (dialogTitle.isNullOrEmpty()) "" else dialogTitle.substring(0, 1), AppGlobal.colorAccent)
     }
 }

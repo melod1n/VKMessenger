@@ -8,36 +8,53 @@
     android:orientation="vertical"
     tools:gravity="end">
 
-    <ru.melod1n.vk.widget.BoundedLinearLayout
-        android:id="@+id/messageBubble"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:id="@+id/messageContainer"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="4dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="4dp"
-        android:orientation="vertical"
-        tools:background="@drawable/ic_message_bubble_out_simple">
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
-        <ru.melod1n.vk.widget.WrapTextView
-            android:id="@+id/messageText"
+        <ru.melod1n.vk.widget.CircleImageView
+            android:id="@+id/messageAvatar"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="8dp"
+            tools:src="?colorAccent" />
+
+        <ru.melod1n.vk.widget.BoundedLinearLayout
+            android:id="@+id/messageBubble"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
             android:layout_marginTop="4dp"
+            android:layout_marginEnd="8dp"
             android:layout_marginBottom="4dp"
-            android:autoLink="all"
-            android:gravity="start|center"
-            android:linksClickable="true"
-            android:paddingStart="14dp"
-            android:paddingTop="10dp"
-            android:paddingEnd="14dp"
-            android:paddingBottom="10dp"
-            app:fixWrap="true"
-            tools:gravity="end"
-            tools:text="Some text"
-            tools:textColor="?android:textColorPrimary" />
+            android:minHeight="40dp"
+            android:orientation="vertical"
+            tools:background="@drawable/ic_message_bubble_out_simple">
 
-    </ru.melod1n.vk.widget.BoundedLinearLayout>
+            <ru.melod1n.vk.widget.WrapTextView
+                android:id="@+id/messageText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="4dp"
+                android:autoLink="all"
+                android:gravity="start|center"
+                android:linksClickable="true"
+                android:paddingStart="14dp"
+                android:paddingTop="10dp"
+                android:paddingEnd="14dp"
+                android:paddingBottom="10dp"
+                app:fixWrap="true"
+                tools:gravity="end"
+                tools:text="Some text"
+                tools:textColor="?android:textColorPrimary" />
+
+        </ru.melod1n.vk.widget.BoundedLinearLayout>
+
+    </LinearLayout>
 
     <TextView
         android:id="@+id/messageDate"

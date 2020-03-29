@@ -12,13 +12,13 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.amulyakhare.textdrawable.TextDrawable
 import com.squareup.picasso.Picasso
 import ru.melod1n.vk.R
 import ru.melod1n.vk.api.UserConfig
 import ru.melod1n.vk.api.VKApi.OnResponseListener
 import ru.melod1n.vk.api.VKLongPollParser
 import ru.melod1n.vk.api.model.*
+import ru.melod1n.vk.api.util.VKUtil
 import ru.melod1n.vk.common.AppGlobal
 import ru.melod1n.vk.common.EventInfo
 import ru.melod1n.vk.common.TaskManager
@@ -42,13 +42,13 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
         VKLongPollParser.OnEventListener {
 
     init {
-//        VKLongPollParser.addOnMessagesListener(this)
-//        VKLongPollParser.addOnEventListener(this)
+        VKLongPollParser.addOnMessagesListener(this)
+        VKLongPollParser.addOnEventListener(this)
     }
 
     override fun onDestroy() {
-//        VKLongPollParser.removeOnMessagesListener(this)
-//        VKLongPollParser.removeOnEventListener(this)
+        VKLongPollParser.removeOnMessagesListener(this)
+        VKLongPollParser.removeOnEventListener(this)
     }
 
     override fun onCreateViewHolder(viewGroup: ViewGroup, type: Int): ViewHolder {
@@ -342,10 +342,7 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
                 userAvatar!!.setImageDrawable(null)
             }
 
-            val dialogAvatarPlaceholder = TextDrawable
-                    .builder()
-                    .buildRound(if (dialogTitle.isEmpty()) "" else dialogTitle.substring(0, 1), AppGlobal.colorAccent)
-
+            val dialogAvatarPlaceholder = VKUtil.getAvatarPlaceholder(dialogTitle)
 
             avatar.setImageDrawable(dialogAvatarPlaceholder)
 
@@ -367,7 +364,8 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
                 if (!ArrayUtil.isEmpty(lastMessage.attachments)) {
                     val attachmentString = getAttachmentText(lastMessage.attachments!!)
 
-                    val attachmentText = if (lastMessage.text.isNullOrEmpty()) attachmentString else (lastMessage.text ?: "")
+                    val attachmentText = if (lastMessage.text.isNullOrEmpty()) attachmentString else (lastMessage.text
+                            ?: "")
 
                     val startIndex = if (lastMessage.text.isNullOrEmpty()) 0 else lastMessage.text!!.length
 
