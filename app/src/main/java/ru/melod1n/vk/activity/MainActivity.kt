@@ -32,6 +32,7 @@ import ru.melod1n.vk.current.BaseActivity
 import ru.melod1n.vk.database.CacheStorage.insertUsers
 import ru.melod1n.vk.database.MemoryCache.getUser
 import ru.melod1n.vk.fragment.FragmentConversations
+import ru.melod1n.vk.fragment.FragmentFriends
 import ru.melod1n.vk.fragment.FragmentLogin
 import ru.melod1n.vk.fragment.FragmentSettings
 import ru.melod1n.vk.service.LongPollService
@@ -44,6 +45,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     private var toggleClick: View.OnClickListener? = null
 
     private val fragmentConversations = FragmentConversations()
+    private val fragmentFriends = FragmentFriends()
     private val fragmentSettings = FragmentSettings()
     private val fragmentLogin = FragmentLogin()
 
@@ -178,6 +180,10 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         FragmentSwitcher.instance.switchFragment(this, fragmentConversations)
     }
 
+    private fun openFriendsScreen() {
+        FragmentSwitcher.instance.switchFragment(this, fragmentFriends)
+    }
+
     private fun loadProfileInfo() {
         TaskManager.execute {
             VKApi.users().get().fields(VKUser.DEFAULT_FIELDS).execute(VKUser::class.java, object : OnResponseListener<VKUser> {
@@ -218,6 +224,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
         when (itemId) {
             R.id.navigationConversations -> openConversationsScreen()
+            R.id.navigationFriends -> openFriendsScreen()
             R.id.navigationSettings -> FragmentSwitcher.instance.switchFragment(this, fragmentSettings)
             else -> valid = false
         }

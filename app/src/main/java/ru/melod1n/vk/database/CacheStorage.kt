@@ -67,6 +67,7 @@ import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.abs
 
+
 @Suppress("UNCHECKED_CAST")
 object CacheStorage {
     private fun selectCursor(table: String, column: String, value: Any): Cursor {
@@ -189,6 +190,32 @@ object CacheStorage {
 
         cursor.close()
         return conversations
+    }
+
+    fun getFriends(userId: Int, onlyOnline: Boolean): ArrayList<VKUser> {
+        val cursor = QueryBuilder.query()
+                .select("*")
+                .from(TABLE_FRIENDS)
+                .leftJoin(TABLE_USERS)
+                .on("friends.friend_id = users.user_id")
+                .where("friends.user_id = $userId")
+                .asCursor(AppGlobal.database)
+
+        val users: ArrayList<VKUser> = ArrayList(cursor.count)
+
+        while (cursor.moveToNext()) {
+            val userOnline = getInt(cursor, ONLINE) == 1
+
+            if (onlyOnline && !userOnline) {
+                continue
+            }
+
+            val user = parseUser(cursor)
+            users.add(user)
+        }
+
+        cursor.close()
+        return users
     }
 
     fun getUser(id: Int): VKUser? {
@@ -400,6 +427,11 @@ object CacheStorage {
 
     fun insertUsers(users: ArrayList<VKUser>) {
         insert(TABLE_USERS, users)
+    }
+
+    fun insertFriends(users: ArrayList<VKUser>) {
+        insertUsers(users)
+        insert(TABLE_FRIENDS, users)
     }
 
     fun insertGroup(group: VKGroup?) {

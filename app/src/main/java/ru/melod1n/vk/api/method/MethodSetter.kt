@@ -127,6 +127,15 @@ open class MethodSetter(private val name: String) {
         return this
     }
 
+    /**
+     *
+     * hints — сортировать по рейтингу, аналогично тому, как друзья сортируются в разделе Мои друзья
+     * random — возвращает друзей в случайном порядке.
+     * mobile — возвращает выше тех друзей, у которых установлены мобильные приложения.
+     * name — сортировать по имени (долго)
+     *
+     */
+
     fun order(value: String): MethodSetter {
         put("order", value)
         return this

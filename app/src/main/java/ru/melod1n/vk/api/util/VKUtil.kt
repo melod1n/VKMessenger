@@ -1,8 +1,12 @@
 package ru.melod1n.vk.api.util
 
+import android.content.Context
+import android.graphics.drawable.Drawable
+import androidx.core.content.ContextCompat
 import com.amulyakhare.textdrawable.TextDrawable
 import ru.melod1n.vk.R
 import ru.melod1n.vk.adapter.MessageAdapter
+import ru.melod1n.vk.api.model.VKConversation
 import ru.melod1n.vk.api.model.VKMessage
 import ru.melod1n.vk.api.model.VKUser
 import ru.melod1n.vk.common.AppGlobal
@@ -97,6 +101,28 @@ object VKUtil {
         }
     }
 
+    fun getUserOnlineIcon(context: Context, conversation: VKConversation?, peerUser: VKUser?): Drawable? {
+        return if (conversation != null) {
+            if (conversation.isUser && peerUser != null) {
+                if (!peerUser.isOnline) {
+                    null
+                } else {
+                    ContextCompat.getDrawable(context, if (peerUser.isOnlineMobile) R.drawable.ic_online_mobile else R.drawable.ic_online_pc)
+                }
+            } else null
+        } else {
+            if (peerUser!!.isOnline) {
+                ContextCompat.getDrawable(context, if (peerUser.isOnlineMobile) R.drawable.ic_online_mobile else R.drawable.ic_online_pc)
+            } else {
+                null
+            }
+        }
+    }
+
+    fun getUserOnlineIcon(context: Context, user: VKUser): Drawable? {
+        return getUserOnlineIcon(context, null, user)
+    }
+
     //TODO: нормальное время
     fun getLastSeenTime(date: Long): String {
         return SimpleDateFormat("HH:mm", Locale.getDefault()).format(date)
@@ -105,4 +131,5 @@ object VKUtil {
     fun getAvatarPlaceholder(dialogTitle: String?): TextDrawable {
         return TextDrawable.builder().buildRound(if (dialogTitle.isNullOrEmpty()) "" else dialogTitle.substring(0, 1), AppGlobal.colorAccent)
     }
+
 }

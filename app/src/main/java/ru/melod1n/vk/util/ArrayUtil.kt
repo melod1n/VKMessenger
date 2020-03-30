@@ -1,7 +1,5 @@
 package ru.melod1n.vk.util
 
-import java.util.*
-
 object ArrayUtil {
 
     const val VALUE_NOT_FOUND = -1

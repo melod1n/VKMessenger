@@ -10,7 +10,6 @@ import android.text.TextWatcher
 import android.util.Log
 import android.view.MenuItem
 import android.view.View
-import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -55,6 +54,7 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
         const val TAG_EXTRA_CONVERSATION = "dialog"
         const val TAG_EXTRA_TITLE = "title"
         const val TAG_EXTRA_AVATAR = "avatar"
+        const val TAG_ID = "id"
     }
 
     private var isEdit = false
@@ -65,7 +65,7 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
         VOICE, SEND, EDIT, DELETE, BLOCKED
     }
 
-    private lateinit var conversation: VKConversation
+    private var conversation: VKConversation? = null
 
     private var title: String? = null
     private var avatar: String? = null
@@ -102,6 +102,8 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
 
         initExtraData()
 
+        if (conversation == null) return
+
         prepareNavigationView()
         prepareToolbar()
         prepareRefreshLayout()
@@ -124,7 +126,7 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
     }
 
     private fun checkAllowedWriting() {
-        if (conversation.isAllowed) {
+        if (conversation!!.isAllowed) {
             fabState = FabState.VOICE
             chatSend.imageTintList = ColorStateList.valueOf(AppGlobal.colorAccent)
             chatMessage.isEnabled = true
@@ -304,11 +306,41 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
     }
 
     private fun initExtraData() {
-        conversation = intent.getSerializableExtra(TAG_EXTRA_CONVERSATION) as VKConversation
+        conversation = intent.getSerializableExtra(TAG_EXTRA_CONVERSATION) as VKConversation?
+
+        peerId = intent.getIntExtra(TAG_ID, -1)
         title = intent.getStringExtra(TAG_EXTRA_TITLE)
         avatar = intent.getStringExtra(TAG_EXTRA_AVATAR)
 
-        peerId = conversation.id
+        if (conversation == VKConversation()) {
+            Thread(Runnable {
+                try {
+                    val conversation = VKApi.messages()
+                            .conversationsById
+                            .peerIds(peerId)
+                            .extended(true)
+                            .execute(VKConversation::class.java) ?: ArrayList()
+
+                    if (conversation.isNullOrEmpty()) {
+                        return@Runnable
+                    }
+
+                    this@MessagesActivity.conversation = conversation[0]
+
+                    val user = MemoryCache.getUser(peerId)
+                    if (user != null) {
+                        title = user.toString()
+                        avatar = user.photo200
+                    }
+
+                    runOnUiThread {
+                        onCreate(null)
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }).start()
+        }
     }
 
     private fun sendMessage(text: String = "", attachments: ArrayList<VKModel>? = null, scrollToBottom: Boolean = true) {
@@ -458,12 +490,12 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
     }
 
     private fun getChatInfo(): String? {
-        return when (conversation.type) {
+        return when (conversation!!.type) {
             VKConversation.TYPE_CHAT -> {
-                if (conversation.isGroupChannel) {
-                    getString(R.string.group_channel_members, conversation.membersCount)
+                if (conversation!!.isGroupChannel) {
+                    getString(R.string.group_channel_members, conversation!!.membersCount)
                 } else {
-                    getString(R.string.chat_members, conversation.membersCount)
+                    getString(R.string.chat_members, conversation!!.membersCount)
                 }
             }
             VKConversation.TYPE_USER -> {
@@ -474,11 +506,11 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
     }
 
     private fun getUserOnline(): String? {
-        val user = MemoryCache.getUser(conversation.id)
+        val user = MemoryCache.getUser(conversation!!.id)
 
         if (!loadedId) {
             loadedId = true
-            TaskManager.loadUser(conversation.id)
+            TaskManager.loadUser(conversation!!.id)
         }
 
         return if (user == null) {
@@ -490,7 +522,9 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
 
     override fun clearList() {
         Log.d(TAG, "clearList")
+
         if (adapter == null) return
+
         adapter!!.clear()
         adapter!!.notifyDataSetChanged()
     }

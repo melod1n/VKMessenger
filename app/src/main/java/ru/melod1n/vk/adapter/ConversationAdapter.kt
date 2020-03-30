@@ -13,7 +13,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.squareup.picasso.Picasso
 import ru.melod1n.vk.R
 import ru.melod1n.vk.api.UserConfig
 import ru.melod1n.vk.api.VKApi.OnResponseListener
@@ -32,6 +31,7 @@ import ru.melod1n.vk.fragment.FragmentConversations
 import ru.melod1n.vk.fragment.FragmentSettings
 import ru.melod1n.vk.util.AndroidUtils
 import ru.melod1n.vk.util.ArrayUtil
+import ru.melod1n.vk.util.ImageUtil
 import ru.melod1n.vk.widget.CircleImageView
 import java.text.SimpleDateFormat
 import java.util.*
@@ -317,7 +317,8 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
         override fun bind(position: Int) {
             val conversation = getItem(position)
 
-            val lastMessage = conversation.lastMessage ?: CacheStorage.getMessage(conversation.lastMessageId) ?: VKMessage()
+            val lastMessage = conversation.lastMessage
+                    ?: CacheStorage.getMessage(conversation.lastMessageId) ?: VKMessage()
 
             if (lastMessage == VKMessage()) {
                 Log.e("ConversationAdapter", "EMPTY MESSAGE ON POSITION $position")
@@ -325,8 +326,9 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
             }
 
             val peerUser = searchPeerUser(lastMessage)
-            val fromUser = searchFromUser(lastMessage)
             val peerGroup = searchPeerGroup(lastMessage)
+
+            val fromUser = searchFromUser(lastMessage)
             val fromGroup = searchFromGroup(lastMessage)
 
             val avatarSize = AndroidUtils.px(if (isExtended) 75F else 68F)
@@ -341,7 +343,7 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
             val dialogTitle = getTitle(conversation, peerUser, peerGroup)
             title.text = dialogTitle
 
-            val onlineIcon = getOnlineIcon(conversation, peerUser)
+            val onlineIcon = VKUtil.getUserOnlineIcon(context, conversation, peerUser)
 
             userOnline.apply {
                 setImageDrawable(onlineIcon)
@@ -350,7 +352,7 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
 
             if ((conversation.isChat || lastMessage.isOut) && !conversation.isGroupChannel) {
                 userAvatar!!.visibility = View.VISIBLE
-                loadImage(getUserAvatar(lastMessage, fromUser, fromGroup), userAvatar, placeholderNormal)
+                ImageUtil.loadImage(getUserAvatar(lastMessage, fromUser, fromGroup), userAvatar, placeholderNormal)
             } else {
                 userAvatar!!.visibility = View.GONE
                 userAvatar!!.setImageDrawable(null)
@@ -360,7 +362,7 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
 
             avatar.setImageDrawable(dialogAvatarPlaceholder)
 
-            loadImage(getAvatar(conversation, peerUser, peerGroup), avatar, dialogAvatarPlaceholder)
+            ImageUtil.loadImage(getAvatar(conversation, peerUser, peerGroup), avatar, dialogAvatarPlaceholder)
 
             val dDialogType = getDialogType(conversation)
 
@@ -492,16 +494,6 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
             }
 
             return SimpleDateFormat("HH:mm", Locale.getDefault()).format(then)
-        }
-
-        private fun getOnlineIcon(conversation: VKConversation, peerUser: VKUser?): Drawable? {
-            return if (conversation.isUser && peerUser != null) {
-                if (!peerUser.isOnline) {
-                    null
-                } else {
-                    context.getDrawable(if (peerUser.isOnlineMobile) R.drawable.ic_online_mobile else R.drawable.ic_online_pc)
-                }
-            } else null
         }
 
         private fun getActionText(lastMessage: VKMessage): String {
@@ -687,12 +679,6 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
             }
         }
 
-        private fun loadImage(image: String?, imageView: ImageView, placeholder: Drawable) {
-            if (image == null || image.isEmpty()) return
-
-            Picasso.get().load(image).priority(Picasso.Priority.LOW).placeholder(placeholder).into(imageView)
-        }
-
         private fun getUserAvatar(message: VKMessage, fromUser: VKUser?, fromGroup: VKGroup?): String? {
             if (message.isFromUser) {
                 if (fromUser != null) {
@@ -723,8 +709,8 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
         }
 
         private fun searchPeerGroup(message: VKMessage): VKGroup? {
-            val id = abs(message.peerId)
-            val group = MemoryCache.getGroup(id)
+            val group = if (VKGroup.isGroupId(message.peerId)) MemoryCache.getGroup(abs(message.peerId)) else null
+
             if (group == null && VKGroup.isGroupId(message.peerId)) {
                 TaskManager.loadGroup(message.peerId)
             }
@@ -732,7 +718,8 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
         }
 
         private fun searchFromGroup(message: VKMessage): VKGroup? {
-            val group = MemoryCache.getGroup(message.fromId)
+            val group = if (VKGroup.isGroupId(message.fromId)) MemoryCache.getGroup(abs(message.fromId)) else null
+
             if (group == null && VKGroup.isGroupId(message.fromId)) {
                 TaskManager.loadGroup(message.fromId)
             }

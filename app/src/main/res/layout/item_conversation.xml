@@ -8,10 +8,11 @@
     android:orientation="horizontal">
 
     <LinearLayout
-        android:id="@+id/dialog_container"
+        android:id="@+id/dialogContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_margin="6dp"
+        android:gravity="center_vertical"
         android:baselineAligned="false"
         android:orientation="horizontal"
         android:padding="6dp">
@@ -94,7 +95,7 @@
                     tools:src="?colorAccent"
                     tools:visibility="visible" />
 
-                <ru.melod1n.vk.widget.WrapTextView
+                <TextView
                     android:id="@+id/dialogText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

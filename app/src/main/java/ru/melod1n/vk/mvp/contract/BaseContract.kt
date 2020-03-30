@@ -3,7 +3,7 @@ package ru.melod1n.vk.mvp.contract
 import ru.melod1n.vk.api.VKApi.OnResponseListener
 import java.util.*
 
-class BaseContract {
+open class BaseContract {
     interface View<T> {
         fun showNoItemsView(visible: Boolean)
         fun showNoInternetView(visible: Boolean)

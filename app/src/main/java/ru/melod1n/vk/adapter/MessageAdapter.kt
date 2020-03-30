@@ -2,15 +2,12 @@ package ru.melod1n.vk.adapter
 
 import android.content.Context
 import android.graphics.Color
-import android.graphics.drawable.Drawable
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
-import com.squareup.picasso.Picasso
 import ru.melod1n.vk.R
 import ru.melod1n.vk.api.model.VKGroup
 import ru.melod1n.vk.api.model.VKMessage
@@ -19,10 +16,12 @@ import ru.melod1n.vk.common.AppGlobal
 import ru.melod1n.vk.current.BaseAdapter
 import ru.melod1n.vk.database.MemoryCache
 import ru.melod1n.vk.util.AndroidUtils
+import ru.melod1n.vk.util.ImageUtil
 import ru.melod1n.vk.widget.BoundedLinearLayout
 import ru.melod1n.vk.widget.CircleImageView
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.abs
 
 
 class MessageAdapter(context: Context, values: ArrayList<VKMessage>) : BaseAdapter<VKMessage, MessageAdapter.BaseHolder>(context, values) {
@@ -129,7 +128,7 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>) : BaseAdapt
             avatar.visibility = if (message.isOut) View.GONE else View.VISIBLE
 
             val user = MemoryCache.getUser(message.fromId)
-            val group = if (VKGroup.isGroupId(message.fromId)) MemoryCache.getGroup(message.fromId) else null
+            val group = if (VKGroup.isGroupId(message.fromId)) MemoryCache.getGroup(abs(message.fromId)) else null
 
             val dialogTitle = if (group == null) user.toString() else group.name
 
@@ -139,14 +138,8 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>) : BaseAdapt
 
             val avatarString = if (group == null) user?.photo100 else group.photo100
 
-            loadImage(avatarString, avatar, avatarPlaceholder)
+            ImageUtil.loadImage(avatarString, avatar, avatarPlaceholder)
         }
-    }
-
-    private fun loadImage(image: String?, imageView: ImageView, placeholder: Drawable) {
-        if (image == null || image.isEmpty()) return
-
-        Picasso.get().load(image).priority(Picasso.Priority.LOW).placeholder(placeholder).into(imageView)
     }
 
     override fun viewHolder(view: View, type: Int): ViewHolder {

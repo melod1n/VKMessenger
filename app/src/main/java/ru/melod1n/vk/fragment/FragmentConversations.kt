@@ -11,7 +11,7 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout.OnRefreshListener
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_messages.*
 import kotlinx.android.synthetic.main.no_internet_view.*
@@ -31,7 +31,7 @@ import ru.melod1n.vk.mvp.contract.BaseContract
 import ru.melod1n.vk.mvp.presenter.ConversationsPresenter
 import ru.melod1n.vk.util.AndroidUtils
 
-class FragmentConversations : BaseFragment(), BaseContract.View<VKConversation>, OnRefreshListener, BaseAdapter.OnItemClickListener, FragmentSettings.OnEventListener {
+class FragmentConversations : BaseFragment(), BaseContract.View<VKConversation>, SwipeRefreshLayout.OnRefreshListener, BaseAdapter.OnItemClickListener, FragmentSettings.OnEventListener {
 
     companion object {
         const val CONVERSATIONS_COUNT = 30
@@ -115,6 +115,7 @@ class FragmentConversations : BaseFragment(), BaseContract.View<VKConversation>,
         val peerGroup = getGroup(conversation.id)
 
         val data = Bundle().apply {
+            putInt(MessagesActivity.TAG_ID, conversation.id)
             putSerializable(MessagesActivity.TAG_EXTRA_CONVERSATION, conversation)
             putString(MessagesActivity.TAG_EXTRA_TITLE, adapter!!.getTitle(conversation, peerUser, peerGroup))
             putString(MessagesActivity.TAG_EXTRA_AVATAR, adapter!!.getAvatar(conversation, peerUser, peerGroup))
