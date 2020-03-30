@@ -13,11 +13,14 @@ import ru.melod1n.vk.mvp.contract.BaseContract
 import ru.melod1n.vk.util.ArrayUtil
 
 class ConversationsRepository : BaseContract.Repository<VKConversation>() {
+
     override fun loadCachedValues(id: Int, offset: Int, count: Int): ArrayList<VKConversation> {
         val conversations = ArrayUtil.cut(CacheStorage.getConversations(count), offset, count)
+
         val dialogs = ArrayList<VKConversation>(conversations.size)
 
         conversations.sortWith(Comparator { o1: VKConversation, o2: VKConversation ->
+
             val m1 = CacheStorage.getMessage(o1.lastMessageId)
             val m2 = CacheStorage.getMessage(o2.lastMessageId)
 
@@ -70,7 +73,7 @@ class ConversationsRepository : BaseContract.Repository<VKConversation>() {
 
         CacheStorage.insertMessages(messages)
         CacheStorage.insertConversations(models)
-        CacheStorage.insertUsers(models[0].profiles)
-        CacheStorage.insertGroups(models[0].groups)
+        CacheStorage.insertUsers(VKConversation.profiles)
+        CacheStorage.insertGroups(VKConversation.groups)
     }
 }

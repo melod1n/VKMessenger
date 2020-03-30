@@ -6,6 +6,7 @@ import android.graphics.drawable.Drawable
 import android.text.SpannableString
 import android.text.TextUtils
 import android.text.style.ForegroundColorSpan
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -89,6 +90,7 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
         val index = searchMessageIndex(messageId)
         if (index == -1) return
         getItem(index).apply {
+            lastMessageId = messageId
             lastMessage = CacheStorage.getMessage(messageId)
         }
 
@@ -100,7 +102,7 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
         if (index == -1) return
         val dialog = getItem(index)
 
-        if (dialog.lastMessage!!.id != messageId) return
+        if (dialog.lastMessageId != messageId) return
 
         if (dialog.lastMessage!!.isOut) {
             dialog.outRead = messageId
@@ -114,8 +116,12 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
         val index = searchConversationIndex(message.peerId)
         if (index == -1) return
         val dialog = getItem(index)
+
         if (dialog.lastMessage!!.date > message.date) return
+
+        dialog.lastMessageId = message.id
         dialog.lastMessage = message
+
         notifyItemChanged(index)
     }
 
@@ -143,6 +149,7 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
                     } else {
                         TaskManager.loadMessage(conversation.lastMessageId, object : OnResponseListener<VKMessage> {
                             override fun onSuccess(models: ArrayList<VKMessage>) {
+                                dialog.lastMessageId = models[0].id
                                 dialog.lastMessage = models[0]
                                 notifyItemChanged(index, 0)
                             }
@@ -155,8 +162,9 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
                 override fun onError(e: Exception) {}
             })
         } else {
-            if (dialog.lastMessage!!.id != messageId) return
+            if (dialog.lastMessageId != messageId) return
 
+            dialog.lastMessageId = preLast.id
             dialog.lastMessage = preLast
             notifyItemChanged(index)
         }
@@ -168,6 +176,7 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
 
         val dialog = getItem(index)
 
+        dialog.lastMessageId = message.id
         dialog.lastMessage = message
 
         notifyItemChanged(index, 0)
@@ -212,6 +221,7 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
                     localId = if (VKConversation.isChatId(id)) id - 2000000000 else id
                     type = if (id < 0) VKConversation.TYPE_GROUP else if (id > 2000000000) VKConversation.TYPE_CHAT else VKConversation.TYPE_USER
                     lastMessage = message
+                    lastMessageId = message.id
                 }
 
                 values.add(0, temp)
@@ -249,7 +259,7 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
     private fun searchMessageIndex(messageId: Int): Int {
         for (i in 0 until itemCount) {
             val dialog = getItem(i)
-            if (dialog.lastMessage!!.id == messageId) return i
+            if (dialog.lastMessageId == messageId) return i
         }
         return -1
     }
@@ -307,8 +317,12 @@ class ConversationAdapter(var fragmentConversations: FragmentConversations, valu
         override fun bind(position: Int) {
             val conversation = getItem(position)
 
-            val lastMessage = CacheStorage.getMessage(conversation.lastMessageId)
-                    ?: conversation.lastMessage!!
+            val lastMessage = conversation.lastMessage ?: CacheStorage.getMessage(conversation.lastMessageId) ?: VKMessage()
+
+            if (lastMessage == VKMessage()) {
+                Log.e("ConversationAdapter", "EMPTY MESSAGE ON POSITION $position")
+                return
+            }
 
             val peerUser = searchPeerUser(lastMessage)
             val fromUser = searchFromUser(lastMessage)

@@ -18,6 +18,7 @@ import ru.melod1n.vk.database.DatabaseHelper
 import ru.melod1n.vk.util.AndroidUtils
 import java.util.*
 
+
 class AppGlobal : Application() {
 
     companion object {
@@ -29,6 +30,8 @@ class AppGlobal : Application() {
         lateinit var resources: Resources
         lateinit var database: SQLiteDatabase
         lateinit var packageName: String
+
+        var instance: AppGlobal? = null
 
         var packageNameString = ""
 
@@ -42,9 +45,10 @@ class AppGlobal : Application() {
         var colorAccent = 0
     }
 
-
     override fun onCreate() {
         super.onCreate()
+        instance = this
+
         preferences = PreferenceManager.getDefaultSharedPreferences(this)
         handler = Handler(mainLooper)
         locale = Locale.getDefault()

@@ -39,7 +39,7 @@ class DatabaseHelper private constructor(context: Context?) : SQLiteOpenHelper(c
     companion object {
 
         private const val DB_NAME = "cache.db"
-        private const val DB_VERSION = 31
+        private const val DB_VERSION = 32
 
         const val TYPE = "type"
         const val PEER_ID = "peer_id"
@@ -62,7 +62,7 @@ class DatabaseHelper private constructor(context: Context?) : SQLiteOpenHelper(c
         const val ATTACHMENTS = "attachments"
         const val IMPORTANT = "important"
         const val FWD_MESSAGES = "fwd_messages"
-        const val REPLY_MESSAGE = "reply_message"
+        const val REPLY_MESSAGE_ID = "reply_message_id"
         const val ACTION = "_action"
 
         const val CONVERSATION_ID = "conversation_id"
@@ -77,9 +77,8 @@ class DatabaseHelper private constructor(context: Context?) : SQLiteOpenHelper(c
         const val IS_NO_SOUND = "is_no_sound"
         const val MEMBERS_COUNT = "members_count"
         const val TITLE = "title"
-        const val PINNED_MESSAGE = "pinned_message"
+        const val PINNED_MESSAGE_ID = "pinned_message_id"
         const val STATE = "state"
-        const val ACTIVE_IDS = "active_ids"
         const val IS_GROUP_CHANNEL = "is_group_channel"
         const val LAST_MESSAGE_ID = "last_message_id"
 
@@ -94,6 +93,7 @@ class DatabaseHelper private constructor(context: Context?) : SQLiteOpenHelper(c
         const val ONLINE_MOBILE = "online_mobile"
         const val STATUS = "status"
         const val LAST_SEEN = "last_seen"
+        const val PLATFORM = "platform"
         const val VERIFIED = "verified"
         const val GROUP_ID = "group_id"
         const val NAME = "name"
@@ -118,7 +118,7 @@ class DatabaseHelper private constructor(context: Context?) : SQLiteOpenHelper(c
                 ATTACHMENTS + " blob, " +
                 IMPORTANT + " integer default 0, " +
                 FWD_MESSAGES + " blob, " +
-                REPLY_MESSAGE + " blob, " +
+                REPLY_MESSAGE_ID + " integer, " +
                 ACTION + " blob" +
                 ");"
 
@@ -137,9 +137,8 @@ class DatabaseHelper private constructor(context: Context?) : SQLiteOpenHelper(c
                 IS_NO_SOUND + " integer default 0, " +
                 MEMBERS_COUNT + " integer, " +
                 TITLE + " varchar(255), " +
-                PINNED_MESSAGE + " blob, " +
+                PINNED_MESSAGE_ID + " blob, " +
                 STATE + " text, " +
-                ACTIVE_IDS + " blob, " +
                 IS_GROUP_CHANNEL + " integer default 0, " +
                 PHOTO_50 + " varchar(255), " +
                 PHOTO_100 + " varchar(255), " +
@@ -161,7 +160,8 @@ class DatabaseHelper private constructor(context: Context?) : SQLiteOpenHelper(c
                 ONLINE + " integer default 0, " +
                 ONLINE_MOBILE + " integer default 0, " +
                 STATUS + " longtext, " +
-                LAST_SEEN + " blob, " +
+                LAST_SEEN + " integer, " +
+                PLATFORM + " integer, " +
                 VERIFIED + " integer default 0" +
                 ");"
 

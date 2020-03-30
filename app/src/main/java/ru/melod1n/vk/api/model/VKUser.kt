@@ -5,6 +5,7 @@ import java.io.Serializable
 import java.util.*
 
 open class VKUser : VKModel, Serializable {
+
     var id = 0
     var firstName: String? = null
     var lastName: String? = null
@@ -19,7 +20,10 @@ open class VKUser : VKModel, Serializable {
     var isOnline = false
     var isOnlineMobile = false
     var status: String? = null
-    var lastSeen: LastSeen? = null
+
+    var lastSeen = 0
+    var lastSeenPlatform = 0
+
     var isVerified = false
 
     constructor()
@@ -40,7 +44,10 @@ open class VKUser : VKModel, Serializable {
         status = o.optString("status")
         val oLastSeen = o.optJSONObject("last_seen")
         if (oLastSeen != null) {
-            lastSeen = LastSeen(oLastSeen)
+            LastSeen(oLastSeen).apply {
+                lastSeen = time
+                lastSeenPlatform = platform
+            }
         }
         isVerified = o.optInt("verified") == 1
     }

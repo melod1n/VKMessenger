@@ -3,6 +3,7 @@ package ru.melod1n.vk.util
 import java.util.*
 
 object ArrayUtil {
+
     const val VALUE_NOT_FOUND = -1
     @JvmOverloads
     fun linearSearch(array: ByteArray, value: Byte, start: Int = 0, end: Int = array.size): Int {

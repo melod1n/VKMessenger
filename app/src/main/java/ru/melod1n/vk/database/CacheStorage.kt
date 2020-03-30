@@ -6,7 +6,6 @@ import ru.melod1n.vk.api.UserConfig
 import ru.melod1n.vk.api.model.*
 import ru.melod1n.vk.common.AppGlobal
 import ru.melod1n.vk.database.DatabaseHelper.Companion.ACTION
-import ru.melod1n.vk.database.DatabaseHelper.Companion.ACTIVE_IDS
 import ru.melod1n.vk.database.DatabaseHelper.Companion.ATTACHMENTS
 import ru.melod1n.vk.database.DatabaseHelper.Companion.CAN_ACCESS_CLOSED
 import ru.melod1n.vk.database.DatabaseHelper.Companion.CLOSED
@@ -42,11 +41,12 @@ import ru.melod1n.vk.database.DatabaseHelper.Companion.PEER_ID
 import ru.melod1n.vk.database.DatabaseHelper.Companion.PHOTO_100
 import ru.melod1n.vk.database.DatabaseHelper.Companion.PHOTO_200
 import ru.melod1n.vk.database.DatabaseHelper.Companion.PHOTO_50
-import ru.melod1n.vk.database.DatabaseHelper.Companion.PINNED_MESSAGE
+import ru.melod1n.vk.database.DatabaseHelper.Companion.PINNED_MESSAGE_ID
+import ru.melod1n.vk.database.DatabaseHelper.Companion.PLATFORM
 import ru.melod1n.vk.database.DatabaseHelper.Companion.RANDOM_ID
 import ru.melod1n.vk.database.DatabaseHelper.Companion.READ
 import ru.melod1n.vk.database.DatabaseHelper.Companion.REASON
-import ru.melod1n.vk.database.DatabaseHelper.Companion.REPLY_MESSAGE
+import ru.melod1n.vk.database.DatabaseHelper.Companion.REPLY_MESSAGE_ID
 import ru.melod1n.vk.database.DatabaseHelper.Companion.SCREEN_NAME
 import ru.melod1n.vk.database.DatabaseHelper.Companion.SEX
 import ru.melod1n.vk.database.DatabaseHelper.Companion.STATE
@@ -63,6 +63,8 @@ import ru.melod1n.vk.database.DatabaseHelper.Companion.UNREAD_COUNT
 import ru.melod1n.vk.database.DatabaseHelper.Companion.USER_ID
 import ru.melod1n.vk.database.DatabaseHelper.Companion.VERIFIED
 import ru.melod1n.vk.util.Util
+import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.math.abs
 
 @Suppress("UNCHECKED_CAST")
@@ -227,14 +229,13 @@ object CacheStorage {
             randomId = getInt(cursor, RANDOM_ID)
             isRead = getInt(cursor, READ) == 1
             isImportant = getInt(cursor, IMPORTANT) == 1
+            replyMessageId = getInt(cursor, REPLY_MESSAGE_ID)
 
             val attachments = Util.deserialize(getBlob(cursor, ATTACHMENTS))
             val fwdMessages = Util.deserialize(getBlob(cursor, FWD_MESSAGES))
-            val replyMessage = Util.deserialize(getBlob(cursor, REPLY_MESSAGE))
             val action = Util.deserialize(getBlob(cursor, ACTION))
 
             this.fwdMessages = fwdMessages as ArrayList<VKMessage>?
-            this.replyMessage = replyMessage as VKMessage?
             this.action = action as VKMessage.Action?
             this.attachments = attachments as ArrayList<VKModel>?
         }
@@ -262,11 +263,7 @@ object CacheStorage {
             photo100 = getString(cursor, PHOTO_100)
             photo200 = getString(cursor, PHOTO_200)
 
-            val activeIds = Util.deserialize(getBlob(cursor, ACTIVE_IDS))
-            val pinnedMessage = Util.deserialize(getBlob(cursor, PINNED_MESSAGE))
-
-            this.pinnedMessage = pinnedMessage as VKPinnedMessage?
-            this.activeIds = activeIds as Array<Int>?
+            this.pinnedMessageId = getInt(cursor, PINNED_MESSAGE_ID)
         }
     }
 
@@ -287,9 +284,8 @@ object CacheStorage {
             isOnlineMobile = getInt(cursor, ONLINE_MOBILE) == 1
             status = getString(cursor, STATUS)
             isVerified = getInt(cursor, VERIFIED) == 1
-
-            val lastSeen = Util.deserialize(getBlob(cursor, LAST_SEEN))
-            this.lastSeen = lastSeen as VKUser.LastSeen?
+            lastSeen = getInt(cursor, LAST_SEEN)
+            lastSeenPlatform = getInt(cursor, PLATFORM)
         }
     }
 
@@ -298,7 +294,7 @@ object CacheStorage {
             id = abs(getInt(cursor, GROUP_ID))
             name = getString(cursor, NAME)
             screenName = getString(cursor, SCREEN_NAME)
-            isClosed = getInt(cursor, IS_CLOSED)
+            isClosed = getInt(cursor, IS_CLOSED) == 1
             deactivated = getString(cursor, DEACTIVATED)
             photo50 = getString(cursor, PHOTO_50)
             photo100 = getString(cursor, PHOTO_100)
@@ -320,7 +316,7 @@ object CacheStorage {
         values.put(IMPORTANT, message.isImportant)
         values.put(ATTACHMENTS, Util.serialize(message.attachments))
         values.put(FWD_MESSAGES, Util.serialize(message.fwdMessages))
-        values.put(REPLY_MESSAGE, Util.serialize(message.replyMessage))
+        values.put(REPLY_MESSAGE_ID, message.replyMessageId)
         values.put(ACTION, Util.serialize(message.action))
     }
 
@@ -336,9 +332,8 @@ object CacheStorage {
         values.put(IS_NO_SOUND, conversation.isNoSound)
         values.put(MEMBERS_COUNT, conversation.membersCount)
         values.put(TITLE, conversation.title ?: "")
-        values.put(PINNED_MESSAGE, Util.serialize(conversation.pinnedMessage))
+        values.put(PINNED_MESSAGE_ID, conversation.pinnedMessageId)
         values.put(STATE, conversation.state)
-        values.put(ACTIVE_IDS, Util.serialize(conversation.activeIds))
         values.put(IS_GROUP_CHANNEL, conversation.isGroupChannel)
         values.put(PHOTO_50, conversation.photo50)
         values.put(PHOTO_100, conversation.photo100)
@@ -366,10 +361,8 @@ object CacheStorage {
         values.put(ONLINE, user.isOnline)
         values.put(ONLINE_MOBILE, user.isOnlineMobile)
         values.put(STATUS, user.status)
-
-        if (user.lastSeen != null) {
-            values.put(LAST_SEEN, Util.serialize(user.lastSeen))
-        }
+        values.put(LAST_SEEN, user.lastSeen)
+        values.put(PLATFORM, user.lastSeenPlatform)
         values.put(VERIFIED, user.isVerified)
     }
 
@@ -390,7 +383,7 @@ object CacheStorage {
     }
 
     fun insertMessage(message: VKMessage?) {
-        insert(TABLE_MESSAGES, ArrayList<VKMessage>(listOf(message)))
+        insert(TABLE_MESSAGES, ArrayList(Collections.singletonList(message)))
     }
 
     fun insertConversation(conversation: VKConversation) {

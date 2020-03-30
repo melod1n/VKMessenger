@@ -62,7 +62,6 @@ class FragmentConversations : BaseFragment(), BaseContract.View<VKConversation>,
         prepareRecyclerView()
 
         prepareNoInternetView()
-
         prepareListeners()
 
         loadCachedData()

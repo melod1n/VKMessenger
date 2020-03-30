@@ -131,7 +131,6 @@ open class VKMessage : VKModel, Serializable {
         }
     }
 
-    var isShowTime = true
     var id = 0
     var date = 0
     var peerId = 0
@@ -141,11 +140,17 @@ open class VKMessage : VKModel, Serializable {
     var text: String? = null
     var randomId = 0
     var conversationMessageId = 0
+
     var attachments: ArrayList<VKModel>? = null
+
     var isImportant = false
+
     var fwdMessages: ArrayList<VKMessage>? = null
-    var replyMessage: VKMessage? = null
+
+    var replyMessageId = 0
+
     var action: Action? = null
+
     var isRead = false
 
     constructor()
@@ -179,7 +184,7 @@ open class VKMessage : VKModel, Serializable {
 
         val oReplyMessage = o.optJSONObject("reply_message")
         if (oReplyMessage != null) {
-            replyMessage = VKMessage(oReplyMessage)
+            replyMessageId = VKMessage(oReplyMessage).id
         }
 
         val oAction = o.optJSONObject("action")

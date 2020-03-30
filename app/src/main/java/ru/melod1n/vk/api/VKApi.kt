@@ -98,26 +98,29 @@ object VKApi {
                 val oConversation = source.optJSONObject("conversation") ?: return null
                 val oLastMessage = source.optJSONObject("last_message") ?: return null
 
-                val conversation = VKConversation(oConversation, oLastMessage)
+                val conversation = VKConversation(oConversation).also { it.lastMessage = VKMessage(oLastMessage) }
 
                 val response = json.optJSONObject("response") ?: return null
 
                 val oProfiles = response.optJSONArray("profiles")
                 if (oProfiles != null) {
                     val profiles = ArrayList<VKUser>()
+
                     for (j in 0 until oProfiles.length()) {
                         profiles.add(VKUser(oProfiles.optJSONObject(j)))
                     }
-                    conversation.profiles = profiles
+
+                    VKConversation.profiles = profiles
                 }
 
                 val oGroups = response.optJSONArray("groups")
                 if (oGroups != null) {
                     val groups = ArrayList<VKGroup>()
+
                     for (j in 0 until oGroups.length()) {
                         groups.add(VKGroup(oGroups.optJSONObject(j)))
                     }
-                    conversation.groups = groups
+                    VKConversation.groups = groups
                 }
 
                 models.add(conversation as T)

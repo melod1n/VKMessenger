@@ -5,7 +5,6 @@ import java.io.Serializable
 import java.util.*
 
 abstract class VKModel : Serializable {
-    var tag: Any? = null
 
     protected constructor()
     protected constructor(o: JSONObject?)

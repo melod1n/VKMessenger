@@ -4,10 +4,11 @@ import org.json.JSONObject
 import java.io.Serializable
 
 class VKGroup : VKModel, Serializable {
+
     var id = 0
     var name: String? = null
     var screenName: String? = null
-    var isClosed = 0
+    var isClosed = false
     var deactivated: String? = null
     var type: String? = null
     var photo50: String? = null
@@ -19,7 +20,7 @@ class VKGroup : VKModel, Serializable {
         id = o.optInt("id", -1)
         name = o.optString("name")
         screenName = o.optString("screen_name")
-        isClosed = o.optInt("is_closed")
+        isClosed = o.optInt("is_closed") == 1
         deactivated = o.optString("deactivated")
         type = o.optString("type")
         photo50 = o.optString("photo_50")

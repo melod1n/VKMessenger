@@ -2,6 +2,7 @@ package ru.melod1n.vk.api.model
 
 import org.json.JSONArray
 import org.json.JSONObject
+import ru.melod1n.vk.database.CacheStorage
 import java.io.Serializable
 import java.util.*
 
@@ -9,6 +10,9 @@ class VKConversation : VKModel, Serializable {
 
     companion object {
         private const val serialVersionUID = 1L
+
+        var profiles = ArrayList<VKUser>()
+        var groups = ArrayList<VKGroup>()
 
         const val STATE_IN = "in"
         const val STATE_KICKED = "kicked"
@@ -65,21 +69,21 @@ class VKConversation : VKModel, Serializable {
     var isDisabledForever = false
     var isNoSound = false
 
-    var profiles = ArrayList<VKUser>()
-    var groups = ArrayList<VKGroup>()
-
     var membersCount = 0
     var title: String? = null
-    var pinnedMessage: VKPinnedMessage? = null
+
+    var pinnedMessageId = 0
+
     var state: String? = null
-    var activeIds: Array<Int>? = null
+
+
+    var lastMessage: VKMessage? = null
+
     var isGroupChannel = false
 
     var photo50: String? = null
     var photo100: String? = null
     var photo200: String? = null
-
-    var lastMessage: VKMessage? = null
 
     val isNotificationsDisabled: Boolean
         get() = isDisabledForever || disabledUntil > 0 || isNoSound
@@ -101,6 +105,8 @@ class VKConversation : VKModel, Serializable {
         lastMessageId = o.optInt("last_message_id", -1)
         unreadCount = o.optInt("unread_count", 0)
 
+        lastMessage = CacheStorage.getMessage(lastMessageId)
+
         val oPushSettings = o.optJSONObject("push_settings")
         if (oPushSettings != null) {
             disabledUntil = oPushSettings.optInt("disabled_until")
@@ -121,7 +127,7 @@ class VKConversation : VKModel, Serializable {
 
             val oPinnedMessage = oChatSettings.optJSONObject("pinned_message")
             if (oPinnedMessage != null) {
-                pinnedMessage = VKPinnedMessage(oPinnedMessage)
+                pinnedMessageId = VKPinnedMessage(oPinnedMessage).id
             }
 
             state = oChatSettings.optString("state")
@@ -135,10 +141,6 @@ class VKConversation : VKModel, Serializable {
 
             isGroupChannel = oChatSettings.optBoolean("is_group_channel")
         }
-    }
-
-    constructor(oConversation: JSONObject, oMessage: JSONObject) : this(oConversation) {
-        lastMessage = VKMessage(oMessage)
     }
 
     val isChat: Boolean

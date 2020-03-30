@@ -93,12 +93,7 @@ object VKUtil {
                 r.getString(R.string.user_online)
             }
         } else {
-            val lastSeen = user.lastSeen
-            if (lastSeen != null) {
-                r.getString(R.string.user_last_seen_at, getLastSeenTime(lastSeen.time * 1000L))
-            } else {
-                r.getString(R.string.user_offline)
-            }
+            r.getString(R.string.user_last_seen_at, getLastSeenTime(user.lastSeen * 1000L))
         }
     }
 
