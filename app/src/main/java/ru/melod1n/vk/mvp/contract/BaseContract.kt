@@ -17,12 +17,12 @@ open class BaseContract {
 
     interface Presenter<T> {
         fun readyForLoading()
-        fun onRequestLoadCachedValues(id: Int, offset: Int, count: Int)
-        fun onRequestLoadValues(id: Int, offset: Int, count: Int)
-        fun onValuesLoading()
-        fun onValuesErrorLoading(e: Exception)
-        fun onValuesLoaded(offset: Int, values: ArrayList<T>, isCache: Boolean)
-        fun onRequestClearList()
+        fun requestCachedValues(id: Int, offset: Int, count: Int)
+        fun requestValues(id: Int, offset: Int, count: Int)
+        fun valuesLoading()
+        fun valuesErrorLoading(e: Exception)
+        fun valuesLoaded(offset: Int, values: ArrayList<T>, isCache: Boolean)
+        fun requestClearList()
     }
 
     abstract class Repository<T> {

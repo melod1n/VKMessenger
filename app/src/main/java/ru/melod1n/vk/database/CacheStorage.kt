@@ -353,6 +353,7 @@ object CacheStorage {
         values.put(OUT_READ, conversation.outRead)
         values.put(UNREAD_COUNT, conversation.unreadCount)
         values.put(TYPE, conversation.type)
+        values.put(IS_ALLOWED, conversation.isAllowed)
         values.put(LOCAL_ID, conversation.localId)
         values.put(DISABLED_UNTIL, conversation.disabledUntil)
         values.put(IS_DISABLED_FOREVER, conversation.isDisabledForever)

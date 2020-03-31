@@ -23,31 +23,31 @@ class MessagesPresenter(private val view: BaseContract.View<VKMessage>) : Presen
         view.hideErrorView()
     }
 
-    override fun onRequestLoadCachedValues(id: Int, offset: Int, count: Int) {
+    override fun requestCachedValues(id: Int, offset: Int, count: Int) {
         readyForLoading()
         cachedValues = repository.loadCachedValues(id, offset, count)
-        onValuesLoaded(offset, cachedValues!!, true)
+        valuesLoaded(offset, cachedValues!!, true)
     }
 
-    override fun onRequestLoadValues(id: Int, offset: Int, count: Int) {
+    override fun requestValues(id: Int, offset: Int, count: Int) {
         readyForLoading()
         repository.loadValues(id, offset, count, object : OnResponseListener<VKMessage> {
             override fun onSuccess(models: ArrayList<VKMessage>) {
                 loadedValues = models
-                onValuesLoaded(offset, loadedValues!!, false)
+                valuesLoaded(offset, loadedValues!!, false)
             }
 
             override fun onError(e: Exception) {
-                onValuesErrorLoading(e)
+                valuesErrorLoading(e)
             }
         })
     }
 
-    override fun onValuesLoading() {
+    override fun valuesLoading() {
         view.showProgressBar(true)
     }
 
-    override fun onValuesErrorLoading(e: Exception) {
+    override fun valuesErrorLoading(e: Exception) {
         view.clearList()
         view.showProgressBar(false)
         view.showNoItemsView(false)
@@ -62,7 +62,7 @@ class MessagesPresenter(private val view: BaseContract.View<VKMessage>) : Presen
         Log.d(TAG, "onValuesErrorLoading: " + e.toString() + ": " + Log.getStackTraceString(e))
     }
 
-    override fun onValuesLoaded(offset: Int, values: ArrayList<VKMessage>, isCache: Boolean) {
+    override fun valuesLoaded(offset: Int, values: ArrayList<VKMessage>, isCache: Boolean) {
         view.hideErrorView()
         view.showNoItemsView(false)
         view.showRefreshLayout(false)
@@ -71,7 +71,7 @@ class MessagesPresenter(private val view: BaseContract.View<VKMessage>) : Presen
         view.loadValuesIntoList(offset, values, isCache)
     }
 
-    override fun onRequestClearList() {
+    override fun requestClearList() {
         view.clearList()
     }
 

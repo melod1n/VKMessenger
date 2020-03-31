@@ -21,32 +21,32 @@ class ConversationsPresenter(private val view: BaseContract.View<VKConversation>
         view.hideErrorView()
     }
 
-    override fun onRequestLoadCachedValues(id: Int, offset: Int, count: Int) {
+    override fun requestCachedValues(id: Int, offset: Int, count: Int) {
         readyForLoading()
         cachedValues = repository.loadCachedValues(0, offset, count)
 
-        onValuesLoaded(offset, cachedValues!!, true)
+        valuesLoaded(offset, cachedValues!!, true)
     }
 
-    override fun onRequestLoadValues(id: Int, offset: Int, count: Int) {
+    override fun requestValues(id: Int, offset: Int, count: Int) {
         readyForLoading()
         repository.loadValues(id, offset, count, object : OnResponseListener<VKConversation> {
             override fun onSuccess(models: ArrayList<VKConversation>) {
                 loadedValues = models
-                onValuesLoaded(offset, loadedValues!!, false)
+                valuesLoaded(offset, loadedValues!!, false)
             }
 
             override fun onError(e: Exception) {
-                onValuesErrorLoading(e)
+                valuesErrorLoading(e)
             }
         })
     }
 
-    override fun onValuesLoading() {
+    override fun valuesLoading() {
         view.showRefreshLayout(true)
     }
 
-    override fun onValuesErrorLoading(e: Exception) {
+    override fun valuesErrorLoading(e: Exception) {
         view.clearList()
         view.showProgressBar(false)
         view.showNoItemsView(false)
@@ -59,7 +59,7 @@ class ConversationsPresenter(private val view: BaseContract.View<VKConversation>
         Log.d(TAG, "onValuesErrorLoading: " + e.toString() + ": " + Log.getStackTraceString(e))
     }
 
-    override fun onValuesLoaded(offset: Int, values: ArrayList<VKConversation>, isCache: Boolean) {
+    override fun valuesLoaded(offset: Int, values: ArrayList<VKConversation>, isCache: Boolean) {
         view.hideErrorView()
         view.showNoItemsView(false)
         view.showRefreshLayout(false)
@@ -68,7 +68,7 @@ class ConversationsPresenter(private val view: BaseContract.View<VKConversation>
         view.loadValuesIntoList(offset, values, isCache)
     }
 
-    override fun onRequestClearList() {
+    override fun requestClearList() {
         view.clearList()
     }
 

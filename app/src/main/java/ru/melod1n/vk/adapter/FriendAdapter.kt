@@ -37,6 +37,8 @@ class FriendAdapter(context: Context, values: ArrayList<VKUser>) : BaseAdapter<V
             }
 
             onlineText.text = VKUtil.getUserOnline(user)
+
+            //TODO: отладить "заходил недавно" и открытие чата
         }
     }
 

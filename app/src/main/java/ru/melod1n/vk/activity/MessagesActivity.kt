@@ -82,9 +82,9 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
     private var loadedId = false
 
     private fun onLoad() {
-        presenter!!.onValuesLoading()
-        presenter!!.onRequestClearList()
-        presenter!!.onRequestLoadValues(peerId, 0, MESSAGES_COUNT)
+        presenter!!.valuesLoading()
+        presenter!!.requestClearList()
+        presenter!!.requestValues(peerId, 0, MESSAGES_COUNT)
     }
 
     override fun onDestroy() {
@@ -102,13 +102,36 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
 
         initExtraData()
 
-        if (conversation == null) return
+        (presenter as MessagesPresenter).readyForLoading()
 
         prepareNavigationView()
         prepareToolbar()
         prepareRefreshLayout()
         prepareRecyclerView()
         prepareEditText()
+
+        if (conversation == null) {
+            loadConversation()
+            return
+        }
+
+        initData()
+    }
+
+    private fun loadConversation() {
+        TaskManager.loadConversation(peerId, object : VKApi.OnResponseListener<VKConversation> {
+            override fun onSuccess(models: ArrayList<VKConversation>) {
+                conversation = models[0]
+                initData()
+            }
+
+            override fun onError(e: Exception) {
+                e.printStackTrace()
+            }
+        })
+    }
+
+    private fun initData() {
         checkAllowedWriting()
 
         val viewedDialogs = MainActivity.viewedDialogs
@@ -116,10 +139,10 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
         if (AndroidUtils.hasConnection() && !viewedDialogs.contains(peerId)) {
             chatInfo.setText(R.string.loading)
             viewedDialogs.add(peerId)
+            
             onLoad()
         } else {
-            onLoad()
-//            presenter!!.onRequestLoadCachedValues(peerId, 0, MESSAGES_COUNT)
+            presenter!!.requestCachedValues(peerId, 0, MESSAGES_COUNT)
         }
 
         refreshFabStyle()
@@ -333,9 +356,7 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
                         avatar = user.photo200
                     }
 
-                    runOnUiThread {
-                        onCreate(null)
-                    }
+
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
@@ -436,7 +457,7 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
     override fun showErrorView(errorTitle: String, errorDescription: String) {
         Log.d(TAG, "showErrorView: $errorTitle: $errorDescription")
         if (!AndroidUtils.hasConnection()) {
-            presenter!!.onRequestLoadCachedValues(0, 0, MESSAGES_COUNT)
+            presenter!!.requestCachedValues(0, 0, MESSAGES_COUNT)
         }
     }
 

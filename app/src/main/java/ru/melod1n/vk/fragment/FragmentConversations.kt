@@ -96,8 +96,8 @@ class FragmentConversations : BaseFragment(), BaseContract.View<VKConversation>,
     private fun refreshData() {
         if (AndroidUtils.hasConnection()) {
             showNoInternetView(false)
-            presenter.onValuesLoading()
-            presenter.onRequestLoadValues(0, 0, CONVERSATIONS_COUNT)
+            presenter.valuesLoading()
+            presenter.requestValues(0, 0, CONVERSATIONS_COUNT)
         } else {
             showNoInternetView(true)
             swipeRefreshLayout.isRefreshing = false
@@ -105,7 +105,7 @@ class FragmentConversations : BaseFragment(), BaseContract.View<VKConversation>,
     }
 
     private fun loadCachedData() {
-        presenter.onRequestLoadCachedValues(0, 0, CONVERSATIONS_COUNT)
+        presenter.requestCachedValues(0, 0, CONVERSATIONS_COUNT)
     }
 
     private fun openChat(position: Int) {
@@ -176,7 +176,7 @@ class FragmentConversations : BaseFragment(), BaseContract.View<VKConversation>,
     override fun showErrorView(errorTitle: String, errorDescription: String) {
         Log.d(TAG, "showErrorView: $errorTitle: $errorDescription")
         if (!AndroidUtils.hasConnection()) {
-            presenter.onRequestLoadCachedValues(0, 0, CONVERSATIONS_COUNT)
+            presenter.requestCachedValues(0, 0, CONVERSATIONS_COUNT)
         }
     }
 

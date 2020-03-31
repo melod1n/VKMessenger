@@ -9,7 +9,7 @@ import ru.melod1n.vk.api.method.MethodSetter
 import ru.melod1n.vk.api.method.UserMethodSetter
 import ru.melod1n.vk.api.model.*
 import ru.melod1n.vk.common.AppGlobal
-import ru.melod1n.vk.common.TaskManager.execute
+import ru.melod1n.vk.common.TaskManager
 import ru.melod1n.vk.net.HttpRequest
 import ru.melod1n.vk.util.ArrayUtil
 
@@ -33,6 +33,7 @@ object VKApi {
         }
 
         val json = JSONObject(buffer)
+
         try {
             checkError(json, url)
         } catch (ex: VKException) {
@@ -40,99 +41,126 @@ object VKApi {
                 execute(url, cls)
             } else throw ex
         }
-        if (cls == null) {
-            return null
+
+
+        when (cls) {
+            null -> return null
+
+            VKLongPollServer::class.java -> {
+                val server = VKLongPollServer(json.optJSONObject("response")!!)
+                return ArrayUtil.singletonList(server) as ArrayList<T>
+            }
+
+            Boolean::class.java -> {
+                val value = json.optInt("response") == 1
+                return ArrayUtil.singletonList(value) as ArrayList<T>
+            }
+
+            Long::class.java -> {
+                val value = json.optLong("response")
+                return ArrayUtil.singletonList(value) as ArrayList<T>
+            }
+
+            Int::class.java -> {
+                val value = json.optInt("response")
+                return ArrayUtil.singletonList(value) as ArrayList<T>
+            }
         }
-        if (cls == VKLongPollServer::class.java) {
-            val server = VKLongPollServer(json.optJSONObject("response")!!)
-            return ArrayUtil.singletonList(server) as ArrayList<T>
-        }
-        if (cls == Boolean::class.java) {
-            val value = json.optInt("response") == 1
-            return ArrayUtil.singletonList(value) as ArrayList<T>
-        }
-        if (cls == Long::class.java) {
-            val value = json.optLong("response")
-            return ArrayUtil.singletonList(value) as ArrayList<T>
-        }
-        if (cls == Int::class.java) {
-            val value = json.optInt("response")
-            return ArrayUtil.singletonList(value) as ArrayList<T>
-        }
+
+        val response = json.opt("response")
+
         val array = optItems(json)
         val models = ArrayList<T>(array!!.length())
-        if (cls == VKUser::class.java) {
-            for (i in 0 until array.length()) {
-                models.add(VKUser(array.optJSONObject(i)) as T)
-            }
-        } else if (cls == VKMessage::class.java) {
-            if (url.contains("messages.getHistory")) {
-                VKMessage.lastHistoryCount = json.optJSONObject("response")!!.optInt("count")
+
+        when (cls) {
+            VKUser::class.java -> {
+                for (i in 0 until array.length()) {
+                    models.add(VKUser(array.optJSONObject(i)) as T)
+                }
             }
 
-            for (i in 0 until array.length()) {
-                var source = array.optJSONObject(i)
-                if (source.has("message")) {
-                    source = source.optJSONObject("message")
+            VKMessage::class.java -> {
+                if (url.contains("messages.getHistory")) {
+                    VKMessage.lastHistoryCount = (response as JSONObject).optInt("count")
                 }
-                val message = VKMessage(source)
-                models.add(message as T)
-                //TODO: сохранять группы и юзеров
+
+                for (i in 0 until array.length()) {
+                    var source = array.optJSONObject(i)
+                    if (source.has("message")) {
+                        source = source.optJSONObject("message")
+                    }
+
+                    val message = VKMessage(source)
+                    models.add(message as T)
+                    //TODO: сохранять группы и юзеров
+                }
             }
-        } else if (cls == VKGroup::class.java) {
-            for (i in 0 until array.length()) {
-                models.add(VKGroup(array.optJSONObject(i)) as T)
+
+            VKGroup::class.java -> {
+                for (i in 0 until array.length()) {
+                    models.add(VKGroup(array.optJSONObject(i)) as T)
+                }
             }
-        } else if (cls == VKModel::class.java && url.contains("messages.getHistoryAttachments")) {
-            return VKAttachments.parse(array) as ArrayList<T>
-        } else if (cls == VKConversation::class.java) {
-            if (url.contains("ById")) {
+
+            VKModel::class.java -> {
+                if (url.contains("messages.getHistoryAttachments")) {
+                    return VKAttachments.parse(array) as ArrayList<T>
+                }
+            }
+
+            VKConversation::class.java -> {
+                if (url.contains("getConversationsById")) {
+
+                    for (i in 0 until array.length()) {
+                        val source = array.optJSONObject(i)
+                        models.add(VKConversation(source) as T)
+                    }
+
+                    return models
+                }
+
                 for (i in 0 until array.length()) {
                     val source = array.optJSONObject(i)
-                    models.add(VKConversation(source) as T)
-                }
-            }
+                    val oConversation = source.optJSONObject("conversation") ?: return null
+                    val oLastMessage = source.optJSONObject("last_message") ?: return null
 
-            for (i in 0 until array.length()) {
-                val source = array.optJSONObject(i)
-                val oConversation = source.optJSONObject("conversation") ?: return null
-                val oLastMessage = source.optJSONObject("last_message") ?: return null
+                    val conversation = VKConversation(oConversation).also { it.lastMessage = VKMessage(oLastMessage) }
 
-                val conversation = VKConversation(oConversation).also { it.lastMessage = VKMessage(oLastMessage) }
+                    val oProfiles = (response as JSONObject).optJSONArray("profiles")
+                    if (oProfiles != null) {
+                        val profiles = ArrayList<VKUser>()
 
-                val response = json.optJSONObject("response") ?: return null
+                        for (j in 0 until oProfiles.length()) {
+                            profiles.add(VKUser(oProfiles.optJSONObject(j)))
+                        }
 
-                val oProfiles = response.optJSONArray("profiles")
-                if (oProfiles != null) {
-                    val profiles = ArrayList<VKUser>()
-
-                    for (j in 0 until oProfiles.length()) {
-                        profiles.add(VKUser(oProfiles.optJSONObject(j)))
+                        VKConversation.profiles = profiles
                     }
 
-                    VKConversation.profiles = profiles
-                }
+                    val oGroups = response.optJSONArray("groups")
+                    if (oGroups != null) {
+                        val groups = ArrayList<VKGroup>()
 
-                val oGroups = response.optJSONArray("groups")
-                if (oGroups != null) {
-                    val groups = ArrayList<VKGroup>()
+                        for (j in 0 until oGroups.length()) {
+                            groups.add(VKGroup(oGroups.optJSONObject(j)))
+                        }
 
-                    for (j in 0 until oGroups.length()) {
-                        groups.add(VKGroup(oGroups.optJSONObject(j)))
+                        VKConversation.groups = groups
                     }
-                    VKConversation.groups = groups
-                }
 
-                models.add(conversation as T)
+                    models.add(conversation as T)
+                }
             }
         }
+
         return models
     }
 
     fun <E> execute(url: String, cls: Class<E>, listener: OnResponseListener<E>?) {
-        execute(Runnable {
+        TaskManager.execute(Runnable {
             try {
                 val models = execute(url, cls)
+
                 if (listener != null) {
                     AppGlobal.handler.post(SuccessCallback(listener, models ?: ArrayList()))
                 }

@@ -20,13 +20,11 @@ import ru.melod1n.vk.R
 import ru.melod1n.vk.activity.MainActivity
 import ru.melod1n.vk.activity.MessagesActivity
 import ru.melod1n.vk.adapter.FriendAdapter
-import ru.melod1n.vk.api.model.VKConversation
 import ru.melod1n.vk.api.model.VKUser
 import ru.melod1n.vk.common.AppGlobal
 import ru.melod1n.vk.common.EventInfo
 import ru.melod1n.vk.current.BaseAdapter
 import ru.melod1n.vk.current.BaseFragment
-import ru.melod1n.vk.database.CacheStorage
 import ru.melod1n.vk.mvp.contract.BaseContract
 import ru.melod1n.vk.mvp.presenter.FriendsPresenter
 import ru.melod1n.vk.util.AndroidUtils
@@ -115,14 +113,7 @@ class FragmentFriends : BaseFragment(), BaseContract.View<VKUser>, SwipeRefreshL
 
 
         val data = Bundle().apply {
-            val conversation = try {
-                CacheStorage.getConversation(user.id)
-            } catch (ignored: Exception) {
-                VKConversation()
-            }
-
             putInt(MessagesActivity.TAG_ID, user.id)
-            putSerializable(MessagesActivity.TAG_EXTRA_CONVERSATION, conversation)
             putString(MessagesActivity.TAG_EXTRA_TITLE, user.toString())
             putString(MessagesActivity.TAG_EXTRA_AVATAR, user.photo200)
         }
