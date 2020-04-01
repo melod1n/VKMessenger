@@ -6,16 +6,11 @@ import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
-import androidx.annotation.LayoutRes
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.GridLayoutManager.SpanSizeLookup
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import java.io.Serializable
 import java.util.*
-import kotlin.math.abs
 
 @Suppress("UNCHECKED_CAST")
 abstract class BaseAdapter<T, VH : BaseAdapter.Holder>(var context: Context, var values: ArrayList<T>) : RecyclerView.Adapter<VH>() {
@@ -36,6 +31,14 @@ abstract class BaseAdapter<T, VH : BaseAdapter.Holder>(var context: Context, var
 
     open fun getItem(position: Int): T {
         return values[position]
+    }
+
+    fun updateData() {
+        if (values.isNullOrEmpty()) return
+
+        for (i in values.indices) {
+            notifyItemChanged(i)
+        }
     }
 
     fun add(position: Int, item: T) {
@@ -64,21 +67,14 @@ abstract class BaseAdapter<T, VH : BaseAdapter.Holder>(var context: Context, var
 
     operator fun set(position: Int, item: T) {
         values[position] = item
-        notifyItemChanged(position)
     }
 
     fun indexOf(`object`: T): Int {
         return values.indexOf(`object`)
     }
 
-    override fun onCreateViewHolder(viewGroup: ViewGroup, type: Int): VH {
-        return if (type != TYPE_HEADER && type != TYPE_FOOTER) {
-            onCreateItemViewHolder(viewGroup, type)
-        } else {
-            val frameLayout = FrameLayout(viewGroup.context)
-            setHeaderFooterLayoutParams(frameLayout)
-            HeaderFooterViewHolder(frameLayout) as VH
-        }
+    fun view(resId: Int, viewGroup: ViewGroup): View {
+        return inflater.inflate(resId, viewGroup, false)
     }
 
     protected fun setHeaderFooterLayoutParams(viewGroup: ViewGroup) {
@@ -111,9 +107,7 @@ abstract class BaseAdapter<T, VH : BaseAdapter.Holder>(var context: Context, var
         }
     }
 
-    protected fun onCreateItemViewHolder(parent: ViewGroup?, type: Int): VH {
-        return viewHolder(inflater.inflate(layoutId(type), parent, false), type)
-    }
+
 
     override fun getItemCount(): Int {
         return realItemCount
@@ -146,10 +140,6 @@ abstract class BaseAdapter<T, VH : BaseAdapter.Holder>(var context: Context, var
         initListeners(holder.itemView, position)
         holder.bind(position)
     }
-
-    protected abstract fun viewHolder(view: View, type: Int): VH
-    @LayoutRes
-    protected abstract fun layoutId(type: Int): Int
 
     fun onSaveInstanceState(): Parcelable {
         val bundle = Bundle()

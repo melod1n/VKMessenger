@@ -25,7 +25,7 @@ open class VKMessage : VKModel, Serializable {
         const val CANCEL_SPAM = 1 shl 15 // Отмена пометки спама
         const val HIDDEN = 1 shl 16 // Приветственное сообщение сообщества
         const val DELETE_FOR_ALL = 1 shl 17 // Сообщение удалено для всех
-        const val CHAT_IN = 1 shl 19 // Входяшее сообщение в беседе
+        const val CHAT_IN = 1 shl 19 // Входящее сообщение в беседе
         const val REPLY_MSG = 1 shl 21 // Ответ на сообщение
 
         private val flags = ArrayMap<String, Int>()
@@ -41,38 +41,52 @@ open class VKMessage : VKModel, Serializable {
         const val ACTION_CHAT_INVITE_USER_BY_LINK = "chat_invite_user_by_link"
 
         fun hasFlag(mask: Int, flagName: String?): Boolean {
-            val `object`: Any? = flags[flagName]
-            return if (`object` != null) { //has flag
-                val flag = `object` as Int
+            val o: Any? = flags[flagName]
+            return if (o != null) { //has flag
+                val flag = o as Int
                 flag and mask > 0
             } else false
         }
 
         //TODO: нормально парсить сообщение
-// [msg_id, flags, peer_id, timestamp, text, {emoji, from, action, keyboard}, {attachs}, random_id, conv_msg_id, edit_time]
+        // [msg_id, flags, peer_id, timestamp, text, {emoji, from, action, keyboard}, {attachs}, random_id, conv_msg_id, edit_time]
         fun parse(array: JSONArray): VKMessage {
             val message = VKMessage()
+
             val id = array.optInt(1)
             message.id = id
-            val flags = array.optInt(2)
+
+            val mask = array.optInt(2)
+
             val peerId = array.optInt(3)
             message.peerId = peerId
+
             val date = array.optInt(4)
             message.date = date
+
             val text = array.optString(5)
             message.text = text
+
             val o = array.optJSONObject(6)
-            val fromId = if (hasFlag(flags, "outbox")) UserConfig.userId else o?.optInt("from")
-                    ?: peerId
+            val fromId = if (hasFlag(mask, "outbox")) UserConfig.userId else {
+                if (hasFlag(mask, "chat_in")) o?.optInt("from")
+                else peerId
+            } ?: peerId
+
             message.fromId = fromId
-            val out = hasFlag(flags, "outbox") || fromId == UserConfig.userId
+
+            val out = hasFlag(mask, "outbox") || fromId == UserConfig.userId
             message.isOut = out
+
             val editTime = array.optInt(10)
             message.editTime = editTime
+
             val conversationMessageId = array.optInt(9)
             message.conversationMessageId = conversationMessageId
+
             val randomId = array.optInt(8)
             message.randomId = randomId
+
             if (o != null) {
                 if (o.has("source_act")) {
                     val action = Action()

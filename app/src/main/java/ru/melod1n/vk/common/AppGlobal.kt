@@ -74,7 +74,7 @@ class AppGlobal : Application() {
         colorAccent = ContextCompat.getColor(this, R.color.accent)
 
         UserConfig.restore()
-        TimeManager.init()
+        TimeManager.init(this)
 
 
     }

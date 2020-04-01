@@ -93,5 +93,7 @@
     <string name="update_state_update_available">Update is available</string>
     <string name="update_new_version">Version: %s</string>
     <string name="update_download">Download</string>
+    <string name="messages_refresh">Refresh</string>
+    <string name="today">Today</string>
 
 </resources>

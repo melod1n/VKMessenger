@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
+import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.ProgressBar
@@ -118,6 +119,24 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
         initData()
     }
 
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.activity_messages, menu)
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            android.R.id.home -> onBackPressed()
+            R.id.messagesRefresh -> onLoad()
+        }
+
+        return super.onOptionsItemSelected(item)
+    }
+
+    fun getRecyclerView(): RecyclerView {
+        return recyclerView
+    }
+
     private fun loadConversation() {
         TaskManager.loadConversation(peerId, object : VKApi.OnResponseListener<VKConversation> {
             override fun onSuccess(models: ArrayList<VKConversation>) {
@@ -139,7 +158,7 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
         if (AndroidUtils.hasConnection() && !viewedDialogs.contains(peerId)) {
             chatInfo.setText(R.string.loading)
             viewedDialogs.add(peerId)
-            
+
             onLoad()
         } else {
             presenter!!.requestCachedValues(peerId, 0, MESSAGES_COUNT)
@@ -314,7 +333,7 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         toolbar.navigationIcon?.setTint(AppGlobal.colorAccent)
-        toolbar.setNavigationOnClickListener { onBackPressed() }
+//        toolbar.setNavigationOnClickListener { onBackPressed() }
     }
 
     private fun prepareRefreshLayout() {
@@ -496,10 +515,6 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
             recyclerView!!.adapter = adapter
         }
 
-        if (offset == 0) {
-            recyclerView!!.scrollToPosition(adapter!!.itemCount - 1)
-        }
-
         if (offset > 0) {
             adapter!!.addAll(values)
             adapter!!.notifyItemRangeInserted(offset, values.size)
@@ -508,6 +523,10 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
 
         adapter!!.values = values
         adapter!!.notifyDataSetChanged()
+
+        if (offset == 0) {
+            recyclerView!!.smoothScrollToPosition(adapter!!.itemCount + 1)
+        }
     }
 
     private fun getChatInfo(): String? {

@@ -2,6 +2,7 @@ package ru.melod1n.vk.adapter
 
 import android.content.Context
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import ru.melod1n.vk.R
@@ -12,6 +13,10 @@ import ru.melod1n.vk.util.ImageUtil
 import ru.melod1n.vk.widget.CircleImageView
 
 class FriendAdapter(context: Context, values: ArrayList<VKUser>) : BaseAdapter<VKUser, FriendAdapter.ViewHolder>(context, values) {
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        return ViewHolder(view(R.layout.item_user, parent))
+    }
 
     open inner class ViewHolder(v: View) : BaseAdapter.Holder(v) {
         private val avatar: CircleImageView = v.findViewById(R.id.userAvatar)
@@ -40,13 +45,5 @@ class FriendAdapter(context: Context, values: ArrayList<VKUser>) : BaseAdapter<V
 
             //TODO: отладить "заходил недавно" и открытие чата
         }
-    }
-
-    override fun viewHolder(view: View, type: Int): ViewHolder {
-        return ViewHolder(view)
-    }
-
-    override fun layoutId(type: Int): Int {
-        return R.layout.item_user
     }
 }

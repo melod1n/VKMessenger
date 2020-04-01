@@ -1,17 +1,15 @@
 package ru.melod1n.vk.util
 
-import android.content.Context
 import android.util.DisplayMetrics
-import android.view.WindowManager
 import ru.melod1n.vk.common.AppGlobal
 
 object AndroidUtils {
     fun px(dp: Float): Int {
-        return (dp * (AppGlobal.resources.displayMetrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT)).toInt()
+        return (dp * AppGlobal.resources.displayMetrics.density).toInt()
     }
 
     fun dp(px: Float): Int {
-        return (px / (AppGlobal.resources.displayMetrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT)).toInt()
+        return (px / AppGlobal.resources.displayMetrics.density).toInt()
     }
 
     fun hasConnection(): Boolean {

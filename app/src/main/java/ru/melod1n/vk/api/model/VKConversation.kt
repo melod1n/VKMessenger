@@ -76,7 +76,6 @@ class VKConversation : VKModel, Serializable {
 
     var state: String? = null
 
-
     var lastMessage: VKMessage? = null
 
     var isGroupChannel = false
@@ -84,12 +83,6 @@ class VKConversation : VKModel, Serializable {
     var photo50: String? = null
     var photo100: String? = null
     var photo200: String? = null
-
-    val isNotificationsDisabled: Boolean
-        get() = isDisabledForever || disabledUntil > 0 || isNoSound
-
-    val isChatId: Boolean
-        get() = id > 2_000_000_000
 
     constructor()
     constructor(o: JSONObject) {
@@ -143,14 +136,25 @@ class VKConversation : VKModel, Serializable {
         }
     }
 
-    val isChat: Boolean
-        get() = type == TYPE_CHAT
+    fun isNotificationsDisabled(): Boolean {
+        return isDisabledForever || disabledUntil > 0 || isNoSound
+    }
 
-    val isUser: Boolean
-        get() = type == TYPE_USER
+    fun isChatId(): Boolean {
+        return id > 2_000_000_000
+    }
 
-    val isGroup: Boolean
-        get() = type == TYPE_GROUP
+    fun isChat(): Boolean {
+        return type == TYPE_CHAT
+    }
+
+    fun isUser(): Boolean {
+        return type == TYPE_USER
+    }
+
+    fun isGroup(): Boolean {
+        return type == TYPE_GROUP
+    }
 
     override fun toString(): String {
         return title ?: ""

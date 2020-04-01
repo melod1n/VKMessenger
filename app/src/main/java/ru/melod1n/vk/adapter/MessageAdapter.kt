@@ -1,22 +1,30 @@
 package ru.melod1n.vk.adapter
 
 import android.content.Context
-import android.graphics.Color
-import android.view.Gravity
+import android.graphics.Typeface
+import android.text.SpannableString
+import android.text.style.StyleSpan
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.LinearLayoutManager
 import ru.melod1n.vk.R
+import ru.melod1n.vk.activity.MessagesActivity
+import ru.melod1n.vk.api.VKLongPollParser
 import ru.melod1n.vk.api.model.VKGroup
 import ru.melod1n.vk.api.model.VKMessage
+import ru.melod1n.vk.api.model.VKUser
 import ru.melod1n.vk.api.util.VKUtil
 import ru.melod1n.vk.common.AppGlobal
+import ru.melod1n.vk.common.EventInfo
 import ru.melod1n.vk.current.BaseAdapter
-import ru.melod1n.vk.database.MemoryCache
+import ru.melod1n.vk.database.CacheStorage
 import ru.melod1n.vk.util.AndroidUtils
+import ru.melod1n.vk.util.ArrayUtil
 import ru.melod1n.vk.util.ImageUtil
+import ru.melod1n.vk.util.Util
 import ru.melod1n.vk.widget.BoundedLinearLayout
 import ru.melod1n.vk.widget.CircleImageView
 import java.text.SimpleDateFormat
@@ -24,15 +32,32 @@ import java.util.*
 import kotlin.math.abs
 
 
-class MessageAdapter(context: Context, values: ArrayList<VKMessage>) : BaseAdapter<VKMessage, MessageAdapter.BaseHolder>(context, values) {
+class MessageAdapter(context: Context, values: ArrayList<VKMessage>) : BaseAdapter<VKMessage, MessageAdapter.BaseHolder>(context, values), VKLongPollParser.OnMessagesListener,
+        VKLongPollParser.OnEventListener {
+
+    private var layoutManager = (context as MessagesActivity).getRecyclerView().layoutManager as LinearLayoutManager
+    private var recyclerView = (context as MessagesActivity).getRecyclerView()
 
     companion object {
         private const val TYPE_TIME_STAMP = 7900
+
+        private const val TYPE_NORMAL_IN = 7910
+        private const val TYPE_NORMAL_OUT = 7911
+
+        private const val TYPE_ATTACHMENT_IN = 7920
+        private const val TYPE_ATTACHMENT_OUT = 7921
+
+        private const val TYPE_ACTION = 7930
     }
 
-    open inner class BaseHolder(v: View) : BaseAdapter.Holder(v) {
-        override fun bind(position: Int) {
-        }
+    init {
+        VKLongPollParser.addOnMessagesListener(this)
+        VKLongPollParser.addOnEventListener(this)
+    }
+
+    override fun onDestroy() {
+        VKLongPollParser.removeOnMessagesListener(this)
+        VKLongPollParser.removeOnEventListener(this)
     }
 
     override fun getItemCount(): Int {
@@ -40,22 +65,37 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>) : BaseAdapt
     }
 
     override fun getItemViewType(position: Int): Int {
+        if (position == values.size) return TYPE_FOOTER
+
+        val message = getItem(position)
+
         return when {
-            position == values.size -> TYPE_FOOTER
-            getItem(position) is TimeStamp -> TYPE_TIME_STAMP
+            message is TimeStamp -> TYPE_TIME_STAMP
+            message.action != null -> TYPE_ACTION
+            message.isOut && ArrayUtil.isEmpty(message.attachments) && ArrayUtil.isEmpty(message.fwdMessages) -> TYPE_NORMAL_OUT
+            !message.isOut && ArrayUtil.isEmpty(message.attachments) && ArrayUtil.isEmpty(message.fwdMessages) -> TYPE_NORMAL_IN
+            message.isOut && (!ArrayUtil.isEmpty(message.attachments) || !ArrayUtil.isEmpty(message.fwdMessages)) -> TYPE_ATTACHMENT_OUT
+            !message.isOut && (!ArrayUtil.isEmpty(message.attachments) || !ArrayUtil.isEmpty(message.fwdMessages)) -> TYPE_ATTACHMENT_IN
+
             else -> 0
         }
     }
 
     override fun onCreateViewHolder(viewGroup: ViewGroup, type: Int): BaseHolder {
         return when (type) {
-            TYPE_TIME_STAMP -> {
-                TimeStampHolder(inflater.inflate(R.layout.item_message_timestamp, viewGroup, false))
-            }
-            TYPE_FOOTER -> {
-                FooterHolder(generateEmptyView())
-            }
-            else -> ViewHolder(inflater.inflate(R.layout.item_message, viewGroup, false))
+            TYPE_FOOTER -> FooterHolder(generateEmptyView())
+
+            TYPE_TIME_STAMP -> TimeStampHolder(view(R.layout.item_message_timestamp, viewGroup))
+
+            TYPE_NORMAL_IN -> ItemNormalIn(view(R.layout.item_message_normal_in, viewGroup))
+            TYPE_NORMAL_OUT -> ItemNormalOut(view(R.layout.item_message_normal_out, viewGroup))
+
+            TYPE_ATTACHMENT_IN -> ItemAttachmentIn(view(R.layout.item_message_attachment_in, viewGroup))
+            TYPE_ATTACHMENT_OUT -> ItemAttachmentOut(view(R.layout.item_message_attachment_out, viewGroup))
+
+            TYPE_ACTION -> ItemAction(view(R.layout.item_message_action, viewGroup))
+
+            else -> PlaceHolder(view(R.layout.item_message, viewGroup))
         }
     }
 
@@ -68,85 +108,229 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>) : BaseAdapt
         }
     }
 
-    class TimeStamp(var string: String = "") : VKMessage()
-
-    inner class TimeStampHolder(v: View) : BaseHolder(v) {
-
-        private val stamp: TextView = v.findViewById(R.id.messageTimeStamp)
-
-
-        override fun bind(position: Int) {
-            stamp.text = (getItem(position) as TimeStamp).string
-        }
-    }
+    class TimeStamp(var time: Long) : VKMessage()
 
     private fun generateEmptyView(): View {
         return View(context).also {
             it.isFocusable = false
             it.isClickable = false
             it.isEnabled = false
-            it.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, AndroidUtils.px(100F))
+            it.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, AndroidUtils.px(74f))
+        }
+    }
+
+    inner class TimeStampHolder(v: View) : BaseHolder(v) {
+
+        private val stamp: TextView = v.findViewById(R.id.messageTimeStamp)
+
+        override fun bind(position: Int) {
+            val item = getItem(position) as TimeStamp
+            val nowTime = Util.removeTime(Date(System.currentTimeMillis()))
+
+            stamp.text = if (item.time == nowTime)
+                context.getString(R.string.today)
+            else
+                SimpleDateFormat("dd MMM", Locale.getDefault()).format(item.time)
         }
     }
 
     inner class FooterHolder(v: View) : BaseHolder(v) {
-        override fun bind(position: Int) {
-
-        }
+        override fun bind(position: Int) {}
     }
 
-    open inner class ViewHolder(v: View) : BaseHolder(v) {
-        private val date: TextView = v.findViewById(R.id.messageDate)
-        private val text: TextView = v.findViewById(R.id.messageText)
-        private val root: LinearLayout = v.findViewById(R.id.messageRoot)
-        private val bubble: BoundedLinearLayout = v.findViewById(R.id.messageBubble)
-        private val avatar: CircleImageView = v.findViewById(R.id.messageAvatar)
-        private val container: LinearLayout = v.findViewById(R.id.messageContainer)
-
-        private val inBackground = ContextCompat.getDrawable(context, R.drawable.ic_message_bubble_in_simple)
-        private val outBackground = ContextCompat.getDrawable(context, R.drawable.ic_message_bubble_out_simple)
-
-        private val inTextColor = Color.WHITE
-        private val outTextColor = Color.BLACK
+    inner class ItemAction(v: View) : BaseHolder(v) {
+        private val text: TextView = v.findViewById(R.id.messageAction)
 
         override fun bind(position: Int) {
             val message = getItem(position)
 
+            val user = VKUtil.searchUser(message.fromId)
+            val group = VKUtil.searchGroup(message.fromId)
+
+            val name = (if (group == null && !VKGroup.isGroupId(message.fromId)) user?.firstName else group?.name)
+                    ?: "null"
+
+            val actionText = "$name${VKUtil.getActionText(context, message)}"
+
+            val spannable = SpannableString(actionText)
+            spannable.setSpan(StyleSpan(Typeface.BOLD), 0, name.length, 0)
+
+            text.text = spannable
+        }
+    }
+
+    open inner class ItemNormalIn(v: View) : NormalViewHolder(v) {
+
+        override fun bind(position: Int) {
+            val message = getItem(position)
+
+            val user = VKUtil.searchUser(message.fromId)
+            val group = VKUtil.searchGroup(message.fromId)
+
+            ViewController().apply {
+                prepareText(message, bubble, text)
+                prepareDate(message, date)
+                prepareAvatar(message, avatar)
+                loadAvatarImage(message, user, group, avatar)
+            }
+
+        }
+    }
+
+    inner class ItemAttachmentIn(v: View) : ItemNormalIn(v) {
+    }
+
+
+    open inner class ItemNormalOut(v: View) : NormalViewHolder(v) {
+
+        protected var user: VKUser? = null
+        protected var group: VKGroup? = null
+
+        override fun bind(position: Int) {
+            val message = getItem(position)
+
+            user = VKUtil.searchUser(message.fromId)
+            group = VKUtil.searchGroup(message.fromId)
+
+            ViewController().apply {
+                prepareText(message, bubble, text)
+                prepareDate(message, date)
+                prepareAvatar(message, avatar)
+                loadAvatarImage(message, user, group, avatar)
+            }
+
+        }
+    }
+
+    inner class ItemAttachmentOut(v: View) : ItemNormalOut(v) {
+    }
+
+    abstract inner class NormalViewHolder(v: View) : BaseHolder(v) {
+        protected val date: TextView = v.findViewById(R.id.messageDate)
+        protected val text: TextView = v.findViewById(R.id.messageText)
+        protected val root: LinearLayout = v.findViewById(R.id.messageRoot)
+        protected val bubble: BoundedLinearLayout = v.findViewById(R.id.messageBubble)
+        protected val avatar: CircleImageView = v.findViewById(R.id.messageAvatar)
+    }
+
+    inner class ViewController {
+
+        fun prepareText(message: VKMessage, bubble: BoundedLinearLayout, text: TextView) {
             bubble.maxWidth = AppGlobal.screenWidth - AppGlobal.screenWidth / 4
-
-            text.background = if (message.isOut) outBackground else inBackground
-            text.setTextColor(if (message.isOut) outTextColor else inTextColor)
             text.text = message.text
+        }
 
-            val gravity = if (message.isOut) Gravity.END else Gravity.START
-
-            root.gravity = gravity
-            container.gravity = gravity or Gravity.CENTER_VERTICAL
-
+        fun prepareDate(message: VKMessage, date: TextView) {
             date.text = SimpleDateFormat("HH:mm", Locale.getDefault()).format(message.date * 1000L)
+        }
 
+        fun prepareAvatar(message: VKMessage, avatar: ImageView) {
             avatar.visibility = if (message.isOut) View.GONE else View.VISIBLE
+        }
 
-            val user = MemoryCache.getUser(message.fromId)
-            val group = if (VKGroup.isGroupId(message.fromId)) MemoryCache.getGroup(abs(message.fromId)) else null
-
-            val dialogTitle = if (group == null) user.toString() else group.name
+        fun loadAvatarImage(message: VKMessage, user: VKUser?, group: VKGroup?, avatar: ImageView) {
+            val dialogTitle = if (group == null && !VKGroup.isGroupId(message.fromId)) user.toString() else group!!.name
 
             val avatarPlaceholder = VKUtil.getAvatarPlaceholder(dialogTitle)
 
             avatar.setImageDrawable(avatarPlaceholder)
-
-            val avatarString = if (group == null) user?.photo100 else group.photo100
+            val avatarString = if (group == null && !VKGroup.isGroupId(message.fromId)) user?.photo100 else group!!.photo100
 
             ImageUtil.loadImage(avatarString, avatar, avatarPlaceholder)
         }
+
     }
 
-    override fun viewHolder(view: View, type: Int): ViewHolder {
-        return ViewHolder(view)
+    open inner class BaseHolder(v: View) : BaseAdapter.Holder(v) {
+        override fun bind(position: Int) {
+        }
     }
 
-    override fun layoutId(type: Int): Int {
-        return R.layout.item_message
+    inner class PlaceHolder(v: View) : NormalViewHolder(v)
+
+    private fun updateGroup(groupId: Int) {
+        var index = -1
+
+        for (i in values.indices) {
+            val item = getItem(i)
+
+            if (abs(item.fromId) == groupId) {
+                index = i
+                break
+            }
+        }
+
+        if (index == -1) return
+
+        notifyItemChanged(index)
+    }
+
+    private fun updateUser(userId: Int) {
+        var index = -1
+
+        for (i in values.indices) {
+            val item = getItem(i)
+
+            if (item.fromId == userId) {
+                index = i
+                break
+            }
+        }
+
+        if (index == -1) return
+        notifyItemChanged(index)
+    }
+
+    private fun updateMessage(messageId: Int) {
+        var index = -1
+
+        for (i in values.indices) {
+            val item = getItem(i)
+
+            if (item.id == messageId) {
+                index = i
+                break
+            }
+        }
+
+        if (index == -1) return
+
+        values[index] = CacheStorage.getMessage(messageId)!!
+        notifyItemChanged(index)
+    }
+
+    override fun onEvent(info: EventInfo<*>) {
+        when (info.key) {
+            EventInfo.MESSAGE_UPDATE -> updateMessage(info.data as Int)
+            EventInfo.USER_UPDATE -> updateUser(info.data as Int)
+            EventInfo.GROUP_UPDATE -> updateGroup(info.data as Int)
+        }
+    }
+
+    override fun onNewMessage(message: VKMessage) {
+        add(message)
+        notifyItemInserted(itemCount + 2)
+
+        val lastPosition = layoutManager.findLastVisibleItemPosition()
+
+        if (lastPosition >= itemCount - 2) {
+            recyclerView.smoothScrollToPosition(itemCount + 2)
+        }
+    }
+
+    override fun onEditMessage(message: VKMessage) {
+
+    }
+
+    override fun onReadMessage(messageId: Int, peerId: Int) {
+
+    }
+
+    override fun onDeleteMessage(messageId: Int, peerId: Int) {
+
+    }
+
+    override fun onRestoredMessage(message: VKMessage) {
+
     }
 }
