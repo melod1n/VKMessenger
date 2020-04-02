@@ -142,6 +142,7 @@ object VKUtil {
 
             if (user == null) {
                 TaskManager.loadUser(id)
+                return VKUser.EMPTY
             }
 
             user
@@ -154,6 +155,7 @@ object VKUtil {
 
             if (group == null) {
                 TaskManager.loadGroup(abs(id))
+                return VKGroup.EMPTY
             }
 
             group

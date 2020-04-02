@@ -77,7 +77,9 @@ open class VKUser : VKModel, Serializable {
 
     companion object {
         private const val serialVersionUID = 1L
+
         const val DEFAULT_FIELDS = "photo_50,photo_100,photo_200,status,screen_name,online,online_mobile,last_seen,verified,sex"
+
         val EMPTY: VKUser = object : VKUser() {
             override fun toString(): String {
                 return "Unknown Unknown"

@@ -3,7 +3,7 @@ package ru.melod1n.vk.api.model
 import org.json.JSONObject
 import java.io.Serializable
 
-class VKGroup : VKModel, Serializable {
+open class VKGroup : VKModel, Serializable {
 
     var id = 0
     var name: String? = null
@@ -14,6 +14,8 @@ class VKGroup : VKModel, Serializable {
     var photo50: String? = null
     var photo100: String? = null
     var photo200: String? = null
+
+
 
     constructor()
     constructor(o: JSONObject) {
@@ -30,9 +32,18 @@ class VKGroup : VKModel, Serializable {
 
     companion object {
         const val DEFAULT_FIELDS = "description,members_count,counters,status,verified"
+
         private const val serialVersionUID = 1L
+
         fun isGroupId(id: Int): Boolean {
             return id < 0
         }
+
+        val EMPTY: VKGroup = object : VKGroup() {
+            init {
+                name = "Unknown"
+            }
+        }
+
     }
 }

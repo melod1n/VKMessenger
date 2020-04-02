@@ -39,10 +39,12 @@ class DatabaseHelper private constructor(context: Context?) : SQLiteOpenHelper(c
     companion object {
 
         private const val DB_NAME = "cache.db"
-        private const val DB_VERSION = 32
+        private const val DB_VERSION = 33
 
         const val TYPE = "type"
+
         const val PEER_ID = "peer_id"
+
         const val PHOTO_50 = "photo_50"
         const val PHOTO_100 = "photo_100"
         const val PHOTO_200 = "photo_200"
@@ -65,7 +67,6 @@ class DatabaseHelper private constructor(context: Context?) : SQLiteOpenHelper(c
         const val REPLY_MESSAGE_ID = "reply_message_id"
         const val ACTION = "_action"
 
-        const val CONVERSATION_ID = "conversation_id"
         const val IN_READ = "in_read"
         const val OUT_READ = "out_read"
         const val UNREAD_COUNT = "unread_count"
@@ -98,6 +99,7 @@ class DatabaseHelper private constructor(context: Context?) : SQLiteOpenHelper(c
         const val GROUP_ID = "group_id"
         const val NAME = "name"
         const val IS_CLOSED = "is_closed"
+
         const val TABLE_CONVERSATIONS = "conversations"
         const val TABLE_MESSAGES = "messages"
         const val TABLE_USERS = "users"

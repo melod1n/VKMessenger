@@ -56,13 +56,13 @@ class FragmentFriends : BaseFragment(), BaseContract.View<VKUser>, SwipeRefreshL
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        presenter = FriendsPresenter(this)
-
         prepareRefreshLayout()
         prepareRecyclerView()
 
         prepareNoInternetView()
         prepareListeners()
+
+        presenter = FriendsPresenter(this)
 
         loadCachedData()
 

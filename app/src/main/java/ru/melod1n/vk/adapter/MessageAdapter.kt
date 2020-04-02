@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import ru.melod1n.vk.R
 import ru.melod1n.vk.activity.MessagesActivity
 import ru.melod1n.vk.api.VKLongPollParser
+import ru.melod1n.vk.api.model.VKConversation
 import ru.melod1n.vk.api.model.VKGroup
 import ru.melod1n.vk.api.model.VKMessage
 import ru.melod1n.vk.api.model.VKUser
@@ -32,7 +33,7 @@ import java.util.*
 import kotlin.math.abs
 
 
-class MessageAdapter(context: Context, values: ArrayList<VKMessage>) : BaseAdapter<VKMessage, MessageAdapter.BaseHolder>(context, values), VKLongPollParser.OnMessagesListener,
+class MessageAdapter(context: Context, values: ArrayList<VKMessage>, var conversation: VKConversation) : BaseAdapter<VKMessage, MessageAdapter.BaseHolder>(context, values), VKLongPollParser.OnMessagesListener,
         VKLongPollParser.OnEventListener {
 
     private var layoutManager = (context as MessagesActivity).getRecyclerView().layoutManager as LinearLayoutManager
@@ -48,6 +49,8 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>) : BaseAdapt
         private const val TYPE_ATTACHMENT_OUT = 7921
 
         private const val TYPE_ACTION = 7930
+
+        private const val TYPE_NORMAL_CHANNEL = 7940
     }
 
     init {
@@ -69,14 +72,15 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>) : BaseAdapt
 
         val message = getItem(position)
 
+        if (message is TimeStamp) return TYPE_TIME_STAMP
+
         return when {
-            message is TimeStamp -> TYPE_TIME_STAMP
             message.action != null -> TYPE_ACTION
+            conversation.isGroupChannel -> TYPE_NORMAL_CHANNEL
             message.isOut && ArrayUtil.isEmpty(message.attachments) && ArrayUtil.isEmpty(message.fwdMessages) -> TYPE_NORMAL_OUT
             !message.isOut && ArrayUtil.isEmpty(message.attachments) && ArrayUtil.isEmpty(message.fwdMessages) -> TYPE_NORMAL_IN
             message.isOut && (!ArrayUtil.isEmpty(message.attachments) || !ArrayUtil.isEmpty(message.fwdMessages)) -> TYPE_ATTACHMENT_OUT
             !message.isOut && (!ArrayUtil.isEmpty(message.attachments) || !ArrayUtil.isEmpty(message.fwdMessages)) -> TYPE_ATTACHMENT_IN
-
             else -> 0
         }
     }
@@ -94,6 +98,8 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>) : BaseAdapt
             TYPE_ATTACHMENT_OUT -> ItemAttachmentOut(view(R.layout.item_message_attachment_out, viewGroup))
 
             TYPE_ACTION -> ItemAction(view(R.layout.item_message_action, viewGroup))
+
+            TYPE_NORMAL_CHANNEL -> ItemChannel(view(R.layout.item_message_channel, viewGroup))
 
             else -> PlaceHolder(view(R.layout.item_message, viewGroup))
         }
@@ -115,7 +121,7 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>) : BaseAdapt
             it.isFocusable = false
             it.isClickable = false
             it.isEnabled = false
-            it.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, AndroidUtils.px(74f))
+            it.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, if (conversation.isGroupChannel) 0 else AndroidUtils.px(74f))
         }
     }
 
@@ -136,6 +142,27 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>) : BaseAdapt
 
     inner class FooterHolder(v: View) : BaseHolder(v) {
         override fun bind(position: Int) {}
+    }
+
+    inner class ItemChannel(v: View) : ItemNormalIn(v) {
+        private val title: TextView = v.findViewById(R.id.channelTitle)
+
+        override fun bind(position: Int) {
+            val message = getItem(position)
+
+            ViewController().prepareDate(message, date)
+
+            val avatarString = conversation.photo100
+
+            val placeHolder = VKUtil.getAvatarPlaceholder(conversation.title)
+
+            avatar.setImageDrawable(placeHolder)
+            ImageUtil.loadImage(avatarString, avatar, placeHolder)
+
+            title.text = conversation.title
+
+            text.text = message.text
+        }
     }
 
     inner class ItemAction(v: View) : BaseHolder(v) {
@@ -183,14 +210,11 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>) : BaseAdapt
 
     open inner class ItemNormalOut(v: View) : NormalViewHolder(v) {
 
-        protected var user: VKUser? = null
-        protected var group: VKGroup? = null
-
         override fun bind(position: Int) {
             val message = getItem(position)
 
-            user = VKUtil.searchUser(message.fromId)
-            group = VKUtil.searchGroup(message.fromId)
+            val user = VKUtil.searchUser(message.fromId)
+            val group = VKUtil.searchGroup(message.fromId)
 
             ViewController().apply {
                 prepareText(message, bubble, text)
@@ -198,7 +222,6 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>) : BaseAdapt
                 prepareAvatar(message, avatar)
                 loadAvatarImage(message, user, group, avatar)
             }
-
         }
     }
 

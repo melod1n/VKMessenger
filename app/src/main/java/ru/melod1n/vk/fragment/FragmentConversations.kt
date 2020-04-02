@@ -20,24 +20,21 @@ import ru.melod1n.vk.R
 import ru.melod1n.vk.activity.MainActivity
 import ru.melod1n.vk.activity.MessagesActivity
 import ru.melod1n.vk.adapter.ConversationAdapter
-import ru.melod1n.vk.api.VKApi
 import ru.melod1n.vk.api.model.VKConversation
-import ru.melod1n.vk.api.model.VKUser
 import ru.melod1n.vk.api.util.VKUtil
 import ru.melod1n.vk.common.AppGlobal
 import ru.melod1n.vk.common.EventInfo
-import ru.melod1n.vk.common.TaskManager
 import ru.melod1n.vk.common.TimeManager
 import ru.melod1n.vk.current.BaseAdapter
 import ru.melod1n.vk.current.BaseFragment
-import ru.melod1n.vk.database.CacheStorage
 import ru.melod1n.vk.database.MemoryCache.getGroup
 import ru.melod1n.vk.database.MemoryCache.getUser
+import ru.melod1n.vk.mvp.contract.BaseContract
+import ru.melod1n.vk.mvp.presenter.ConversationsPresenter
 import ru.melod1n.vk.util.AndroidUtils
-import ru.melod1n.vk.util.ArrayUtil
 
 class FragmentConversations : BaseFragment(),
-//        BaseContract.View<VKConversation>,
+        BaseContract.View<VKConversation>,
         SwipeRefreshLayout.OnRefreshListener,
         BaseAdapter.OnItemClickListener,
         FragmentSettings.OnEventListener,
@@ -49,7 +46,7 @@ class FragmentConversations : BaseFragment(),
     }
 
     private var adapter: ConversationAdapter? = null
-//    private lateinit var presenter: ConversationsPresenter
+    private lateinit var presenter: ConversationsPresenter
 
     override fun onResume() {
         super.onResume()
@@ -66,13 +63,13 @@ class FragmentConversations : BaseFragment(),
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-//        presenter = ConversationsPresenter(this)
-
         prepareRefreshLayout()
         prepareRecyclerView()
 
         prepareNoInternetView()
         prepareListeners()
+
+        presenter = ConversationsPresenter(this)
 
         loadCachedData()
 
@@ -109,18 +106,9 @@ class FragmentConversations : BaseFragment(),
 
     private fun refreshData() {
         if (AndroidUtils.hasConnection()) {
-            loadValues(0, 0, CONVERSATIONS_COUNT, object : VKApi.OnResponseListener<VKConversation> {
-                override fun onSuccess(models: ArrayList<VKConversation>) {
-                    loadValuesIntoList(0, models, false)
-                }
-
-                override fun onError(e: Exception) {
-
-                }
-
-            })
-//            presenter.readyForLoading()
-//            presenter.requestValues(0, 0, CONVERSATIONS_COUNT)
+            showNoInternetView(false)
+            presenter.valuesLoading()
+            presenter.requestValues(0, 0, CONVERSATIONS_COUNT)
         } else {
             showNoInternetView(true)
             swipeRefreshLayout.isRefreshing = false
@@ -128,57 +116,7 @@ class FragmentConversations : BaseFragment(),
     }
 
     private fun loadCachedData() {
-//        presenter.requestCachedValues(0, 0, CONVERSATIONS_COUNT)
-    }
-
-    fun loadCachedValues(id: Int, offset: Int, count: Int): ArrayList<VKConversation> {
-        val conversations = ArrayUtil.cut(CacheStorage.getConversations(count), offset, count)
-
-        val dialogs = ArrayList<VKConversation>(conversations.size)
-
-        conversations.sortWith(Comparator { o1: VKConversation, o2: VKConversation ->
-
-            val m1 = CacheStorage.getMessage(o1.lastMessageId)
-            val m2 = CacheStorage.getMessage(o2.lastMessageId)
-
-            if (m1 == null || m2 == null) return@Comparator 0
-
-            val x = m1.date
-            val y = m2.date
-
-            y - x
-//            if (x > y) -1 else if (x == y) 1 else 0
-        })
-
-        for (i in conversations.indices) {
-            val conversation = conversations[i].apply {
-                lastMessage = CacheStorage.getMessage(lastMessageId)
-            }
-
-            dialogs.add(conversation)
-        }
-        return dialogs
-    }
-
-    fun loadValues(id: Int, offset: Int, count: Int, listener: VKApi.OnResponseListener<VKConversation>) {
-        TaskManager.execute {
-            try {
-                val models = VKApi.messages()
-                        .conversations
-                        .filter("all")
-                        .extended(true)
-                        .fields(VKUser.DEFAULT_FIELDS)
-                        .offset(offset).count(count)
-                        .execute(VKConversation::class.java) ?: ArrayList()
-
-//                insertDataInDatabase(models)
-
-                AppGlobal.handler.post(VKApi.SuccessCallback(listener, models))
-            } catch (e: Exception) {
-                e.printStackTrace()
-                AppGlobal.handler.post(VKApi.ErrorCallback(listener, e))
-            }
-        }
+        presenter.requestCachedValues(0, 0, CONVERSATIONS_COUNT)
     }
 
     private fun openChat(position: Int) {
@@ -223,11 +161,11 @@ class FragmentConversations : BaseFragment(),
         openChat(position)
     }
 
-    fun showNoItemsView(visible: Boolean) {
+    override fun showNoItemsView(visible: Boolean) {
         Log.d(TAG, "showNoItemsView: $visible")
     }
 
-    fun showNoInternetView(visible: Boolean) {
+    override fun showNoInternetView(visible: Boolean) {
         if (visible) clearList()
 
         if (visible) {
@@ -242,30 +180,28 @@ class FragmentConversations : BaseFragment(),
                 animate().alpha(0f).setDuration(250).withEndAction { visibility = View.GONE }.start()
             }
         }
-//
-//        noInternetView.visibility = if (visible) View.VISIBLE else View.GONE
     }
 
-    fun showErrorView(errorTitle: String, errorDescription: String) {
+    override fun showErrorView(errorTitle: String, errorDescription: String) {
         Log.d(TAG, "showErrorView: $errorTitle: $errorDescription")
         if (!AndroidUtils.hasConnection()) {
-//            presenter.requestCachedValues(0, 0, CONVERSATIONS_COUNT)
+            presenter.requestCachedValues(0, 0, CONVERSATIONS_COUNT)
         }
     }
 
-    fun hideErrorView() {
+    override fun hideErrorView() {
         Log.d(TAG, "hideErrorView")
     }
 
-    fun showRefreshLayout(visible: Boolean) {
+    override fun showRefreshLayout(visible: Boolean) {
         swipeRefreshLayout.isRefreshing = visible
     }
 
-    fun showProgressBar(visible: Boolean) {
+    override fun showProgressBar(visible: Boolean) {
         progressBar.visibility = if (visible) View.VISIBLE else View.GONE
     }
 
-    fun loadValuesIntoList(offset: Int, values: ArrayList<VKConversation>, isCache: Boolean) {
+    override fun loadValuesIntoList(offset: Int, values: ArrayList<VKConversation>, isCache: Boolean) {
         Log.d(TAG, "loadValuesIntoList: $offset, ${values.size}, isCache: $isCache")
 
         if (isCache && values.isEmpty() && !AndroidUtils.hasConnection()) {
@@ -294,14 +230,12 @@ class FragmentConversations : BaseFragment(),
         }
 
         adapter!!.values = values
-        adapter!!.notifyDataSetChanged()
+
     }
 
-    fun clearList() {
+    override fun clearList() {
         Log.d(TAG, "clearList")
-
         if (adapter == null) return
-
         adapter!!.clear()
         adapter!!.notifyDataSetChanged()
     }

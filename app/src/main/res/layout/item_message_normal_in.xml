@@ -40,6 +40,7 @@
             android:paddingTop="10dp"
             android:paddingEnd="14dp"
             android:paddingBottom="10dp"
+            android:textColorLink="@android:color/white"
             android:textColor="@android:color/white"
             app:fixWrap="true"
             tools:text="Some text" />

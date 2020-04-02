@@ -1,7 +1,5 @@
 package ru.melod1n.vk.activity
 
-import android.app.Activity
-import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
@@ -13,12 +11,9 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.ProgressBar
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.GravityCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.amulyakhare.textdrawable.TextDrawable
-import com.google.android.material.navigation.NavigationView
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_messages.*
 import kotlinx.android.synthetic.main.no_internet_view.*
@@ -35,6 +30,7 @@ import ru.melod1n.vk.api.util.VKUtil
 import ru.melod1n.vk.common.AppGlobal
 import ru.melod1n.vk.common.EventInfo
 import ru.melod1n.vk.common.TaskManager
+import ru.melod1n.vk.current.BaseActivity
 import ru.melod1n.vk.current.BaseAdapter
 import ru.melod1n.vk.database.CacheStorage
 import ru.melod1n.vk.database.MemoryCache
@@ -42,10 +38,12 @@ import ru.melod1n.vk.mvp.contract.BaseContract
 import ru.melod1n.vk.mvp.contract.BaseContract.Presenter
 import ru.melod1n.vk.mvp.presenter.MessagesPresenter
 import ru.melod1n.vk.util.AndroidUtils
-import ru.melod1n.vk.util.ViewUtils
 import kotlin.random.Random
 
-class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, BaseAdapter.OnItemClickListener, NavigationView.OnNavigationItemSelectedListener, TaskManager.OnEventListener {
+class MessagesActivity : BaseActivity(),
+        BaseContract.View<VKMessage>,
+        BaseAdapter.OnItemClickListener,
+        TaskManager.OnEventListener {
 
     companion object {
         const val TAG = "MessagesActivity"
@@ -99,17 +97,15 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_messages)
 
-        presenter = MessagesPresenter(this)
-
         initExtraData()
 
-        (presenter as MessagesPresenter).readyForLoading()
-
-        prepareNavigationView()
         prepareToolbar()
         prepareRefreshLayout()
         prepareRecyclerView()
         prepareEditText()
+
+        presenter = MessagesPresenter(this)
+        (presenter as MessagesPresenter).readyForLoading()
 
         if (conversation == null) {
             loadConversation()
@@ -168,6 +164,13 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
     }
 
     private fun checkAllowedWriting() {
+        if (conversation!!.isGroupChannel) {
+            chatPanel.visibility = View.GONE
+            return
+        }
+
+        chatPanel.visibility = View.VISIBLE
+
         if (conversation!!.isAllowed) {
             fabState = FabState.VOICE
             chatSend.imageTintList = ColorStateList.valueOf(AppGlobal.colorAccent)
@@ -306,12 +309,6 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
         }
     }
 
-    private fun prepareNavigationView() {
-        ViewUtils.prepareNavigationHeader(navigationView, null)
-        navigationView.setNavigationItemSelectedListener(this)
-        navigationView.setCheckedItem(R.id.navigationConversations)
-    }
-
     private fun prepareToolbar() {
         setSupportActionBar(toolbar)
 
@@ -424,23 +421,6 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
         }
     }
 
-    override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.navigationConversations,
-            R.id.navigationSettings,
-            R.id.navigationFriends,
-            R.id.navigationImportant,
-            R.id.navigationSearch -> {
-                setResult(Activity.RESULT_OK, Intent().apply { putExtra("item_id", item.itemId) })
-                finish()
-
-                drawerLayout.closeDrawer(GravityCompat.START)
-                true
-            }
-            else -> false
-        }
-    }
-
     override fun showNoItemsView(visible: Boolean) {
         if (visible) {
             noItemsView.apply {
@@ -501,11 +481,9 @@ class MessagesActivity : AppCompatActivity(), BaseContract.View<VKMessage>, Base
         VKUtil.prepareList(values)
 
         if (adapter == null) {
-            adapter = MessageAdapter(this, values).also {
+            adapter = MessageAdapter(this, values, conversation ?: VKConversation()).also {
                 it.onItemClickListener = this
             }
-
-//            adapter!!.addFooter(generateEmptyView())
 
             recyclerView!!.adapter = adapter
             return

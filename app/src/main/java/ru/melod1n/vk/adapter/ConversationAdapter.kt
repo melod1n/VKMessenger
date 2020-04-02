@@ -213,20 +213,23 @@ class ConversationAdapter(fragmentConversations: FragmentConversations, values: 
                 set(0, conversation)
                 notifyItemChanged(0)
             } else {
-                val maxPosition = layoutManager.findLastCompletelyVisibleItemPosition() - layoutManager.findFirstCompletelyVisibleItemPosition() + 1
+//                val maxPosition = layoutManager.findLastCompletelyVisibleItemPosition() - layoutManager.findFirstCompletelyVisibleItemPosition() + 1
 
-                if (index > maxPosition) {
-                    values.removeAt(index)
-                    notifyItemRemoved(index)
+                values.removeAt(index)
+                values.add(0, conversation)
 
-                    values.add(0, conversation)
-                    notifyItemInserted(0)
-                } else {
-                    values.removeAt(index)
-                    values.add(0, conversation)
-
-                    notifyItemMoved(index, 0)
-                }
+//                if (index > maxPosition) {
+//                    values.removeAt(index)
+//                    notifyItemRemoved(index)
+//
+//                    values.add(0, conversation)
+//                    notifyItemInserted(0)
+//                } else {
+//                    values.removeAt(index)
+//                    values.add(0, conversation)
+//
+//                    notifyItemMoved(index, 0)
+//                }
             }
         } else {
             val conversation = CacheStorage.getConversation(message.peerId)
@@ -248,7 +251,7 @@ class ConversationAdapter(fragmentConversations: FragmentConversations, values: 
             notifyItemInserted(0)
         }
 
-        notifyItemRangeChanged(0, itemCount, -1)
+        notifyItemRangeChanged(0, itemCount)
 
         if (layoutManager.findFirstVisibleItemPosition() < 2) {
             layoutManager.scrollToPosition(0)

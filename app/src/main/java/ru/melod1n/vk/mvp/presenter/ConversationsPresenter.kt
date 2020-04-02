@@ -11,6 +11,7 @@ import ru.melod1n.vk.util.ArrayUtil
 class ConversationsPresenter(private val view: BaseContract.View<VKConversation>) : BaseContract.Presenter<VKConversation> {
 
     private val repository: BaseContract.Repository<VKConversation>
+
     private var loadedValues: ArrayList<VKConversation>? = null
     private var cachedValues: ArrayList<VKConversation>? = null
 
@@ -23,6 +24,7 @@ class ConversationsPresenter(private val view: BaseContract.View<VKConversation>
 
     override fun requestCachedValues(id: Int, offset: Int, count: Int) {
         readyForLoading()
+
         cachedValues = repository.loadCachedValues(0, offset, count)
 
         valuesLoaded(offset, cachedValues!!, true)
@@ -51,11 +53,13 @@ class ConversationsPresenter(private val view: BaseContract.View<VKConversation>
         view.showProgressBar(false)
         view.showNoItemsView(false)
         view.showRefreshLayout(false)
+
         if (e is VKException) {
             view.showErrorView(e.toString(), e.message)
         } else {
             view.showErrorView(e.toString(), Log.getStackTraceString(e))
         }
+
         Log.d(TAG, "onValuesErrorLoading: " + e.toString() + ": " + Log.getStackTraceString(e))
     }
 

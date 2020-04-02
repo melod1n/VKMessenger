@@ -163,7 +163,7 @@ object CacheStorage {
     }
 
     fun getConversation(peerId: Int): VKConversation? {
-        val cursor = selectCursor(TABLE_CONVERSATIONS, DatabaseHelper.CONVERSATION_ID, peerId)
+        val cursor = selectCursor(TABLE_CONVERSATIONS, PEER_ID, peerId)
 
         if (cursor.count == 0) return null
 
@@ -176,8 +176,9 @@ object CacheStorage {
         return conversation
     }
 
-    val conversations: ArrayList<VKConversation>
-        get() = getConversations(0)
+    fun getConversations(): ArrayList<VKConversation> {
+        return getConversations(0)
+    }
 
     fun getConversations(size: Int): ArrayList<VKConversation> {
         val cursor = selectCursor(TABLE_CONVERSATIONS)
@@ -290,7 +291,7 @@ object CacheStorage {
             photo100 = getString(cursor, PHOTO_100)
             photo200 = getString(cursor, PHOTO_200)
 
-            this.pinnedMessageId = getInt(cursor, PINNED_MESSAGE_ID)
+            pinnedMessageId = getInt(cursor, PINNED_MESSAGE_ID)
         }
     }
 
