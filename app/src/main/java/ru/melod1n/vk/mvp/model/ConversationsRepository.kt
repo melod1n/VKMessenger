@@ -35,7 +35,7 @@ class ConversationsRepository : BaseContract.Repository<VKConversation>() {
 
         for (i in conversations.indices) {
             val conversation = conversations[i].apply {
-                lastMessage = CacheStorage.getMessage(lastMessageId)
+                lastMessage = CacheStorage.getMessage(lastMessageId)!!
             }
 
             dialogs.add(conversation)

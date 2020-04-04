@@ -4,18 +4,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout    xmlns:tools="http://schemas.android.com/tools"
-        android:id="@+id/swipeRefreshLayout"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            tools:itemCount="100" />
-
-    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+    <include layout="@layout/recycler_view" />
 
     <ProgressBar
         android:id="@+id/progressBar"
@@ -23,10 +12,18 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center" />
 
-    <include
-        layout="@layout/no_internet_view"
+    <ViewStub
+        android:id="@+id/noItemsViewStub"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="gone" />
+        android:inflatedId="@+id/noItemsView"
+        android:layout="@layout/no_items_view" />
+
+    <ViewStub
+        android:id="@+id/noInternetViewStub"
+        android:inflatedId="@+id/noInternetView"
+        android:layout="@layout/no_internet_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -67,11 +67,12 @@
         android:layout_gravity="center"
         tools:visibility="gone" />
 
-    <include
-        layout="@layout/no_items_view"
+    <ViewStub
+        android:id="@+id/noItemsViewStub"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="gone" />
+        android:inflatedId="@+id/noItemsView"
+        android:layout="@layout/no_items_view" />
 
     <LinearLayout
         android:id="@+id/chatPanel"
@@ -109,11 +110,12 @@
 
     </LinearLayout>
 
-    <include
-        layout="@layout/no_internet_view"
+    <ViewStub
+        android:id="@+id/noInternetViewStub"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="gone" />
+        android:inflatedId="@+id/noInternetView"
+        android:layout="@layout/no_internet_view" />
 
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

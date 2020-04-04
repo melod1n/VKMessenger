@@ -136,7 +136,7 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>, var convers
             stamp.text = if (item.time == nowTime)
                 context.getString(R.string.today)
             else
-                SimpleDateFormat("dd MMM", Locale.getDefault()).format(item.time)
+                SimpleDateFormat("d MMM", Locale.getDefault()).format(item.time)
         }
     }
 

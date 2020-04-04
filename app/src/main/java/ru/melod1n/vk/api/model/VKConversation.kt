@@ -2,7 +2,6 @@ package ru.melod1n.vk.api.model
 
 import org.json.JSONArray
 import org.json.JSONObject
-import ru.melod1n.vk.database.CacheStorage
 import java.io.Serializable
 import java.util.*
 
@@ -76,7 +75,7 @@ class VKConversation : VKModel, Serializable {
 
     var state: String? = null
 
-    var lastMessage: VKMessage? = null
+    var lastMessage = VKMessage()
 
     var isGroupChannel = false
 
@@ -97,8 +96,6 @@ class VKConversation : VKModel, Serializable {
         outRead = o.optInt("out_read")
         lastMessageId = o.optInt("last_message_id", -1)
         unreadCount = o.optInt("unread_count", 0)
-
-        lastMessage = CacheStorage.getMessage(lastMessageId)
 
         val oPushSettings = o.optJSONObject("push_settings")
         if (oPushSettings != null) {

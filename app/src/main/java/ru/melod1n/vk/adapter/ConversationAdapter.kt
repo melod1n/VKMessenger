@@ -11,8 +11,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import ru.melod1n.vk.R
+import ru.melod1n.vk.adapter.diffutil.ConversationDiffUtilCallback
 import ru.melod1n.vk.api.UserConfig
 import ru.melod1n.vk.api.VKLongPollParser
 import ru.melod1n.vk.api.model.VKConversation
@@ -28,6 +30,7 @@ import ru.melod1n.vk.util.AndroidUtils
 import ru.melod1n.vk.util.ArrayUtil
 import ru.melod1n.vk.util.ImageUtil
 import ru.melod1n.vk.widget.CircleImageView
+
 
 class ConversationAdapter(fragmentConversations: FragmentConversations, values: ArrayList<VKConversation>) : BaseAdapter<VKConversation, ConversationAdapter.NormalMessageOut>(fragmentConversations.requireActivity(), values),
         VKLongPollParser.OnMessagesListener,
@@ -68,11 +71,15 @@ class ConversationAdapter(fragmentConversations: FragmentConversations, values: 
                 ?: "1") == 2
 
 
+        private val avatarSize = AndroidUtils.px(if (isExtended) 60F else 50F)
+        private val maxLines = if (isExtended) 2 else 1
+
         override fun bind(position: Int) {
+            Log.d("BIND", "position = $position");
+
             val conversation = getItem(position)
 
             val lastMessage = conversation.lastMessage
-                    ?: CacheStorage.getMessage(conversation.lastMessageId) ?: VKMessage()
 
             if (lastMessage == VKMessage()) {
                 Log.e("ConversationAdapter", "EMPTY MESSAGE ON POSITION $position")
@@ -85,14 +92,14 @@ class ConversationAdapter(fragmentConversations: FragmentConversations, values: 
             val fromUser = VKUtil.searchUser(lastMessage.fromId)
             val fromGroup = VKUtil.searchGroup(lastMessage.fromId)
 
-            val avatarSize = AndroidUtils.px(if (isExtended) 60F else 50F)
-
             avatar.layoutParams.apply {
-                height = avatarSize
-                width = avatarSize
+                if (height != avatarSize) height = avatarSize
+                if (width != avatarSize) width = avatarSize
             }
 
-            text.maxLines = if (isExtended) 2 else 1
+            if (text.maxLines != maxLines) {
+                text.maxLines = maxLines
+            }
 
             val dialogTitle = VKUtil.getTitle(conversation, peerUser, peerGroup)
             title.text = dialogTitle
@@ -178,7 +185,8 @@ class ConversationAdapter(fragmentConversations: FragmentConversations, values: 
                 text.text = span
             }
 
-            val isRead = (lastMessage.isOut && conversation.outRead == conversation.lastMessageId || !lastMessage.isOut && conversation.inRead == conversation.lastMessageId) && conversation.lastMessageId == lastMessage.id
+            val isRead = ((lastMessage.isOut && conversation.outRead == conversation.lastMessageId ||
+                    !lastMessage.isOut && conversation.inRead == conversation.lastMessageId) && conversation.lastMessageId == lastMessage.id) && conversation.unreadCount == 0
 
             if (isRead) {
                 dialogCounter.visibility = View.GONE
@@ -202,40 +210,26 @@ class ConversationAdapter(fragmentConversations: FragmentConversations, values: 
     }
 
     private fun addMessage(message: VKMessage) {
-        //TODO: постичь дзен
-
         val index = searchConversationIndex(message.peerId)
+
+        CacheStorage.insertMessage(message)
+
+        val list = ArrayList(values)
 
         if (index >= 0) {
             val conversation = prepareConversation(getItem(index), message)
 
             if (index == 0) {
-                set(0, conversation)
                 notifyItemChanged(0)
             } else {
-//                val maxPosition = layoutManager.findLastCompletelyVisibleItemPosition() - layoutManager.findFirstCompletelyVisibleItemPosition() + 1
-
-                values.removeAt(index)
-                values.add(0, conversation)
-
-//                if (index > maxPosition) {
-//                    values.removeAt(index)
-//                    notifyItemRemoved(index)
-//
-//                    values.add(0, conversation)
-//                    notifyItemInserted(0)
-//                } else {
-//                    values.removeAt(index)
-//                    values.add(0, conversation)
-//
-//                    notifyItemMoved(index, 0)
-//                }
+                list.removeAt(index)
+                list.add(0, conversation)
             }
         } else {
             val conversation = CacheStorage.getConversation(message.peerId)
 
             if (conversation != null) {
-                values.add(0, prepareConversation(conversation, message))
+                list.add(0, prepareConversation(conversation, message))
             } else {
                 val temp = VKConversation().apply {
                     id = message.peerId
@@ -245,17 +239,24 @@ class ConversationAdapter(fragmentConversations: FragmentConversations, values: 
                     lastMessageId = message.id
                 }
 
-                values.add(0, temp)
+                list.add(0, temp)
             }
-
-            notifyItemInserted(0)
         }
 
-        notifyItemRangeChanged(0, itemCount)
+        updateList(list)
 
         if (layoutManager.findFirstVisibleItemPosition() < 2) {
             layoutManager.scrollToPosition(0)
         }
+    }
+
+    fun updateList(newList: List<VKConversation>) {
+        val diffCallBack = ConversationDiffUtilCallback(values, newList)
+        val diffResult = DiffUtil.calculateDiff(diffCallBack, false)
+
+        setItems(ArrayList(newList))
+
+        diffResult.dispatchUpdatesTo(this)
     }
 
     private fun editMessage(message: VKMessage) {
@@ -264,10 +265,24 @@ class ConversationAdapter(fragmentConversations: FragmentConversations, values: 
 
         val dialog = getItem(index)
 
-        dialog.lastMessageId = message.id
         dialog.lastMessage = message
 
-        notifyItemChanged(index, 0)
+        notifyItemChanged(index)
+    }
+
+    private fun readMessage(messageId: Int, peerId: Int) {
+        val index = searchConversationIndex(peerId)
+        if (index == -1) return
+
+        val dialog = getItem(index)
+
+        if (dialog.lastMessageId == messageId) {
+            dialog.unreadCount = 0
+        } else {
+            dialog.unreadCount = dialog.lastMessageId - messageId
+        }
+
+        notifyItemChanged(index)
     }
 
     private fun prepareConversation(conversation: VKConversation, newMessage: VKMessage): VKConversation {
@@ -278,11 +293,13 @@ class ConversationAdapter(fragmentConversations: FragmentConversations, values: 
             conversation.unreadCount = 0
             newMessage.isRead = false
         } else {
-            conversation.unreadCount = conversation.unreadCount + 1
+            conversation.unreadCount += 1
         }
+
         if (newMessage.peerId == newMessage.fromId && newMessage.fromId == UserConfig.userId) { //для лс
             conversation.outRead = newMessage.id
         }
+
         return conversation
     }
 
@@ -296,7 +313,7 @@ class ConversationAdapter(fragmentConversations: FragmentConversations, values: 
     }
 
     private fun searchMessageIndex(messageId: Int): Int {
-        for (i in 0 until itemCount) {
+        for (i in values.indices) {
             val dialog = getItem(i)
             if (dialog.lastMessageId == messageId) return i
         }
@@ -316,7 +333,7 @@ class ConversationAdapter(fragmentConversations: FragmentConversations, values: 
         val index = searchConversationIndex(peerId)
         if (index == -1) return
 
-        values[index] = CacheStorage.getConversation(peerId) ?: VKConversation()
+        values[index] = (CacheStorage.getConversation(peerId) ?: VKConversation())
 
         notifyItemChanged(index)
     }
@@ -338,7 +355,7 @@ class ConversationAdapter(fragmentConversations: FragmentConversations, values: 
         if (index == -1) return
         getItem(index).apply {
             lastMessageId = messageId
-            lastMessage = CacheStorage.getMessage(messageId)
+            lastMessage = CacheStorage.getMessage(messageId)!!
         }
 
         notifyItemChanged(index)
@@ -353,7 +370,7 @@ class ConversationAdapter(fragmentConversations: FragmentConversations, values: 
     }
 
     override fun onReadMessage(messageId: Int, peerId: Int) {
-//        TODO("Not yet implemented")
+        readMessage(messageId, peerId)
     }
 
     override fun onDeleteMessage(messageId: Int, peerId: Int) {

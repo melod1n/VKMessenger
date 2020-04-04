@@ -16,8 +16,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.amulyakhare.textdrawable.TextDrawable
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_messages.*
-import kotlinx.android.synthetic.main.no_internet_view.*
-import kotlinx.android.synthetic.main.no_items_view.*
 import kotlinx.android.synthetic.main.recycler_view.*
 import ru.melod1n.vk.R
 import ru.melod1n.vk.adapter.MessageAdapter
@@ -422,14 +420,18 @@ class MessagesActivity : BaseActivity(),
     }
 
     override fun showNoItemsView(visible: Boolean) {
+        noItemsViewStub.visibility = View.GONE
+
         if (visible) {
-            noItemsView.apply {
+            noItemsViewStub.inflate()
+
+            noItemsViewStub.apply {
                 alpha = 0f
                 visibility = View.VISIBLE
                 animate().alpha(1f).setDuration(250).start()
             }
         } else {
-            noItemsView.apply {
+            noItemsViewStub.apply {
                 alpha = 1f
                 animate().alpha(0f).setDuration(250).withEndAction { visibility = View.GONE }.start()
             }
@@ -439,14 +441,18 @@ class MessagesActivity : BaseActivity(),
     override fun showNoInternetView(visible: Boolean) {
         if (visible) clearList()
 
+        noInternetViewStub.visibility = View.GONE
+
         if (visible) {
-            noInternetView.apply {
+            noInternetViewStub.inflate()
+
+            noInternetViewStub.apply {
                 alpha = 0f
                 visibility = View.VISIBLE
                 animate().alpha(1f).setDuration(250).start()
             }
         } else {
-            noInternetView.apply {
+            noInternetViewStub.apply {
                 alpha = 1f
                 animate().alpha(0f).setDuration(250).withEndAction { visibility = View.GONE }.start()
             }

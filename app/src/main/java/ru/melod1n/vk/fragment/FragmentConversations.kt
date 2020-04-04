@@ -12,9 +12,7 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_messages.*
-import kotlinx.android.synthetic.main.no_internet_view.*
 import kotlinx.android.synthetic.main.recycler_view.*
 import ru.melod1n.vk.R
 import ru.melod1n.vk.activity.MainActivity
@@ -87,13 +85,14 @@ class FragmentConversations : BaseFragment(),
     }
 
     private fun prepareNoInternetView() {
-        noInternetUpdate.setOnClickListener {
-            if (AndroidUtils.hasConnection()) {
-                refreshData()
-            } else {
-                Snackbar.make(noInternetView, R.string.no_connection, Snackbar.LENGTH_SHORT).show()
-            }
-        }
+//        noInternetViewStub.inflate()
+//        noInternetUpdate.setOnClickListener {
+//            if (AndroidUtils.hasConnection()) {
+//                refreshData()
+//            } else {
+//                Snackbar.make(noInternetView, R.string.no_connection, Snackbar.LENGTH_SHORT).show()
+//            }
+//        }
     }
 
     private fun prepareListeners() {
@@ -162,20 +161,39 @@ class FragmentConversations : BaseFragment(),
     }
 
     override fun showNoItemsView(visible: Boolean) {
-        Log.d(TAG, "showNoItemsView: $visible")
-    }
-
-    override fun showNoInternetView(visible: Boolean) {
-        if (visible) clearList()
+        noItemsViewStub.visibility = View.GONE
 
         if (visible) {
-            noInternetView.apply {
+            noItemsViewStub.inflate()
+
+            noItemsViewStub.apply {
                 alpha = 0f
                 visibility = View.VISIBLE
                 animate().alpha(1f).setDuration(250).start()
             }
         } else {
-            noInternetView.apply {
+            noItemsViewStub.apply {
+                alpha = 1f
+                animate().alpha(0f).setDuration(250).withEndAction { visibility = View.GONE }.start()
+            }
+        }
+    }
+
+    override fun showNoInternetView(visible: Boolean) {
+        if (visible) clearList()
+
+        noInternetViewStub.visibility = View.GONE
+
+        if (visible) {
+            noInternetViewStub.inflate()
+
+            noInternetViewStub.apply {
+                alpha = 0f
+                visibility = View.VISIBLE
+                animate().alpha(1f).setDuration(250).start()
+            }
+        } else {
+            noInternetViewStub.apply {
                 alpha = 1f
                 animate().alpha(0f).setDuration(250).withEndAction { visibility = View.GONE }.start()
             }
@@ -217,27 +235,31 @@ class FragmentConversations : BaseFragment(),
             return
         }
 
+        val newList = ArrayList(adapter!!.values)
+
         if (recyclerView.adapter == null) {
             recyclerView.adapter = adapter
         }
 
         if (offset != 0) {
-            adapter!!.apply {
-                addAll(values)
-                notifyItemRangeInserted(offset, values.size)
-            }
+            newList.addAll(values)
+
+            adapter!!.updateList(newList)
             return
         }
 
         adapter!!.values = values
 
+        adapter!!.notifyDataSetChanged()
     }
 
     override fun clearList() {
         Log.d(TAG, "clearList")
         if (adapter == null) return
-        adapter!!.clear()
-        adapter!!.notifyDataSetChanged()
+
+        val values = ArrayList<VKConversation>()
+
+        adapter!!.updateList(values)
     }
 
     override fun onDestroy() {
