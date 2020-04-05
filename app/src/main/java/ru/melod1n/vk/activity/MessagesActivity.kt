@@ -14,8 +14,11 @@ import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.amulyakhare.textdrawable.TextDrawable
+import com.google.android.material.snackbar.Snackbar
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_messages.*
+import kotlinx.android.synthetic.main.no_internet_view.*
+import kotlinx.android.synthetic.main.no_items_view.*
 import kotlinx.android.synthetic.main.recycler_view.*
 import ru.melod1n.vk.R
 import ru.melod1n.vk.adapter.MessageAdapter
@@ -64,31 +67,24 @@ class MessagesActivity : BaseActivity(),
 
     private var conversation: VKConversation? = null
 
-    private var title: String? = null
-    private var avatar: String? = null
+    private var title = ""
+    private var avatar = ""
 
     private var lastMessageText = ""
     private var attachments = ArrayList<VKModel>()
 
     private var peerId = 0
 
-    private var presenter: Presenter<VKMessage>? = null
+    private lateinit var presenter: Presenter<VKMessage>
 
     private var adapter: MessageAdapter? = null
 
     private var loadedId = false
 
-    private fun onLoad() {
-        presenter!!.valuesLoading()
-        presenter!!.requestClearList()
-        presenter!!.requestValues(peerId, 0, MESSAGES_COUNT)
-    }
-
     override fun onDestroy() {
         super.onDestroy()
 
         adapter?.onDestroy()
-        presenter = null
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -101,6 +97,8 @@ class MessagesActivity : BaseActivity(),
         prepareRefreshLayout()
         prepareRecyclerView()
         prepareEditText()
+        prepareNoItemsView()
+        prepareNoInternetView()
 
         presenter = MessagesPresenter(this)
         (presenter as MessagesPresenter).readyForLoading()
@@ -113,6 +111,15 @@ class MessagesActivity : BaseActivity(),
         initData()
     }
 
+    private fun refreshData() {
+        if (hasConnection()) {
+            presenter.readyForLoading()
+            presenter.requestValues(peerId, 0, MESSAGES_COUNT)
+        } else {
+            showNoInternetView(true)
+        }
+    }
+
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.activity_messages, menu)
         return super.onCreateOptionsMenu(menu)
@@ -121,7 +128,7 @@ class MessagesActivity : BaseActivity(),
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             android.R.id.home -> onBackPressed()
-            R.id.messagesRefresh -> onLoad()
+            R.id.messagesRefresh -> refreshData()
         }
 
         return super.onOptionsItemSelected(item)
@@ -129,6 +136,28 @@ class MessagesActivity : BaseActivity(),
 
     fun getRecyclerView(): RecyclerView {
         return recyclerView
+    }
+
+    private fun prepareNoItemsView() {
+        noItemsRefresh.setOnClickListener {
+            if (hasConnection()) {
+                refreshData()
+            } else {
+                showNoInternetView(true)
+            }
+        }
+
+        noItemsText.text = getString(R.string.dialog_is_empty)
+    }
+
+    private fun prepareNoInternetView() {
+        noInternetUpdate.setOnClickListener {
+            if (hasConnection()) {
+                refreshData()
+            } else {
+                Snackbar.make(noInternetView, R.string.no_connection, Snackbar.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun loadConversation() {
@@ -149,13 +178,19 @@ class MessagesActivity : BaseActivity(),
 
         val viewedDialogs = MainActivity.viewedDialogs
 
-        if (AndroidUtils.hasConnection() && !viewedDialogs.contains(peerId)) {
+        presenter.requestCachedValues(peerId, 0, MESSAGES_COUNT)
+
+        if (adapter?.values?.size == 1) {
+            showProgressBar(true)
+        }
+
+        if (hasConnection() && !viewedDialogs.contains(peerId)) {
             chatInfo.setText(R.string.loading)
             viewedDialogs.add(peerId)
 
-            onLoad()
+            refreshData()
         } else {
-            presenter!!.requestCachedValues(peerId, 0, MESSAGES_COUNT)
+            showProgressBar(false)
         }
 
         refreshFabStyle()
@@ -312,7 +347,7 @@ class MessagesActivity : BaseActivity(),
 
         val placeholder = TextDrawable
                 .builder()
-                .buildRound(if (title!!.isEmpty()) "" else title!!.substring(0, 1), AppGlobal.colorAccent)
+                .buildRound(if (title.isEmpty()) "" else title.substring(0, 1), AppGlobal.colorAccent)
 
         chatAvatar.setImageDrawable(placeholder)
 
@@ -346,10 +381,10 @@ class MessagesActivity : BaseActivity(),
         conversation = intent.getSerializableExtra(TAG_EXTRA_CONVERSATION) as VKConversation?
 
         peerId = intent.getIntExtra(TAG_ID, -1)
-        title = intent.getStringExtra(TAG_EXTRA_TITLE)
-        avatar = intent.getStringExtra(TAG_EXTRA_AVATAR)
+        title = intent.getStringExtra(TAG_EXTRA_TITLE) ?: ""
+        avatar = intent.getStringExtra(TAG_EXTRA_AVATAR) ?: ""
 
-        if (conversation == VKConversation()) {
+        if (conversation == VKConversation() && hasConnection()) {
             Thread(Runnable {
                 try {
                     val conversation = VKApi.messages()
@@ -364,12 +399,16 @@ class MessagesActivity : BaseActivity(),
 
                     this@MessagesActivity.conversation = conversation[0]
 
-                    val user = MemoryCache.getUser(peerId)
+                    val user = VKUtil.searchUser(peerId)
+                    val group = VKUtil.searchGroup(peerId)
+
                     if (user != null) {
                         title = user.toString()
-                        avatar = user.photo200
+                        avatar = user.photo200!!
+                    } else if (group != null) {
+                        title = group.name!!
+                        avatar = group.photo200!!
                     }
-
 
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -397,6 +436,8 @@ class MessagesActivity : BaseActivity(),
         adapter!!.add(message)
         adapter!!.notifyDataSetChanged()
 
+        checkListIsEmpty(adapter!!.values)
+
         if (scrollToBottom)
             recyclerView.smoothScrollToPosition(adapter!!.itemCount - 1)
 
@@ -420,18 +461,14 @@ class MessagesActivity : BaseActivity(),
     }
 
     override fun showNoItemsView(visible: Boolean) {
-        noItemsViewStub.visibility = View.GONE
-
         if (visible) {
-            noItemsViewStub.inflate()
-
-            noItemsViewStub.apply {
+            noItemsView.apply {
                 alpha = 0f
                 visibility = View.VISIBLE
                 animate().alpha(1f).setDuration(250).start()
             }
         } else {
-            noItemsViewStub.apply {
+            noItemsView.apply {
                 alpha = 1f
                 animate().alpha(0f).setDuration(250).withEndAction { visibility = View.GONE }.start()
             }
@@ -441,18 +478,14 @@ class MessagesActivity : BaseActivity(),
     override fun showNoInternetView(visible: Boolean) {
         if (visible) clearList()
 
-        noInternetViewStub.visibility = View.GONE
-
         if (visible) {
-            noInternetViewStub.inflate()
-
-            noInternetViewStub.apply {
+            noInternetView.apply {
                 alpha = 0f
                 visibility = View.VISIBLE
                 animate().alpha(1f).setDuration(250).start()
             }
         } else {
-            noInternetViewStub.apply {
+            noInternetView.apply {
                 alpha = 1f
                 animate().alpha(0f).setDuration(250).withEndAction { visibility = View.GONE }.start()
             }
@@ -461,8 +494,8 @@ class MessagesActivity : BaseActivity(),
 
     override fun showErrorView(errorTitle: String, errorDescription: String) {
         Log.d(TAG, "showErrorView: $errorTitle: $errorDescription")
-        if (!AndroidUtils.hasConnection()) {
-            presenter!!.requestCachedValues(0, 0, MESSAGES_COUNT)
+        if (!hasConnection()) {
+            presenter.requestCachedValues(0, 0, MESSAGES_COUNT)
         }
     }
 
@@ -481,22 +514,20 @@ class MessagesActivity : BaseActivity(),
 
         setChatInfoText()
 
-        if (values.isEmpty()) return
-
         VKUtil.sortMessagesByDate(values, false)
         VKUtil.prepareList(values)
 
         if (adapter == null) {
-            adapter = MessageAdapter(this, values, conversation ?: VKConversation()).also {
+            adapter = MessageAdapter(this, values, conversation!!).also {
                 it.onItemClickListener = this
             }
 
-            recyclerView!!.adapter = adapter
+            recyclerView.adapter = adapter
             return
         }
 
-        if (recyclerView!!.adapter == null) {
-            recyclerView!!.adapter = adapter
+        if (recyclerView.adapter == null) {
+            recyclerView.adapter = adapter
         }
 
         if (offset > 0) {
@@ -509,7 +540,7 @@ class MessagesActivity : BaseActivity(),
         adapter!!.notifyDataSetChanged()
 
         if (offset == 0) {
-            recyclerView!!.smoothScrollToPosition(adapter!!.itemCount + 1)
+            recyclerView.smoothScrollToPosition(adapter!!.itemCount + 1)
         }
     }
 
@@ -544,9 +575,15 @@ class MessagesActivity : BaseActivity(),
         }
     }
 
-    override fun clearList() {
-        Log.d(TAG, "clearList")
+    override fun checkListIsEmpty(values: ArrayList<VKMessage>) {
+        showNoItemsView(values.isEmpty())
+    }
 
+    override fun hasConnection(): Boolean {
+        return AndroidUtils.hasConnection()
+    }
+
+    override fun clearList() {
         if (adapter == null) return
 
         adapter!!.clear()

@@ -6,9 +6,12 @@ import ru.melod1n.vk.api.VKException
 import ru.melod1n.vk.api.model.VKConversation
 import ru.melod1n.vk.mvp.contract.BaseContract
 import ru.melod1n.vk.mvp.model.ConversationsRepository
-import ru.melod1n.vk.util.ArrayUtil
 
 class ConversationsPresenter(private val view: BaseContract.View<VKConversation>) : BaseContract.Presenter<VKConversation> {
+
+    companion object {
+        private const val TAG = "ConversationsPresenter"
+    }
 
     private val repository: BaseContract.Repository<VKConversation>
 
@@ -68,16 +71,12 @@ class ConversationsPresenter(private val view: BaseContract.View<VKConversation>
         view.showNoItemsView(false)
         view.showRefreshLayout(false)
         view.showProgressBar(false)
-        view.showNoItemsView(ArrayUtil.isEmpty(values))
+        view.checkListIsEmpty(values)
         view.loadValuesIntoList(offset, values, isCache)
     }
 
-    override fun requestClearList() {
+    override fun clearList() {
         view.clearList()
-    }
-
-    companion object {
-        private const val TAG = "ConversationsPresenter"
     }
 
     init {

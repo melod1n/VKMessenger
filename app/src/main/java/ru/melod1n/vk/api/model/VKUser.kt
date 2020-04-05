@@ -40,8 +40,11 @@ open class VKUser : VKModel, Serializable {
         photo100 = o.optString("photo_100")
         photo200 = o.optString("photo_200")
         isOnline = o.optInt("online") == 1
+
         if (isOnline) isOnlineMobile = o.optInt("online_mobile") == 1
+
         status = o.optString("status")
+
         val oLastSeen = o.optJSONObject("last_seen")
         if (oLastSeen != null) {
             LastSeen(oLastSeen).apply {

@@ -11,7 +11,6 @@ import ru.melod1n.vk.api.model.VKUser
 import ru.melod1n.vk.concurrent.LowThread
 import ru.melod1n.vk.database.CacheStorage
 import java.util.*
-import kotlin.math.abs
 
 object TaskManager {
     private const val TAG = "TaskManager"
@@ -62,6 +61,7 @@ object TaskManager {
 
     fun loadUser(userId: Int) {
         Log.i(TAG, "loadUser: $userId")
+
         if (currentTasksIds.contains(userId)) return
         currentTasksIds.add(userId)
 
@@ -70,7 +70,7 @@ object TaskManager {
         addProcedure(setter, VKUser::class.java, EventInfo<Any>(EventInfo.USER_UPDATE, userId), object : OnResponseListener<VKUser> {
             override fun onSuccess(models: ArrayList<VKUser>) {
                 currentTasksIds.remove(userId)
-                CacheStorage.insertUser(models[0])
+                CacheStorage.insertUsers(models)
             }
 
             override fun onError(e: Exception) {
@@ -79,19 +79,18 @@ object TaskManager {
         })
     }
 
-    fun loadGroup(gid: Int) {
-        val groupId = abs(gid)
-
+    fun loadGroup(groupId: Int) {
         Log.i(TAG, "loadGroup: $groupId")
 
         if (currentTasksIds.contains(groupId)) return
         currentTasksIds.add(groupId)
+
         val setter = VKApi.groups().byId.groupId(groupId).fields(VKGroup.DEFAULT_FIELDS)
 
         addProcedure(setter, VKGroup::class.java, EventInfo<Any>(EventInfo.GROUP_UPDATE, groupId), object : OnResponseListener<VKGroup> {
             override fun onSuccess(models: ArrayList<VKGroup>) {
                 currentTasksIds.remove(groupId)
-                CacheStorage.insertGroup(models[0])
+                CacheStorage.insertGroups(models)
             }
 
             override fun onError(e: Exception) {
@@ -100,7 +99,6 @@ object TaskManager {
         })
     }
 
-    @JvmOverloads
     fun loadMessage(messageId: Int, listener: OnResponseListener<VKMessage>? = null) {
         Log.i(TAG, "loadMessage: $messageId")
 
@@ -113,7 +111,13 @@ object TaskManager {
         addProcedure(setter, VKMessage::class.java, EventInfo<Any>(EventInfo.MESSAGE_UPDATE, messageId), object : OnResponseListener<VKMessage> {
             override fun onSuccess(models: ArrayList<VKMessage>) {
                 currentTasksIds.remove(messageId)
-                CacheStorage.insertMessage(models[0])
+
+                if (CacheStorage.getMessage(models[0].id) == null) {
+                    CacheStorage.insertMessages(models)
+                } else {
+                    CacheStorage.updateMessages(models)
+                }
+
                 listener?.onSuccess(models)
             }
 
@@ -124,7 +128,6 @@ object TaskManager {
         })
     }
 
-    @JvmOverloads
     fun loadConversation(peerId: Int, listener: OnResponseListener<VKConversation>? = null) {
         Log.i(TAG, "loadConversation: $peerId")
         if (currentTasksIds.contains(peerId)) return
@@ -136,7 +139,13 @@ object TaskManager {
         addProcedure(setter, VKConversation::class.java, EventInfo<Any>(EventInfo.CONVERSATION_UPDATE, peerId), object : OnResponseListener<VKConversation> {
             override fun onSuccess(models: ArrayList<VKConversation>) {
                 currentTasksIds.remove(peerId)
-                CacheStorage.insertConversation(models[0])
+
+                if (CacheStorage.getConversation(models[0].id) == null) {
+                    CacheStorage.insertConversations(models)
+                } else {
+                    CacheStorage.updateConversations(models)
+                }
+
                 listener?.onSuccess(models)
             }
 

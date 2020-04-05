@@ -285,6 +285,52 @@ class ConversationAdapter(fragmentConversations: FragmentConversations, values: 
         notifyItemChanged(index)
     }
 
+    private fun deleteMessage(peerId: Int) {
+        val index = searchConversationIndex(peerId)
+        if (index == -1) return
+
+        val dialog = getItem(index)
+
+        val messages = VKUtil.sortMessagesByDate(CacheStorage.getMessages(dialog.id), true)
+
+        if (messages.isEmpty()) {
+            CacheStorage.deleteConversation(dialog.id)
+
+            val items = ArrayList(values)
+            items.removeAt(index)
+
+            updateList(items)
+        } else {
+            val lastMessage = messages[0]
+
+            dialog.lastMessageId = lastMessage.id
+            dialog.lastMessage = lastMessage
+
+            setItems(VKUtil.sortConversationsByDate(values, true))
+            notifyDataSetChanged()
+        }
+    }
+
+    private fun restoreMessage(message: VKMessage) {
+        val index = searchConversationIndex(message.peerId)
+        if (index == -1) return
+
+        val dialog = getItem(index)
+
+        //TODO: кривое сообщение
+
+        val messages = CacheStorage.getMessages(dialog.id).apply { add(message) }
+        VKUtil.sortMessagesByDate(messages, true)
+
+        val lastMessage = messages[0]
+
+        dialog.lastMessageId = lastMessage.id
+        dialog.lastMessage = lastMessage
+
+        setItems(VKUtil.sortConversationsByDate(values, true))
+        notifyDataSetChanged()
+    }
+
     private fun prepareConversation(conversation: VKConversation, newMessage: VKMessage): VKConversation {
         conversation.lastMessage = newMessage
         conversation.lastMessageId = newMessage.id
@@ -374,11 +420,11 @@ class ConversationAdapter(fragmentConversations: FragmentConversations, values: 
     }
 
     override fun onDeleteMessage(messageId: Int, peerId: Int) {
-//        TODO("Not yet implemented")
+        deleteMessage(peerId)
     }
 
     override fun onRestoredMessage(message: VKMessage) {
-//        TODO("Not yet implemented")
+        restoreMessage(message)
     }
 
 

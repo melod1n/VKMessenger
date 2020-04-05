@@ -59,13 +59,16 @@ abstract class BaseAdapter<T, VH : BaseAdapter.Holder>(var context: Context, var
         values.removeAt(index)
     }
 
+    fun isEmpty(): Boolean {
+        return values.isNullOrEmpty()
+    }
+
     fun view(resId: Int, viewGroup: ViewGroup): View {
         return inflater.inflate(resId, viewGroup, false)
     }
 
     fun setItems(list: ArrayList<T>) {
-        values.clear()
-        values.addAll(list)
+        values = list
     }
 
     override fun onBindViewHolder(holder: VH, position: Int) {

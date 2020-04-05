@@ -1,7 +1,6 @@
 package ru.melod1n.vk.mvp.contract
 
 import ru.melod1n.vk.api.VKApi.OnResponseListener
-import java.util.*
 
 open class BaseContract {
     interface View<T> {
@@ -12,6 +11,8 @@ open class BaseContract {
         fun showRefreshLayout(visible: Boolean)
         fun showProgressBar(visible: Boolean)
         fun loadValuesIntoList(offset: Int, values: ArrayList<T>, isCache: Boolean)
+        fun checkListIsEmpty(values: ArrayList<T>)
+        fun hasConnection(): Boolean
         fun clearList()
     }
 
@@ -22,7 +23,7 @@ open class BaseContract {
         fun valuesLoading()
         fun valuesErrorLoading(e: Exception)
         fun valuesLoaded(offset: Int, values: ArrayList<T>, isCache: Boolean)
-        fun requestClearList()
+        fun clearList()
     }
 
     abstract class Repository<T> {

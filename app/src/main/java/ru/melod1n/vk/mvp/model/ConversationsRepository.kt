@@ -35,7 +35,7 @@ class ConversationsRepository : BaseContract.Repository<VKConversation>() {
 
         for (i in conversations.indices) {
             val conversation = conversations[i].apply {
-                lastMessage = CacheStorage.getMessage(lastMessageId)!!
+                lastMessage = CacheStorage.getMessage(lastMessageId) ?: return@apply
             }
 
             dialogs.add(conversation)
@@ -68,7 +68,7 @@ class ConversationsRepository : BaseContract.Repository<VKConversation>() {
         val messages = ArrayList<VKMessage>(models.size)
 
         for (conversation in models) {
-            messages.add(conversation.lastMessage!!)
+            messages.add(conversation.lastMessage)
         }
 
         CacheStorage.insertMessages(messages)

@@ -12,7 +12,10 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_messages.*
+import kotlinx.android.synthetic.main.no_internet_view.*
+import kotlinx.android.synthetic.main.no_items_view.*
 import kotlinx.android.synthetic.main.recycler_view.*
 import ru.melod1n.vk.R
 import ru.melod1n.vk.activity.MainActivity
@@ -64,6 +67,7 @@ class FragmentConversations : BaseFragment(),
         prepareRefreshLayout()
         prepareRecyclerView()
 
+        prepareNoItemsView()
         prepareNoInternetView()
         prepareListeners()
 
@@ -71,9 +75,7 @@ class FragmentConversations : BaseFragment(),
 
         loadCachedData()
 
-        if (AndroidUtils.hasConnection()) {
-            refreshData()
-        }
+        refreshData()
 
         TimeManager.addOnMinuteChangeListener(this)
     }
@@ -84,15 +86,24 @@ class FragmentConversations : BaseFragment(),
         }
     }
 
+    private fun prepareNoItemsView() {
+        noItemsRefresh.setOnClickListener {
+            refreshData()
+
+            if (!hasConnection())
+                showNoInternetView(true)
+        }
+        noItemsText.text = getString(R.string.list_is_empty)
+    }
+
     private fun prepareNoInternetView() {
-//        noInternetViewStub.inflate()
-//        noInternetUpdate.setOnClickListener {
-//            if (AndroidUtils.hasConnection()) {
-//                refreshData()
-//            } else {
-//                Snackbar.make(noInternetView, R.string.no_connection, Snackbar.LENGTH_SHORT).show()
-//            }
-//        }
+        noInternetUpdate.setOnClickListener {
+            refreshData()
+
+            if (!hasConnection()) {
+                Snackbar.make(noInternetView, R.string.no_connection, Snackbar.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun prepareListeners() {
@@ -104,12 +115,13 @@ class FragmentConversations : BaseFragment(),
     }
 
     private fun refreshData() {
-        if (AndroidUtils.hasConnection()) {
-            showNoInternetView(false)
-            presenter.valuesLoading()
+        if (hasConnection()) {
+            presenter.readyForLoading()
             presenter.requestValues(0, 0, CONVERSATIONS_COUNT)
         } else {
-            showNoInternetView(true)
+            if (adapter!!.isEmpty())
+                showNoInternetView(true)
+
             swipeRefreshLayout.isRefreshing = false
         }
     }
@@ -161,18 +173,14 @@ class FragmentConversations : BaseFragment(),
     }
 
     override fun showNoItemsView(visible: Boolean) {
-        noItemsViewStub.visibility = View.GONE
-
         if (visible) {
-            noItemsViewStub.inflate()
-
-            noItemsViewStub.apply {
+            noItemsView.apply {
                 alpha = 0f
                 visibility = View.VISIBLE
                 animate().alpha(1f).setDuration(250).start()
             }
         } else {
-            noItemsViewStub.apply {
+            noItemsView.apply {
                 alpha = 1f
                 animate().alpha(0f).setDuration(250).withEndAction { visibility = View.GONE }.start()
             }
@@ -182,18 +190,14 @@ class FragmentConversations : BaseFragment(),
     override fun showNoInternetView(visible: Boolean) {
         if (visible) clearList()
 
-        noInternetViewStub.visibility = View.GONE
-
         if (visible) {
-            noInternetViewStub.inflate()
-
-            noInternetViewStub.apply {
+            noInternetView.apply {
                 alpha = 0f
                 visibility = View.VISIBLE
                 animate().alpha(1f).setDuration(250).start()
             }
         } else {
-            noInternetViewStub.apply {
+            noInternetView.apply {
                 alpha = 1f
                 animate().alpha(0f).setDuration(250).withEndAction { visibility = View.GONE }.start()
             }
@@ -222,12 +226,10 @@ class FragmentConversations : BaseFragment(),
     override fun loadValuesIntoList(offset: Int, values: ArrayList<VKConversation>, isCache: Boolean) {
         Log.d(TAG, "loadValuesIntoList: $offset, ${values.size}, isCache: $isCache")
 
-        if (isCache && values.isEmpty() && !AndroidUtils.hasConnection()) {
+        if (isCache && values.isEmpty() && !hasConnection()) {
             showNoInternetView(true)
             return
         }
-
-        if (values.isEmpty()) return
 
         if (adapter == null) {
             adapter = ConversationAdapter(this, values).also { it.onItemClickListener = this }
@@ -253,8 +255,15 @@ class FragmentConversations : BaseFragment(),
         adapter!!.notifyDataSetChanged()
     }
 
+    override fun checkListIsEmpty(values: ArrayList<VKConversation>) {
+        showNoItemsView(values.isEmpty())
+    }
+
+    override fun hasConnection(): Boolean {
+        return AndroidUtils.hasConnection()
+    }
+
     override fun clearList() {
-        Log.d(TAG, "clearList")
         if (adapter == null) return
 
         val values = ArrayList<VKConversation>()

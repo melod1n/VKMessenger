@@ -39,7 +39,7 @@ class DatabaseHelper private constructor(context: Context?) : SQLiteOpenHelper(c
     companion object {
 
         private const val DB_NAME = "cache.db"
-        private const val DB_VERSION = 33
+        private const val DB_VERSION = 35
 
         const val TYPE = "type"
 

@@ -71,7 +71,7 @@ class MessagesPresenter(private val view: BaseContract.View<VKMessage>) : Presen
         view.loadValuesIntoList(offset, values, isCache)
     }
 
-    override fun requestClearList() {
+    override fun clearList() {
         view.clearList()
     }
 

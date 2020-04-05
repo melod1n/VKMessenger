@@ -81,7 +81,9 @@
     <string name="project_vkm">Project.VKM</string>
     <string name="enter">Enter</string>
     <string name="no_access">No access</string>
+
     <string name="dialog_is_empty">Dialog is empty</string>
+    <string name="list_is_empty">List is empty</string>
 
     <string name="update_state_downloading">Downloading&#8230;</string>
     <string name="update_state_checking">Checking&#8230;</string>
@@ -94,6 +96,10 @@
     <string name="update_new_version">Version: %s</string>
     <string name="update_download">Download</string>
     <string name="messages_refresh">Refresh</string>
+
     <string name="today">Today</string>
+    <string name="yesterday">Yesterday</string>
+
+    <string name="refresh">Refresh</string>
 
 </resources>

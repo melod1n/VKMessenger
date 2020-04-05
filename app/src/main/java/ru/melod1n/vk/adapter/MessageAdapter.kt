@@ -3,6 +3,7 @@ package ru.melod1n.vk.adapter
 import android.content.Context
 import android.graphics.Typeface
 import android.text.SpannableString
+import android.text.format.DateUtils
 import android.text.style.StyleSpan
 import android.view.View
 import android.view.ViewGroup
@@ -133,10 +134,11 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>, var convers
             val item = getItem(position) as TimeStamp
             val nowTime = Util.removeTime(Date(System.currentTimeMillis()))
 
-            stamp.text = if (item.time == nowTime)
-                context.getString(R.string.today)
-            else
-                SimpleDateFormat("d MMM", Locale.getDefault()).format(item.time)
+            stamp.text = when {
+                item.time == nowTime -> context.getString(R.string.today)
+                nowTime - item.time == DateUtils.DAY_IN_MILLIS -> context.getString(R.string.yesterday)
+                else -> SimpleDateFormat("d MMM", Locale.getDefault()).format(item.time)
+            }
         }
     }
 
@@ -322,6 +324,14 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>, var convers
         notifyItemChanged(index)
     }
 
+    private fun containsRandomId(randomId: Int): Boolean {
+        for (message in values) {
+            if (message.randomId == randomId) return true
+        }
+
+        return false
+    }
+
     override fun onEvent(info: EventInfo<*>) {
         when (info.key) {
             EventInfo.MESSAGE_UPDATE -> updateMessage(info.data as Int)
@@ -331,8 +341,10 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>, var convers
     }
 
     override fun onNewMessage(message: VKMessage) {
+        if (containsRandomId(message.randomId)) return
+
         add(message)
-        notifyItemInserted(itemCount + 2)
+        notifyDataSetChanged()
 
         val lastPosition = layoutManager.findLastVisibleItemPosition()
 

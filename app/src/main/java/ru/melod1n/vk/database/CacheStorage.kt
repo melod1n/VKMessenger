@@ -2,6 +2,7 @@ package ru.melod1n.vk.database
 
 import android.content.ContentValues
 import android.database.Cursor
+import android.text.TextUtils
 import ru.melod1n.vk.api.UserConfig
 import ru.melod1n.vk.api.model.*
 import ru.melod1n.vk.common.AppGlobal
@@ -63,8 +64,6 @@ import ru.melod1n.vk.database.DatabaseHelper.Companion.UNREAD_COUNT
 import ru.melod1n.vk.database.DatabaseHelper.Companion.USER_ID
 import ru.melod1n.vk.database.DatabaseHelper.Companion.VERIFIED
 import ru.melod1n.vk.util.Util
-import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.math.abs
 
 
@@ -127,6 +126,32 @@ object CacheStorage {
         }
     }
 
+    private fun update(table: String, values: ArrayList<*>, whereClause: String, whereArgs: Array<String>) {
+        AppGlobal.database.beginTransaction()
+
+        for (i in values.indices) {
+            val cv = ContentValues()
+
+            val item = values[i] as VKModel
+
+            when (table) {
+                TABLE_MESSAGES -> putValues(item as VKMessage, cv)
+                TABLE_CONVERSATIONS -> putValues(item as VKConversation, cv)
+                TABLE_USERS -> putValues(item as VKUser, cv, false)
+                TABLE_FRIENDS -> putValues(item as VKUser, cv, true)
+                TABLE_GROUPS -> putValues(item as VKGroup, cv)
+            }
+
+            AppGlobal.database.update(table, cv, "$whereClause = ?", whereArgs)
+            cv.clear()
+        }
+
+        AppGlobal.database.apply {
+            setTransactionSuccessful()
+            endTransaction()
+        }
+    }
+
     fun delete(table: String?, where: Any, args: Any) {
         AppGlobal.database.delete(table, "$where = ?", arrayOf(args.toString()))
     }
@@ -135,8 +160,8 @@ object CacheStorage {
         AppGlobal.database.delete(table, null, null)
     }
 
-    fun getMessage(id: Int): VKMessage? {
-        val cursor = selectCursor(TABLE_MESSAGES, MESSAGE_ID, id)
+    fun getMessage(messageId: Int): VKMessage? {
+        val cursor = selectCursor(TABLE_MESSAGES, MESSAGE_ID, messageId)
 
         if (cursor.count == 0) return null
 
@@ -407,24 +432,50 @@ object CacheStorage {
         values.put(PHOTO_200, group.photo200)
     }
 
-    fun insertMessages(messages: ArrayList<VKMessage>) {
-        insert(TABLE_MESSAGES, messages)
-    }
-
-    fun insertMessage(message: VKMessage?) {
-        insert(TABLE_MESSAGES, ArrayList(Collections.singletonList(message)))
-    }
-
     fun insertConversation(conversation: VKConversation) {
-        insert(TABLE_CONVERSATIONS, ArrayList<VKConversation>(listOf(conversation)))
+        insertConversations(ArrayList(listOf(conversation)))
     }
 
     fun insertConversations(conversations: ArrayList<VKConversation>) {
         insert(TABLE_CONVERSATIONS, conversations)
     }
 
-    fun insertUser(user: VKUser?) {
-        insert(TABLE_USERS, ArrayList<VKUser>(listOf(user)))
+    fun updateConversations(conversations: ArrayList<VKConversation>) {
+        val ids = Array(conversations.size) {it.toString()}
+
+        for (i in conversations.indices) {
+            ids[i] = conversations[i].id.toString()
+        }
+
+        update(TABLE_CONVERSATIONS, conversations, PEER_ID, ids)
+    }
+
+    fun deleteConversations(conversations: ArrayList<VKConversation>) {
+        val ids = IntArray(conversations.size)
+
+        for (i in conversations.indices) {
+            ids[i] = conversations[i].id
+        }
+
+        deleteConversations(ids)
+    }
+
+    fun deleteConversations(conversationsIds: IntArray) {
+        val args = TextUtils.join(", ", conversationsIds.toMutableList())
+
+        delete(TABLE_CONVERSATIONS, PEER_ID, args)
+    }
+
+    fun deleteConversation(conversation: VKConversation) {
+        deleteConversations(ArrayList(listOf(conversation)))
+    }
+
+    fun deleteConversation(conversationId: Int) {
+        deleteConversations(intArrayOf(conversationId))
+    }
+
+    fun insertUser(user: VKUser) {
+        insertUsers(ArrayList(listOf(user)))
     }
 
     fun insertUsers(users: ArrayList<VKUser>) {
@@ -436,11 +487,57 @@ object CacheStorage {
         insert(TABLE_FRIENDS, users)
     }
 
-    fun insertGroup(group: VKGroup?) {
-        insert(TABLE_GROUPS, ArrayList<VKGroup>(listOf(group)))
+    fun insertGroup(group: VKGroup) {
+        insertGroups(ArrayList(listOf(group)))
     }
 
     fun insertGroups(groups: ArrayList<VKGroup>) {
         insert(TABLE_GROUPS, groups)
+    }
+
+    fun updateMessages(messages: ArrayList<VKMessage>) {
+        val ids = Array(messages.size) {it.toString()}
+
+        for (i in messages.indices) {
+            ids[i] = messages[i].id.toString()
+        }
+
+        update(TABLE_MESSAGES, messages, MESSAGE_ID, ids)
+    }
+
+    fun updateMessage(message: VKMessage) {
+        updateMessages(ArrayList(listOf(message)))
+    }
+
+    fun insertMessages(messages: ArrayList<VKMessage>) {
+        insert(TABLE_MESSAGES, messages)
+    }
+
+    fun insertMessage(message: VKMessage) {
+        insertMessages(ArrayList(listOf(message)))
+    }
+
+    fun deleteMessages(messages: ArrayList<VKMessage>) {
+        val ids = IntArray(messages.size)
+
+        for (i in messages.indices) {
+            ids[i] = messages[i].id
+        }
+
+        deleteMessages(ids)
+    }
+
+    fun deleteMessages(messagesIds: IntArray) {
+        val args = TextUtils.join(", ", messagesIds.toMutableList())
+
+        delete(TABLE_MESSAGES, MESSAGE_ID, args)
+    }
+
+    fun deleteMessage(message: VKMessage) {
+        deleteMessages(ArrayList(listOf(message)))
+    }
+
+    fun deleteMessage(messageId: Int) {
+        deleteMessages(intArrayOf(messageId))
     }
 }

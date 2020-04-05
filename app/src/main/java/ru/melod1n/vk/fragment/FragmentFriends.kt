@@ -28,7 +28,6 @@ import ru.melod1n.vk.current.BaseFragment
 import ru.melod1n.vk.mvp.contract.BaseContract
 import ru.melod1n.vk.mvp.presenter.FriendsPresenter
 import ru.melod1n.vk.util.AndroidUtils
-import java.util.*
 
 class FragmentFriends : BaseFragment(), BaseContract.View<VKUser>, SwipeRefreshLayout.OnRefreshListener, BaseAdapter.OnItemClickListener, FragmentSettings.OnEventListener {
 
@@ -66,16 +65,14 @@ class FragmentFriends : BaseFragment(), BaseContract.View<VKUser>, SwipeRefreshL
 
         loadCachedData()
 
-        if (AndroidUtils.hasConnection()) {
-            refreshData()
-        }
+        refreshData()
     }
 
     private fun prepareNoInternetView() {
         noInternetUpdate.setOnClickListener {
-            if (AndroidUtils.hasConnection()) {
-                refreshData()
-            } else {
+            refreshData()
+
+            if (!hasConnection()) {
                 Snackbar.make(noInternetView, R.string.no_connection, Snackbar.LENGTH_SHORT).show()
             }
         }
@@ -94,9 +91,8 @@ class FragmentFriends : BaseFragment(), BaseContract.View<VKUser>, SwipeRefreshL
     }
 
     private fun refreshData() {
-        if (AndroidUtils.hasConnection()) {
-            showNoInternetView(false)
-            presenter.onValuesLoading()
+        if (hasConnection()) {
+            presenter.readyForLoading()
             presenter.onRequestLoadValues(0, 0, FRIENDS_COUNT, false)
         } else {
             showNoInternetView(true)
@@ -170,7 +166,7 @@ class FragmentFriends : BaseFragment(), BaseContract.View<VKUser>, SwipeRefreshL
 
     override fun showErrorView(errorTitle: String, errorDescription: String) {
         Log.d(TAG, "showErrorView: $errorTitle: $errorDescription")
-        if (!AndroidUtils.hasConnection()) {
+        if (!hasConnection()) {
             presenter.onRequestLoadCachedValues(0, 0, FragmentConversations.CONVERSATIONS_COUNT, false)
         }
     }
@@ -190,7 +186,7 @@ class FragmentFriends : BaseFragment(), BaseContract.View<VKUser>, SwipeRefreshL
     override fun loadValuesIntoList(offset: Int, values: ArrayList<VKUser>, isCache: Boolean) {
         Log.d(TAG, "loadValuesIntoList: $offset, ${values.size}, isCache: $isCache")
 
-        if (isCache && values.isEmpty() && !AndroidUtils.hasConnection()) {
+        if (isCache && values.isEmpty() && !hasConnection()) {
             showNoInternetView(true)
             return
 
@@ -220,9 +216,17 @@ class FragmentFriends : BaseFragment(), BaseContract.View<VKUser>, SwipeRefreshL
         adapter!!.notifyDataSetChanged()
     }
 
+    override fun checkListIsEmpty(values: ArrayList<VKUser>) {
+        showNoItemsView(values.isEmpty())
+    }
+
+    override fun hasConnection(): Boolean {
+        return AndroidUtils.hasConnection()
+    }
+
     override fun clearList() {
-        Log.d(TAG, "clearList")
         if (adapter == null) return
+
         adapter!!.clear()
         adapter!!.notifyDataSetChanged()
     }

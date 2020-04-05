@@ -63,13 +63,30 @@ object VKUtil {
         return if (!m.find()) null else m.group(2)
     }
 
-    fun sortMessagesByDate(values: ArrayList<VKMessage>, reverse: Boolean): ArrayList<VKMessage> {
+    fun sortMessagesByDate(values: ArrayList<VKMessage>, firstOnTop: Boolean): ArrayList<VKMessage> {
         values.sortWith(Comparator { m1, m2 ->
+            val d1 = m1.date
+            val d2 = m2.date
 
-            if (reverse) {
-                m2.date - m1.date
+            if (firstOnTop) {
+                d2 - d1
             } else {
-                m1.date - m2.date
+                d1 - d2
+            }
+        })
+
+        return values
+    }
+
+    fun sortConversationsByDate(values: ArrayList<VKConversation>, firstOnTop: Boolean): ArrayList<VKConversation> {
+        values.sortWith(Comparator { c1, c2 ->
+            val d1 = c1.lastMessage.date
+            val d2 = c2.lastMessage.date
+
+            if (firstOnTop) {
+                d2 - d1
+            } else {
+                d1 - d2
             }
         })
 
