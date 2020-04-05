@@ -433,13 +433,9 @@ class MessagesActivity : BaseActivity(),
 
         chatMessage.setText("")
 
-        adapter!!.add(message)
-        adapter!!.notifyDataSetChanged()
+        adapter!!.addMessage(message, scrollToBottom)
 
         checkListIsEmpty(adapter!!.values)
-
-        if (scrollToBottom)
-            recyclerView.smoothScrollToPosition(adapter!!.itemCount - 1)
 
         TaskManager.execute {
             VKApi.messages().send()
@@ -451,6 +447,8 @@ class MessagesActivity : BaseActivity(),
                             message.id = models[0]
 
                             CacheStorage.insertMessage(message)
+
+                            TaskManager.loadMessage(message.id)
                         }
 
                         override fun onError(e: Exception) {

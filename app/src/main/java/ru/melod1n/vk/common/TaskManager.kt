@@ -112,6 +112,7 @@ object TaskManager {
             override fun onSuccess(models: ArrayList<VKMessage>) {
                 currentTasksIds.remove(messageId)
 
+                //TODO: пуш
                 if (CacheStorage.getMessage(models[0].id) == null) {
                     CacheStorage.insertMessages(models)
                 } else {

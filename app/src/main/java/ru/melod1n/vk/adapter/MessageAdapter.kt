@@ -246,7 +246,13 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>, var convers
         }
 
         fun prepareDate(message: VKMessage, date: TextView) {
-            date.text = SimpleDateFormat("HH:mm", Locale.getDefault()).format(message.date * 1000L)
+            var dateText = SimpleDateFormat("HH:mm", Locale.getDefault()).format(message.date * 1000L)
+
+            if (message.editTime > 0) {
+                dateText += ", ${context.getString(R.string.edited).toLowerCase(Locale.getDefault())}"
+            }
+
+            date.text = dateText
         }
 
         fun prepareAvatar(message: VKMessage, avatar: ImageView) {
@@ -324,12 +330,59 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>, var convers
         notifyItemChanged(index)
     }
 
+    private fun searchMessagePosition(messageId: Int): Int {
+        for (i in values.indices) {
+            if (getItem(i).id == messageId) return i
+        }
+
+        return -1
+    }
+
     private fun containsRandomId(randomId: Int): Boolean {
         for (message in values) {
             if (message.randomId == randomId) return true
         }
 
         return false
+    }
+
+    fun addMessage(message: VKMessage, withScroll: Boolean = false) {
+        if (containsRandomId(message.randomId)) return
+
+        add(message)
+        notifyDataSetChanged()
+
+        val lastPosition = layoutManager.findLastVisibleItemPosition()
+
+        if (withScroll && lastPosition >= itemCount - 2) {
+            recyclerView.smoothScrollToPosition(itemCount + 2)
+        }
+    }
+
+    fun editMessage(message: VKMessage) {
+        val index = searchMessagePosition(message.id)
+        if (index == -1) return
+
+        set(index, message)
+        notifyItemChanged(index)
+    }
+
+    fun deleteMessage(messageId: Int, peerId: Int) {
+        if (peerId != conversation.id) return
+
+        val index = searchMessagePosition(messageId)
+        if (index == -1) return
+
+        removeAt(index)
+        notifyDataSetChanged()
+    }
+
+    //TODO: кривое сообщение
+    fun restoreMessage(message: VKMessage) {
+        if (message.peerId != conversation.id) return
+
+        setItems(VKUtil.sortMessagesByDate(values.apply { add(message) }, false))
+        notifyDataSetChanged()
     }
 
     override fun onEvent(info: EventInfo<*>) {
@@ -341,31 +394,22 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>, var convers
     }
 
     override fun onNewMessage(message: VKMessage) {
-        if (containsRandomId(message.randomId)) return
-
-        add(message)
-        notifyDataSetChanged()
-
-        val lastPosition = layoutManager.findLastVisibleItemPosition()
-
-        if (lastPosition >= itemCount - 2) {
-            recyclerView.smoothScrollToPosition(itemCount + 2)
-        }
+        addMessage(message)
     }
 
     override fun onEditMessage(message: VKMessage) {
-
+        editMessage(message)
     }
 
     override fun onReadMessage(messageId: Int, peerId: Int) {
-
+        //TODO: реализовать
     }
 
     override fun onDeleteMessage(messageId: Int, peerId: Int) {
-
+        deleteMessage(messageId, peerId)
     }
 
     override fun onRestoredMessage(message: VKMessage) {
-
+        restoreMessage(message)
     }
 }
