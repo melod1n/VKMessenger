@@ -94,6 +94,26 @@ object VKUtil {
     }
 
     fun prepareList(messages: ArrayList<VKMessage>) {
+        when (messages.size) {
+            0 -> return
+            1 -> {
+                if (messages[0] is MessageAdapter.TimeStamp) {
+                    messages.clear()
+                } else {
+                    messages.add(0, MessageAdapter.TimeStamp(Util.removeTime(Date(messages[0].date * 1000L))))
+                }
+
+                return
+            }
+//            2 -> {
+//                if (messages[0] is MessageAdapter.TimeStamp) {
+//                    messages.clear()
+//                } else {
+//                    messages.add(0, MessageAdapter.TimeStamp(Util.removeTime(Date(messages[0].date * 1000L))))
+//                }
+//            }
+        }
+
         for (i in messages.size - 1 downTo 1) {
             val m1 = messages[i]
             val m2 = messages[i - 1]
@@ -101,8 +121,8 @@ object VKUtil {
             val d1 = Util.removeTime(Date(m1.date * 1000L))
             val d2 = Util.removeTime(Date(m2.date * 1000L))
 
-            if (d1 > d2) {
-                messages.add(i, MessageAdapter.TimeStamp(d1))
+            if (d1 > d2 || i == 1) {
+                messages.add(i - 1, MessageAdapter.TimeStamp(d1))
             }
         }
     }

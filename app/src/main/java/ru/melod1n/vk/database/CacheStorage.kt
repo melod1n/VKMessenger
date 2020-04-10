@@ -290,7 +290,7 @@ object CacheStorage {
 
             this.fwdMessages = fwdMessages as ArrayList<VKMessage>?
             this.action = action as VKMessage.Action?
-            this.attachments = attachments as ArrayList<VKModel>?
+            this.attachments = attachments as ArrayList<VKModel>
         }
     }
 

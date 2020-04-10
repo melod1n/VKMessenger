@@ -101,6 +101,10 @@
     <string name="yesterday">Yesterday</string>
 
     <string name="refresh">Refresh</string>
+
     <string name="edited">Edited</string>
+
+    <string name="conversations_is_empty">No conversations</string>
+    <string name="friends_is_empty">No friends :(</string>
 
 </resources>

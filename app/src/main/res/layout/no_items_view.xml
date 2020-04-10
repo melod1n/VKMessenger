@@ -27,14 +27,23 @@
     <com.google.android.material.button.MaterialButton
         android:id="@+id/noItemsRefresh"
         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-        android:layout_width="120dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:elevation="0dp"
+        android:fontFamily="@font/roboto_regular"
+        android:letterSpacing="0"
+        android:paddingStart="12dp"
+        android:paddingTop="6dp"
+        android:paddingEnd="14dp"
+        android:paddingBottom="6dp"
         android:text="@string/refresh"
         android:textAllCaps="false"
-        android:textColor="?colorAccent"
+        android:textColor="?android:textColorPrimary"
         app:backgroundTint="@android:color/transparent"
-        app:rippleColor="?colorAccent" />
+        app:cornerRadius="24dp"
+        app:icon="@drawable/ic_refresh"
+        app:iconTint="?colorAccent"
+        app:rippleColor="?colorAccent"
+        app:strokeWidth="1dp" />
 
 </LinearLayout>

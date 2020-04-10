@@ -39,6 +39,7 @@ import ru.melod1n.vk.mvp.contract.BaseContract
 import ru.melod1n.vk.mvp.contract.BaseContract.Presenter
 import ru.melod1n.vk.mvp.presenter.MessagesPresenter
 import ru.melod1n.vk.util.AndroidUtils
+import ru.melod1n.vk.util.AndroidUtils.hasConnection
 import kotlin.random.Random
 
 class MessagesActivity : BaseActivity(),
@@ -75,7 +76,7 @@ class MessagesActivity : BaseActivity(),
 
     private var peerId = 0
 
-    private lateinit var presenter: Presenter<VKMessage>
+    internal lateinit var presenter: Presenter<VKMessage>
 
     private var adapter: MessageAdapter? = null
 
@@ -101,7 +102,7 @@ class MessagesActivity : BaseActivity(),
         prepareNoInternetView()
 
         presenter = MessagesPresenter(this)
-        (presenter as MessagesPresenter).readyForLoading()
+        (presenter as MessagesPresenter).prepareForLoading()
 
         if (conversation == null) {
             loadConversation()
@@ -111,12 +112,16 @@ class MessagesActivity : BaseActivity(),
         initData()
     }
 
-    private fun refreshData() {
-        if (hasConnection()) {
-            presenter.readyForLoading()
-            presenter.requestValues(peerId, 0, MESSAGES_COUNT)
+    private fun loadValues() {
+        if (AndroidUtils.hasConnection()) {
+            if (adapter != null && !adapter!!.isEmpty()) {
+                presenter.prepareForLoading();
+            }
+
+            presenter.requestValues(0, 0, MESSAGES_COUNT)
         } else {
-            showNoInternetView(true)
+            showNoInternetView(true);
+            showRefreshLayout(false);
         }
     }
 
@@ -128,37 +133,14 @@ class MessagesActivity : BaseActivity(),
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             android.R.id.home -> onBackPressed()
-            R.id.messagesRefresh -> refreshData()
+            R.id.messagesRefresh -> loadValues()
         }
 
         return super.onOptionsItemSelected(item)
     }
 
-    fun getRecyclerView(): RecyclerView {
-        return recyclerView
-    }
 
-    private fun prepareNoItemsView() {
-        noItemsRefresh.setOnClickListener {
-            if (hasConnection()) {
-                refreshData()
-            } else {
-                showNoInternetView(true)
-            }
-        }
 
-        noItemsText.text = getString(R.string.dialog_is_empty)
-    }
-
-    private fun prepareNoInternetView() {
-        noInternetUpdate.setOnClickListener {
-            if (hasConnection()) {
-                refreshData()
-            } else {
-                Snackbar.make(noInternetView, R.string.no_connection, Snackbar.LENGTH_SHORT).show()
-            }
-        }
-    }
 
     private fun loadConversation() {
         TaskManager.loadConversation(peerId, object : VKApi.OnResponseListener<VKConversation> {
@@ -188,7 +170,7 @@ class MessagesActivity : BaseActivity(),
             chatInfo.setText(R.string.loading)
             viewedDialogs.add(peerId)
 
-            refreshData()
+            loadValues()
         } else {
             showProgressBar(false)
         }
@@ -435,7 +417,7 @@ class MessagesActivity : BaseActivity(),
 
         adapter!!.addMessage(message, scrollToBottom)
 
-        checkListIsEmpty(adapter!!.values)
+        presenter.checkListIsEmpty(adapter!!.values)
 
         TaskManager.execute {
             VKApi.messages().send()
@@ -455,90 +437,6 @@ class MessagesActivity : BaseActivity(),
                             e.printStackTrace()
                         }
                     })
-        }
-    }
-
-    override fun showNoItemsView(visible: Boolean) {
-        if (visible) {
-            noItemsView.apply {
-                alpha = 0f
-                visibility = View.VISIBLE
-                animate().alpha(1f).setDuration(250).start()
-            }
-        } else {
-            noItemsView.apply {
-                alpha = 1f
-                animate().alpha(0f).setDuration(250).withEndAction { visibility = View.GONE }.start()
-            }
-        }
-    }
-
-    override fun showNoInternetView(visible: Boolean) {
-        if (visible) clearList()
-
-        if (visible) {
-            noInternetView.apply {
-                alpha = 0f
-                visibility = View.VISIBLE
-                animate().alpha(1f).setDuration(250).start()
-            }
-        } else {
-            noInternetView.apply {
-                alpha = 1f
-                animate().alpha(0f).setDuration(250).withEndAction { visibility = View.GONE }.start()
-            }
-        }
-    }
-
-    override fun showErrorView(errorTitle: String, errorDescription: String) {
-        Log.d(TAG, "showErrorView: $errorTitle: $errorDescription")
-        if (!hasConnection()) {
-            presenter.requestCachedValues(0, 0, MESSAGES_COUNT)
-        }
-    }
-
-    override fun hideErrorView() {
-        Log.d(TAG, "hideErrorView")
-    }
-
-    override fun showRefreshLayout(visible: Boolean) {}
-
-    override fun showProgressBar(visible: Boolean) {
-        findViewById<ProgressBar>(R.id.progressBar).visibility = if (visible) View.VISIBLE else View.GONE
-    }
-
-    override fun loadValuesIntoList(offset: Int, values: ArrayList<VKMessage>, isCache: Boolean) {
-        Log.d(TAG, "loadValuesIntoList: " + offset + ", " + values.size)
-
-        setChatInfoText()
-
-        VKUtil.sortMessagesByDate(values, false)
-        VKUtil.prepareList(values)
-
-        if (adapter == null) {
-            adapter = MessageAdapter(this, values, conversation!!).also {
-                it.onItemClickListener = this
-            }
-
-            recyclerView.adapter = adapter
-            return
-        }
-
-        if (recyclerView.adapter == null) {
-            recyclerView.adapter = adapter
-        }
-
-        if (offset > 0) {
-            adapter!!.addAll(values)
-            adapter!!.notifyItemRangeInserted(offset, values.size)
-            return
-        }
-
-        adapter!!.values = values
-        adapter!!.notifyDataSetChanged()
-
-        if (offset == 0) {
-            recyclerView.smoothScrollToPosition(adapter!!.itemCount + 1)
         }
     }
 
@@ -573,12 +471,114 @@ class MessagesActivity : BaseActivity(),
         }
     }
 
-    override fun checkListIsEmpty(values: ArrayList<VKMessage>) {
-        showNoItemsView(values.isEmpty())
+    override fun onItemClick(position: Int) {
+        val message = adapter!!.getItem(position)
+
+        Toast.makeText(this, message.text, Toast.LENGTH_SHORT).show()
     }
 
-    override fun hasConnection(): Boolean {
-        return AndroidUtils.hasConnection()
+    override fun prepareNoInternetView() {
+        noInternetUpdate.setOnClickListener {
+            if (hasConnection()) {
+                loadValues()
+            } else {
+                Snackbar.make(noInternetView, R.string.no_connection, Snackbar.LENGTH_SHORT).show()
+            }
+        }
+    }
+    override fun prepareNoItemsView() {
+        noItemsRefresh.setOnClickListener {
+            if (hasConnection()) {
+                loadValues()
+            } else {
+                showNoInternetView(true)
+            }
+        }
+
+        noItemsText.text = getString(R.string.dialog_is_empty)
+    }
+
+    override fun prepareErrorView() {
+
+    }
+
+    override fun showNoItemsView(visible: Boolean) {
+        if (visible) {
+            noItemsView.apply {
+                alpha = 0f
+                visibility = View.VISIBLE
+                animate().alpha(1f).setDuration(250).start()
+            }
+        } else {
+            noItemsView.apply {
+                alpha = 1f
+                animate().alpha(0f).setDuration(250).withEndAction { visibility = View.GONE }.start()
+            }
+        }
+    }
+
+    override fun showNoInternetView(visible: Boolean) {
+        if (visible) clearList()
+
+        if (visible) {
+            noInternetView.apply {
+                alpha = 0f
+                visibility = View.VISIBLE
+                animate().alpha(1f).setDuration(250).start()
+            }
+        } else {
+            noInternetView.apply {
+                alpha = 1f
+                animate().alpha(0f).setDuration(250).withEndAction { visibility = View.GONE }.start()
+            }
+        }
+    }
+
+    override fun showErrorView(e: Exception?) {
+        if (!hasConnection()) {
+            presenter.requestCachedValues(0, 0, MESSAGES_COUNT)
+        }
+    }
+
+    override fun showRefreshLayout(visible: Boolean) {}
+
+    override fun showProgressBar(visible: Boolean) {
+        findViewById<ProgressBar>(R.id.progressBar).visibility = if (visible) View.VISIBLE else View.GONE
+    }
+
+    override fun insertValues(id: Int, offset: Int, count: Int, values: ArrayList<VKMessage>, isCache: Boolean) {
+        Log.d(TAG, "loadValuesIntoList: " + offset + ", " + values.size)
+
+        setChatInfoText()
+
+        VKUtil.sortMessagesByDate(values, false)
+        VKUtil.prepareList(values)
+
+        if (adapter == null) {
+            adapter = MessageAdapter(this, values, conversation!!).also {
+                it.onItemClickListener = this
+            }
+
+            recyclerView.adapter = adapter
+            return
+        }
+
+        if (recyclerView.adapter == null) {
+            recyclerView.adapter = adapter
+        }
+
+        if (offset > 0) {
+            adapter!!.addAll(values)
+            adapter!!.notifyItemRangeInserted(offset, values.size)
+            return
+        }
+
+        adapter!!.values = values
+        adapter!!.notifyDataSetChanged()
+
+        if (offset == 0) {
+            recyclerView.smoothScrollToPosition(adapter!!.itemCount + 1)
+        }
     }
 
     override fun clearList() {
@@ -586,11 +586,5 @@ class MessagesActivity : BaseActivity(),
 
         adapter!!.clear()
         adapter!!.notifyDataSetChanged()
-    }
-
-    override fun onItemClick(position: Int) {
-        val message = adapter!!.getItem(position)
-
-        Toast.makeText(this, message.text, Toast.LENGTH_SHORT).show()
     }
 }

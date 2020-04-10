@@ -21,6 +21,8 @@ import ru.melod1n.vk.R
 import ru.melod1n.vk.activity.MainActivity
 import ru.melod1n.vk.activity.MessagesActivity
 import ru.melod1n.vk.adapter.ConversationAdapter
+import ru.melod1n.vk.adapter.diffutil.ConversationDiffUtilCallback
+import ru.melod1n.vk.api.VKException
 import ru.melod1n.vk.api.model.VKConversation
 import ru.melod1n.vk.api.util.VKUtil
 import ru.melod1n.vk.common.AppGlobal
@@ -33,6 +35,7 @@ import ru.melod1n.vk.database.MemoryCache.getUser
 import ru.melod1n.vk.mvp.contract.BaseContract
 import ru.melod1n.vk.mvp.presenter.ConversationsPresenter
 import ru.melod1n.vk.util.AndroidUtils
+import ru.melod1n.vk.util.AndroidUtils.hasConnection
 
 class FragmentConversations : BaseFragment(),
         BaseContract.View<VKConversation>,
@@ -47,7 +50,8 @@ class FragmentConversations : BaseFragment(),
     }
 
     private var adapter: ConversationAdapter? = null
-    private lateinit var presenter: ConversationsPresenter
+
+    internal lateinit var presenter: ConversationsPresenter
 
     override fun onResume() {
         super.onResume()
@@ -56,7 +60,7 @@ class FragmentConversations : BaseFragment(),
     }
 
     override fun onRefresh() {
-        refreshData()
+        loadValues()
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -73,77 +77,11 @@ class FragmentConversations : BaseFragment(),
 
         presenter = ConversationsPresenter(this)
 
-        loadCachedData()
+        loadCachedValues()
 
-        refreshData()
+        loadValues()
 
         TimeManager.addOnMinuteChangeListener(this)
-    }
-
-    override fun onMinuteChange(currentMinute: Int) {
-        requireActivity().runOnUiThread {
-//            adapter?.updateData()
-        }
-    }
-
-    private fun prepareNoItemsView() {
-        noItemsRefresh.setOnClickListener {
-            refreshData()
-
-            if (!hasConnection())
-                showNoInternetView(true)
-        }
-        noItemsText.text = getString(R.string.list_is_empty)
-    }
-
-    private fun prepareNoInternetView() {
-        noInternetUpdate.setOnClickListener {
-            refreshData()
-
-            if (!hasConnection()) {
-                Snackbar.make(noInternetView, R.string.no_connection, Snackbar.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    private fun prepareListeners() {
-        FragmentSettings.addOnEventListener(this)
-    }
-
-    override fun onNewEvent(event: EventInfo<*>) {
-
-    }
-
-    private fun refreshData() {
-        if (hasConnection()) {
-            presenter.readyForLoading()
-            presenter.requestValues(0, 0, CONVERSATIONS_COUNT)
-        } else {
-            if (adapter!!.isEmpty())
-                showNoInternetView(true)
-
-            swipeRefreshLayout.isRefreshing = false
-        }
-    }
-
-    private fun loadCachedData() {
-        presenter.requestCachedValues(0, 0, CONVERSATIONS_COUNT)
-    }
-
-    private fun openChat(position: Int) {
-        val conversation = adapter!!.getItem(position)
-
-        val peerUser = getUser(conversation.id)
-        val peerGroup = getGroup(conversation.id)
-
-        val data = Bundle().apply {
-            putInt(MessagesActivity.TAG_ID, conversation.id)
-            putSerializable(MessagesActivity.TAG_EXTRA_CONVERSATION, conversation)
-            putString(MessagesActivity.TAG_EXTRA_TITLE, VKUtil.getTitle(conversation, peerUser, peerGroup))
-            putString(MessagesActivity.TAG_EXTRA_AVATAR, VKUtil.getAvatar(conversation, peerUser, peerGroup))
-        }
-
-        requireActivity().startActivityForResult(Intent(requireContext(), MessagesActivity::class.java).putExtras(data), MainActivity.REQUEST_CODE_FROM_DRAWER)
     }
 
     private fun prepareRefreshLayout() {
@@ -164,12 +102,84 @@ class FragmentConversations : BaseFragment(),
         recyclerView.layoutManager = manager
     }
 
-    fun getRecyclerView(): RecyclerView {
-        return recyclerView
+    private fun loadCachedValues() {
+        presenter.requestCachedValues(0, 0, CONVERSATIONS_COUNT)
+    }
+
+    private fun loadValues() {
+        if (hasConnection()) {
+            if (adapter != null && !adapter!!.isEmpty()) {
+                presenter.prepareForLoading();
+            } else {
+                showRefreshLayout(true);
+            }
+
+            presenter.requestValues(0, 0, CONVERSATIONS_COUNT)
+        } else {
+            showNoInternetView(true);
+            showRefreshLayout(false);
+        }
+    }
+
+    private fun prepareListeners() {
+        FragmentSettings.addOnEventListener(this)
+    }
+
+    override fun onNewEvent(event: EventInfo<*>) {
+
+    }
+
+    private fun openChat(position: Int) {
+        val conversation = adapter!!.getItem(position)
+
+        val peerUser = getUser(conversation.id)
+        val peerGroup = getGroup(conversation.id)
+
+        val data = Bundle().apply {
+            putInt(MessagesActivity.TAG_ID, conversation.id)
+            putSerializable(MessagesActivity.TAG_EXTRA_CONVERSATION, conversation)
+            putString(MessagesActivity.TAG_EXTRA_TITLE, VKUtil.getTitle(conversation, peerUser, peerGroup))
+            putString(MessagesActivity.TAG_EXTRA_AVATAR, VKUtil.getAvatar(conversation, peerUser, peerGroup))
+        }
+
+        requireActivity().startActivityForResult(Intent(requireContext(), MessagesActivity::class.java).putExtras(data), MainActivity.REQUEST_CODE_FROM_DRAWER)
     }
 
     override fun onItemClick(position: Int) {
         openChat(position)
+    }
+
+    override fun onMinuteChange(currentMinute: Int) {
+        requireActivity().runOnUiThread {
+            adapter ?: return@runOnUiThread
+
+            adapter!!.notifyItemRangeChanged(0, adapter!!.itemCount, ConversationDiffUtilCallback.DATE_CHANGED)
+        }
+    }
+
+    override fun prepareNoInternetView() {
+        noInternetUpdate.setOnClickListener {
+            loadValues()
+
+            if (!hasConnection()) {
+                Snackbar.make(noInternetView, R.string.no_connection, Snackbar.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    override fun prepareNoItemsView() {
+        noItemsRefresh.setOnClickListener {
+            loadValues()
+
+            if (!hasConnection())
+                showNoInternetView(true)
+        }
+
+        noItemsText.text = getString(R.string.conversations_is_empty)
+    }
+
+    override fun prepareErrorView() {
+
     }
 
     override fun showNoItemsView(visible: Boolean) {
@@ -204,15 +214,16 @@ class FragmentConversations : BaseFragment(),
         }
     }
 
-    override fun showErrorView(errorTitle: String, errorDescription: String) {
-        Log.d(TAG, "showErrorView: $errorTitle: $errorDescription")
+    override fun showErrorView(e: Exception?) {
+        if (e is VKException) {
+            //...
+        } else {
+            //...
+        }
+
         if (!AndroidUtils.hasConnection()) {
             presenter.requestCachedValues(0, 0, CONVERSATIONS_COUNT)
         }
-    }
-
-    override fun hideErrorView() {
-        Log.d(TAG, "hideErrorView")
     }
 
     override fun showRefreshLayout(visible: Boolean) {
@@ -223,7 +234,7 @@ class FragmentConversations : BaseFragment(),
         progressBar.visibility = if (visible) View.VISIBLE else View.GONE
     }
 
-    override fun loadValuesIntoList(offset: Int, values: ArrayList<VKConversation>, isCache: Boolean) {
+    override fun insertValues(id: Int, offset: Int, count: Int, values: ArrayList<VKConversation>, isCache: Boolean) {
         Log.d(TAG, "loadValuesIntoList: $offset, ${values.size}, isCache: $isCache")
 
         if (isCache && values.isEmpty() && !hasConnection()) {
@@ -253,14 +264,6 @@ class FragmentConversations : BaseFragment(),
         adapter!!.values = values
 
         adapter!!.notifyDataSetChanged()
-    }
-
-    override fun checkListIsEmpty(values: ArrayList<VKConversation>) {
-        showNoItemsView(values.isEmpty())
-    }
-
-    override fun hasConnection(): Boolean {
-        return AndroidUtils.hasConnection()
     }
 
     override fun clearList() {

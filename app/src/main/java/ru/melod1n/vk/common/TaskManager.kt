@@ -39,9 +39,7 @@ object TaskManager {
             methodSetter.execute(className, object : OnResponseListener<T> {
                 override fun onSuccess(models: ArrayList<T>) {
                     onResponseListener?.onSuccess(models)
-                    if (pushInfo != null) {
-                        sendEvent(pushInfo)
-                    }
+                    sendEvent(pushInfo)
                 }
 
                 override fun onError(e: Exception) {
@@ -51,10 +49,12 @@ object TaskManager {
         }
     }
 
-    private fun sendEvent(info: EventInfo<*>) {
+    private fun sendEvent(info: EventInfo<*>?) {
+        if (info == null) return
+
         AppGlobal.handler.post {
             for (listener in listeners) {
-                listener.onNewEvent(info)
+                 listener.onNewEvent(info)
             }
         }
     }
@@ -131,6 +131,7 @@ object TaskManager {
 
     fun loadConversation(peerId: Int, listener: OnResponseListener<VKConversation>? = null) {
         Log.i(TAG, "loadConversation: $peerId")
+
         if (currentTasksIds.contains(peerId)) return
 
         currentTasksIds.add(peerId)
@@ -140,6 +141,8 @@ object TaskManager {
         addProcedure(setter, VKConversation::class.java, EventInfo<Any>(EventInfo.CONVERSATION_UPDATE, peerId), object : OnResponseListener<VKConversation> {
             override fun onSuccess(models: ArrayList<VKConversation>) {
                 currentTasksIds.remove(peerId)
+
+                //TODO: не отсылается пуш
 
                 if (CacheStorage.getConversation(models[0].id) == null) {
                     CacheStorage.insertConversations(models)

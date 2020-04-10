@@ -5,6 +5,10 @@ import ru.melod1n.vk.api.model.VKConversation
 
 class ConversationDiffUtilCallback(private val oldList: List<VKConversation>, private val newList: List<VKConversation>) : DiffUtil.Callback() {
 
+    companion object {
+        const val DATE_CHANGED = "date"
+    }
+
     override fun getOldListSize(): Int {
         return oldList.size
     }
@@ -38,6 +42,15 @@ class ConversationDiffUtilCallback(private val oldList: List<VKConversation>, pr
                 old.attachments == new.attachments &&
                 old.fwdMessages == new.fwdMessages &&
                 old.id == new.id
+    }
+
+    override fun getChangePayload(oldItemPosition: Int, newItemPosition: Int): Any? {
+        val d1 = oldList[oldItemPosition].lastMessage.date
+        val d2 = newList[newItemPosition].lastMessage.date
+
+        if (d1 != d2) return DATE_CHANGED
+
+        return super.getChangePayload(oldItemPosition, newItemPosition)
     }
 
 }

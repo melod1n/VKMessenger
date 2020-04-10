@@ -75,7 +75,7 @@ abstract class BaseAdapter<T, VH : BaseAdapter.Holder>(var context: Context, var
         onBindItemViewHolder(holder, position)
     }
 
-    private fun initListeners(itemView: View, position: Int) {
+    fun initListeners(itemView: View, position: Int) {
         itemView.setOnClickListener { if (onItemClickListener != null) onItemClickListener!!.onItemClick(position) }
         itemView.setOnLongClickListener {
             if (onItemLongClickListener != null) onItemLongClickListener!!.onItemLongClick(position)

@@ -17,6 +17,7 @@
         android:layout_height="25dp"
         android:layout_alignTop="@+id/profileAvatar"
         android:layout_marginStart="14dp"
+        android:layout_marginEnd="14dp"
         android:layout_toEndOf="@+id/profileAvatar"
         android:gravity="center_vertical"
         android:maxLines="1"
@@ -31,8 +32,11 @@
         android:layout_height="25dp"
         android:layout_alignStart="@+id/profileName"
         android:layout_alignBottom="@+id/profileAvatar"
+        android:layout_marginEnd="14dp"
         android:layout_toEndOf="@+id/profileAvatar"
         android:gravity="center_vertical"
+        android:maxLines="1"
+        android:singleLine="true"
         android:text="@string/drawer_status"
         android:textColor="?android:textColorSecondary" />
 

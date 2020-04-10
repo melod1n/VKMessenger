@@ -5,7 +5,6 @@ import org.json.JSONArray
 import org.json.JSONObject
 import ru.melod1n.vk.api.UserConfig
 import java.io.Serializable
-import java.util.*
 
 open class VKMessage : VKModel, Serializable {
     companion object {
@@ -155,7 +154,7 @@ open class VKMessage : VKModel, Serializable {
     var randomId = 0
     var conversationMessageId = 0
 
-    var attachments: ArrayList<VKModel>? = null
+    var attachments: ArrayList<VKModel> = ArrayList()
 
     var isImportant = false
 
