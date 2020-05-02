@@ -4,18 +4,12 @@ import android.app.Activity
 import android.content.Intent
 import android.graphics.drawable.Drawable
 import android.os.Bundle
-import android.text.InputType
-import android.text.TextUtils
 import android.view.MenuItem
 import android.view.View
-import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.graphics.drawable.DrawerArrowDrawable
-import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.view.GravityCompat
-import androidx.drawerlayout.widget.DrawerLayout
 import butterknife.ButterKnife
 import com.google.android.material.navigation.NavigationView
 import kotlinx.android.synthetic.main.activity_main.*
@@ -33,7 +27,6 @@ import ru.melod1n.vk.database.CacheStorage.insertUsers
 import ru.melod1n.vk.database.MemoryCache.getUser
 import ru.melod1n.vk.fragment.FragmentConversations
 import ru.melod1n.vk.fragment.FragmentFriends
-import ru.melod1n.vk.fragment.FragmentLogin
 import ru.melod1n.vk.fragment.FragmentSettings
 import ru.melod1n.vk.service.LongPollService
 import ru.melod1n.vk.util.ViewUtils.prepareNavigationHeader
@@ -47,7 +40,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     private val fragmentConversations = FragmentConversations()
     private val fragmentFriends = FragmentFriends()
     private val fragmentSettings = FragmentSettings()
-    private val fragmentLogin = FragmentLogin()
 
     private var selectedId = 0
 
@@ -79,53 +71,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
     private fun prepareToolbar() {
         setSupportActionBar(toolbar)
-
-        toolbar.setOnLongClickListener {
-            val currentFragment = FragmentSwitcher.getCurrentFragment(supportFragmentManager)
-            if (currentFragment is FragmentLogin) {
-                AlertDialog.Builder(this).apply {
-                    setTitle(R.string.custom_data)
-
-                    val userId = AppCompatEditText(this@MainActivity).apply {
-                        inputType = InputType.TYPE_CLASS_NUMBER
-                        setHint(R.string.user_id)
-                        maxLines = 1
-                    }
-
-                    val token = AppCompatEditText(this@MainActivity).apply {
-                        setHint(R.string.token)
-                        maxLines = 1
-                    }
-
-                    val layout = LinearLayout(this@MainActivity).also {
-                        it.orientation = LinearLayout.VERTICAL
-                        it.addView(userId)
-                        it.addView(token)
-                    }
-
-                    setView(layout)
-                    setPositiveButton(android.R.string.ok) { _, _ ->
-                        val id = userId.text.toString().toInt()
-                        val accessToken = token.text.toString()
-
-                        if (id < 1 || TextUtils.isEmpty(accessToken)) return@setPositiveButton
-
-                        UserConfig.apply {
-                            this.userId = userId.text.toString().toInt()
-                            this.token = token.text.toString()
-                        }.save()
-
-                        finish()
-                        startActivity(Intent(this@MainActivity, MainActivity::class.java))
-                    }
-
-                    setCancelable(false)
-                    setNegativeButton(android.R.string.cancel, null)
-                }.show()
-            }
-
-            false
-        }
     }
 
     private fun prepareNavigationView() {
@@ -140,8 +85,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             UserConfig.token = token
             UserConfig.userId = userId
             UserConfig.save()
-        } else if (intent.hasExtra("open_login")) {
-            openLoginScreen()
         }
     }
 
@@ -155,8 +98,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 openConversationsScreen()
             }
         } else {
-            if (!intent.hasExtra("open_login"))
-                openStartScreen()
+            openStartScreen()
         }
     }
 
@@ -168,12 +110,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         finish()
         startActivity(Intent(this, StartActivity::class.java))
         overridePendingTransition(R.anim.activity_close_enter, R.anim.activity_close_exit)
-    }
-
-    private fun openLoginScreen() {
-        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
-        toolbar.navigationIcon = null
-        FragmentSwitcher.instance.switchFragment(this, fragmentLogin)
     }
 
     private fun openConversationsScreen() {

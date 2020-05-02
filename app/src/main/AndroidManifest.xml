@@ -37,6 +37,10 @@
             android:theme="@style/AppTheme.Start" />
 
         <activity
+            android:name=".activity.LoginActivity"
+            android:label="@string/activity_login" />
+
+        <activity
             android:name=".activity.UpdateActivity"
             android:theme="@style/AppTheme.Update" />
 

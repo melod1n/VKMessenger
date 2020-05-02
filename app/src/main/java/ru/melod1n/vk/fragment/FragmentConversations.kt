@@ -13,6 +13,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import kotlinx.android.synthetic.main.activity_messages.*
+import kotlinx.android.synthetic.main.activity_messages.progressBar
+import kotlinx.android.synthetic.main.fragment_conversations.*
 import kotlinx.android.synthetic.main.recycler_view.*
 import ru.melod1n.vk.R
 import ru.melod1n.vk.activity.MainActivity
@@ -161,18 +163,14 @@ class FragmentConversations : BaseFragment(),
     }
 
     override fun showNoItemsView(visible: Boolean) {
-        noItemsViewStub.visibility = View.GONE
-
         if (visible) {
-            noItemsViewStub.inflate()
-
-            noItemsViewStub.apply {
+            noItemsView.apply {
                 alpha = 0f
                 visibility = View.VISIBLE
                 animate().alpha(1f).setDuration(250).start()
             }
         } else {
-            noItemsViewStub.apply {
+            noItemsView.apply {
                 alpha = 1f
                 animate().alpha(0f).setDuration(250).withEndAction { visibility = View.GONE }.start()
             }
@@ -180,20 +178,16 @@ class FragmentConversations : BaseFragment(),
     }
 
     override fun showNoInternetView(visible: Boolean) {
-        if (visible) clearList()
-
-        noInternetViewStub.visibility = View.GONE
-
         if (visible) {
-            noInternetViewStub.inflate()
+            clearList()
 
-            noInternetViewStub.apply {
+            noInternetView.apply {
                 alpha = 0f
                 visibility = View.VISIBLE
                 animate().alpha(1f).setDuration(250).start()
             }
         } else {
-            noInternetViewStub.apply {
+            noInternetView.apply {
                 alpha = 1f
                 animate().alpha(0f).setDuration(250).withEndAction { visibility = View.GONE }.start()
             }
