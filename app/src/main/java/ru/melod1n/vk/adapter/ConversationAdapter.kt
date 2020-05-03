@@ -56,16 +56,23 @@ class ConversationAdapter(private val fragmentConversations: FragmentConversatio
         return ConversationHolder(view(R.layout.item_conversation, parent))
     }
 
-<<<<<<< Updated upstream
     override fun onBindViewHolder(holder: ConversationHolder, position: Int, payloads: MutableList<Any>) {
         initListeners(holder.itemView, position)
         holder.bind(position, payloads)
     }
 
-    inner class ConversationHolder(v: View) : BaseAdapter.Holder(v) {
-=======
+    inner class ConversationHolder(v: View) : BaseHolder(v) {
+        override fun bind(position: Int) {
+            bind(position, mutableListOf())
+        }
+
+        fun bind(position: Int, payloads: MutableList<Any>) {
+
+        }
+    }
+
     inner class NormalMessageOut(v: View) : BaseHolder(v) {
->>>>>>> Stashed changes
+
         private var text = v.findViewById<TextView>(R.id.dialogText)
         private var title = v.findViewById<TextView>(R.id.dialogTitle)
         private var avatar = v.findViewById<CircleImageView>(R.id.dialogAvatar)
@@ -454,6 +461,5 @@ class ConversationAdapter(private val fragmentConversations: FragmentConversatio
     override fun onRestoredMessage(message: VKMessage) {
         restoreMessage(message)
     }
-
 
 }

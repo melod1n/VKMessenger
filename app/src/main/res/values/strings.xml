@@ -73,7 +73,7 @@
     <string name="user_last_seen_at">Last seen at %s</string>
 
     <string name="chat_members">%d members</string>
-    
+
     <string name="group_channel_members">Channel • %d members</string>
     <string name="voice_record_tip"><![CDATA[Press & hold to record voice]]></string>
     <string name="no_connection">No connection</string>
@@ -98,7 +98,7 @@
     <string name="messages_refresh">Refresh</string>
 
     <string name="today">Today</string>
-<<<<<<< Updated upstream
+
     <string name="yesterday">Yesterday</string>
 
     <string name="refresh">Refresh</string>
@@ -107,11 +107,11 @@
 
     <string name="conversations_is_empty">No conversations</string>
     <string name="friends_is_empty">No friends :(</string>
-=======
+    =======
     <string name="start_screen_login_settings">Login settings</string>
     <string name="in_progress_placeholder">In progress</string>
     <string name="prefs_general">General</string>
     <string name="fragment_settings_general_hide_keyboard_on_scroll_up_title">Hide the keyboard while scrolling up</string>
->>>>>>> Stashed changes
+    >>>>>>> Stashed changes
 
 </resources>

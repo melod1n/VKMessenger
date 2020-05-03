@@ -68,10 +68,6 @@
         tools:visibility="gone" />
 
     <include
-<<<<<<< Updated upstream
-=======
-        android:id="@+id/noItemsView"
->>>>>>> Stashed changes
         layout="@layout/no_items_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -114,10 +110,6 @@
     </LinearLayout>
 
     <include
-<<<<<<< Updated upstream
-=======
-        android:id="@+id/noInternetView"
->>>>>>> Stashed changes
         layout="@layout/no_internet_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

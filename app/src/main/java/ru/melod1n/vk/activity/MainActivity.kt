@@ -62,8 +62,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         checkExtraData()
         checkLogin(savedInstanceState)
 
-        ViewUtils.setDrawerEdgeSize(drawerLayout, AppGlobal.screenWidth)
-
         TaskManager.addOnEventListener(this)
     }
 

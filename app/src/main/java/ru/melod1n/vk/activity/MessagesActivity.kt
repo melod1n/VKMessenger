@@ -15,12 +15,8 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.amulyakhare.textdrawable.TextDrawable
-<<<<<<< Updated upstream
-import com.google.android.material.snackbar.Snackbar
-=======
-import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
->>>>>>> Stashed changes
+import com.google.android.material.snackbar.Snackbar
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_messages.*
 import kotlinx.android.synthetic.main.no_internet_view.*
@@ -47,11 +43,7 @@ import ru.melod1n.vk.mvp.contract.BaseContract
 import ru.melod1n.vk.mvp.contract.BaseContract.Presenter
 import ru.melod1n.vk.mvp.presenter.MessagesPresenter
 import ru.melod1n.vk.util.AndroidUtils
-<<<<<<< Updated upstream
-import ru.melod1n.vk.util.AndroidUtils.hasConnection
-=======
 import ru.melod1n.vk.util.ViewUtils
->>>>>>> Stashed changes
 import kotlin.random.Random
 
 
@@ -153,8 +145,6 @@ class MessagesActivity : BaseActivity(),
     }
 
 
-
-
     private fun loadConversation() {
         TaskManager.loadConversation(peerId, object : VKApi.OnResponseListener<VKConversation> {
             override fun onSuccess(models: ArrayList<VKConversation>) {
@@ -179,7 +169,7 @@ class MessagesActivity : BaseActivity(),
             showProgressBar(true)
         }
 
-        if (hasConnection() && !viewedDialogs.contains(peerId)) {
+        if (AndroidUtils.hasConnection() && !viewedDialogs.contains(peerId)) {
             chatInfo.setText(R.string.loading)
             viewedDialogs.add(peerId)
 
@@ -481,7 +471,7 @@ class MessagesActivity : BaseActivity(),
         title = intent.getStringExtra(TAG_EXTRA_TITLE) ?: ""
         avatar = intent.getStringExtra(TAG_EXTRA_AVATAR) ?: ""
 
-        if (conversation == VKConversation() && hasConnection()) {
+        if (conversation == VKConversation() && AndroidUtils.hasConnection()) {
             Thread(Runnable {
                 try {
                     val conversation = VKApi.messages()
@@ -555,7 +545,6 @@ class MessagesActivity : BaseActivity(),
         }
     }
 
-<<<<<<< Updated upstream
     private fun getChatInfo(): String? {
         return when (conversation!!.type) {
             VKConversation.TYPE_CHAT -> {
@@ -595,16 +584,17 @@ class MessagesActivity : BaseActivity(),
 
     override fun prepareNoInternetView() {
         noInternetUpdate.setOnClickListener {
-            if (hasConnection()) {
+            if (AndroidUtils.hasConnection()) {
                 loadValues()
             } else {
                 Snackbar.make(noInternetView, R.string.no_connection, Snackbar.LENGTH_SHORT).show()
             }
         }
     }
+
     override fun prepareNoItemsView() {
         noItemsRefresh.setOnClickListener {
-            if (hasConnection()) {
+            if (AndroidUtils.hasConnection()) {
                 loadValues()
             } else {
                 showNoInternetView(true)
@@ -618,8 +608,6 @@ class MessagesActivity : BaseActivity(),
 
     }
 
-=======
->>>>>>> Stashed changes
     override fun showNoItemsView(visible: Boolean) {
         if (visible) {
             noItemsView.apply {
@@ -653,7 +641,7 @@ class MessagesActivity : BaseActivity(),
     }
 
     override fun showErrorView(e: Exception?) {
-        if (!hasConnection()) {
+        if (!AndroidUtils.hasConnection()) {
             presenter.requestCachedValues(0, 0, MESSAGES_COUNT)
         }
     }
