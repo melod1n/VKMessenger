@@ -11,15 +11,8 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-<<<<<<< Updated upstream
-import com.google.android.material.snackbar.Snackbar
-import kotlinx.android.synthetic.main.activity_messages.*
-import kotlinx.android.synthetic.main.no_internet_view.*
-import kotlinx.android.synthetic.main.no_items_view.*
-=======
+import kotlinx.android.synthetic.main.activity_messages.progressBar
 import kotlinx.android.synthetic.main.fragment_conversations.*
->>>>>>> Stashed changes
 import kotlinx.android.synthetic.main.recycler_view.*
 import ru.melod1n.vk.R
 import ru.melod1n.vk.activity.MainActivity
@@ -202,9 +195,10 @@ class FragmentConversations : BaseFragment(),
     }
 
     override fun showNoInternetView(visible: Boolean) {
-        if (visible) clearList()
 
-        if (visible) {
+        if (visible) clearList() {
+
+        
             noInternetView.apply {
                 alpha = 0f
                 visibility = View.VISIBLE

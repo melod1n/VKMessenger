@@ -1,46 +1,43 @@
-package ru.melod1n.vk.fragment
+package ru.melod1n.vk.activity
 
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
+import android.text.InputType
 import android.text.TextUtils
 import android.view.LayoutInflater
+import android.view.MenuItem
 import android.view.View
-import android.view.ViewGroup
 import android.webkit.CookieManager
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import butterknife.ButterKnife
-import kotlinx.android.synthetic.main.fragment_login.*
+import android.widget.LinearLayout
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.widget.AppCompatEditText
+import kotlinx.android.synthetic.main.activity_login.*
+import kotlinx.android.synthetic.main.toolbar.*
 import ru.melod1n.vk.R
-import ru.melod1n.vk.activity.MainActivity
 import ru.melod1n.vk.api.UserConfig
 import ru.melod1n.vk.api.VKAuth
 import ru.melod1n.vk.common.AppGlobal
-import ru.melod1n.vk.current.BaseFragment
+import ru.melod1n.vk.current.BaseActivity
 
-class FragmentLogin : BaseFragment {
+class LoginActivity : BaseActivity() {
 
-    constructor(titleRes: Int) : super(titleRes)
-    constructor() : super()
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_login)
 
-    override fun onResume() {
-        super.onResume()
-        requireActivity().setTitle(R.string.fragment_login)
-    }
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_login, container, false)
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        prepareSettings()
+        prepareToolbar()
         prepareRefreshLayout()
+
+        prepareSettings()
+
         val url = VKAuth.getUrl(UserConfig.API_ID, VKAuth.settings)
         webView.loadUrl(url)
     }
+
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun prepareSettings() {
@@ -50,6 +47,18 @@ class FragmentLogin : BaseFragment {
 
         val cookieManager = CookieManager.getInstance()
         cookieManager.setAcceptCookie(true)
+    }
+
+    private fun prepareToolbar() {
+        setSupportActionBar(toolbar)
+        supportActionBar!!.setDisplayHomeAsUpEnabled(true)
+
+        toolbar.navigationIcon?.setTint(AppGlobal.colorAccent)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == android.R.id.home) onBackPressed()
+        return super.onOptionsItemSelected(item)
     }
 
     private fun prepareRefreshLayout() {
@@ -70,17 +79,18 @@ class FragmentLogin : BaseFragment {
 
         override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
             super.onPageStarted(view, url, favicon)
-            requireView().findViewById<View>(R.id.progressBar).visibility = View.VISIBLE
+
+            progressBar.visibility = View.VISIBLE
+
             view.visibility = View.GONE
             parseUrl(url)
         }
 
-        override fun onPageFinished(wview: WebView, url: String) {
-            super.onPageFinished(wview, url)
-            if (view == null) return
+        override fun onPageFinished(view: WebView, url: String) {
+            super.onPageFinished(view, url)
 
-            requireView().findViewById<View>(R.id.progressBar).visibility = View.GONE
-            wview.visibility = View.VISIBLE
+            progressBar.visibility = View.GONE
+            view.visibility = View.VISIBLE
         }
     }
 
@@ -92,11 +102,11 @@ class FragmentLogin : BaseFragment {
                     val auth = VKAuth.parseRedirectUrl(url)
                     val token = auth[0]
                     val id = auth[1].toInt()
-                    val intent = Intent(requireContext(), MainActivity::class.java)
+                    val intent = Intent(this, MainActivity::class.java)
                     intent.putExtra("token", token)
                     intent.putExtra("user_id", id)
 
-                    requireActivity().finishAffinity()
+                    finishAffinity()
                     startActivity(intent)
                 }
             }

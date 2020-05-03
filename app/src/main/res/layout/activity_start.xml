@@ -5,8 +5,15 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
+    <androidx.appcompat.widget.AppCompatImageView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:layout_alignParentBottom="true"
+        android:src="@drawable/ic_start_screen_background" />
+
     <FrameLayout
-        android:id="@+id/avatar"
+        android:id="@+id/startLogo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
@@ -29,7 +36,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/avatar"
+        android:layout_below="@id/startLogo"
         android:layout_centerHorizontal="true"
         android:fontFamily="@font/tt_commons_bold"
         android:text="@string/project_vkm"
@@ -38,7 +45,24 @@
         android:textSize="36sp" />
 
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/enter"
+        style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/startLoginSettings"
+        android:layout_above="@+id/startEnter"
+        android:layout_centerHorizontal="true"
+        android:fontFamily="@font/tt_commons_medium"
+        android:text="@string/start_screen_login_settings"
+        android:textAppearance="?android:textAppearanceLarge"
+        android:textColor="@android:color/white"
+        app:backgroundTint="@android:color/transparent"
+        app:icon="@drawable/ic_settings"
+        app:iconPadding="4dp"
+        app:iconTint="@android:color/white"
+        app:rippleColor="@android:color/white" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/startEnter"
         android:layout_width="match_parent"
         android:layout_height="66dp"
         android:layout_alignParentBottom="true"

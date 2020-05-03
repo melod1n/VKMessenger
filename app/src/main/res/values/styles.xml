@@ -1,5 +1,13 @@
 <resources>
 
+    <style name="AppTheme.Toolbar" parent="Widget.MaterialComponents.Toolbar.PrimarySurface">
+        <item name="titleTextAppearance">@style/Toolbar.Title</item>
+        <item name="android:textSize">24sp</item>
+        <item name="android:elevation">3dp</item>
+        <item name="titleTextColor">?colorAccent</item>
+        <item name="android:background">?colorPrimary</item>
+    </style>
+
     <style name="Toolbar.Title" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">
         <item name="android:textSize">24sp</item>
         <item name="android:fontFamily">@font/tt_commons_medium</item>
