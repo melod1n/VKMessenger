@@ -1,5 +1,7 @@
 package ru.melod1n.vk.util
 
+import android.content.res.Configuration
+import ru.melod1n.vk.common.AppGlobal
 import ru.melod1n.vk.io.BytesOutputStream
 import java.io.ByteArrayInputStream
 import java.io.IOException
@@ -9,6 +11,14 @@ import java.util.*
 
 
 object Util {
+
+    fun isDarkTheme(): Boolean {
+        val currentNightMode = AppGlobal.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+        return when (currentNightMode) {
+            Configuration.UI_MODE_NIGHT_YES -> true
+            else -> false
+        }
+    }
 
     fun serialize(source: Any?): ByteArray? {
         try {

@@ -25,6 +25,7 @@ import ru.melod1n.vk.common.AppGlobal
 import ru.melod1n.vk.common.EventInfo
 import ru.melod1n.vk.common.TaskManager
 import ru.melod1n.vk.current.BaseAdapter
+import ru.melod1n.vk.current.BaseHolder
 import ru.melod1n.vk.database.CacheStorage
 import ru.melod1n.vk.fragment.FragmentConversations
 import ru.melod1n.vk.fragment.FragmentSettings
@@ -55,12 +56,16 @@ class ConversationAdapter(private val fragmentConversations: FragmentConversatio
         return ConversationHolder(view(R.layout.item_conversation, parent))
     }
 
+<<<<<<< Updated upstream
     override fun onBindViewHolder(holder: ConversationHolder, position: Int, payloads: MutableList<Any>) {
         initListeners(holder.itemView, position)
         holder.bind(position, payloads)
     }
 
     inner class ConversationHolder(v: View) : BaseAdapter.Holder(v) {
+=======
+    inner class NormalMessageOut(v: View) : BaseHolder(v) {
+>>>>>>> Stashed changes
         private var text = v.findViewById<TextView>(R.id.dialogText)
         private var title = v.findViewById<TextView>(R.id.dialogTitle)
         private var avatar = v.findViewById<CircleImageView>(R.id.dialogAvatar)

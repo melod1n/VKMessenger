@@ -9,6 +9,7 @@ import ru.melod1n.vk.R
 import ru.melod1n.vk.api.model.VKUser
 import ru.melod1n.vk.api.util.VKUtil
 import ru.melod1n.vk.current.BaseAdapter
+import ru.melod1n.vk.current.BaseHolder
 import ru.melod1n.vk.util.ImageUtil
 import ru.melod1n.vk.widget.CircleImageView
 
@@ -18,7 +19,7 @@ class FriendAdapter(context: Context, values: ArrayList<VKUser>) : BaseAdapter<V
         return ViewHolder(view(R.layout.item_user, parent))
     }
 
-    open inner class ViewHolder(v: View) : BaseAdapter.Holder(v) {
+    open inner class ViewHolder(v: View) : BaseHolder(v) {
         private val avatar: CircleImageView = v.findViewById(R.id.userAvatar)
         private val name: TextView = v.findViewById(R.id.userName)
         private val online: ImageView = v.findViewById(R.id.userOnline)

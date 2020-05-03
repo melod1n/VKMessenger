@@ -61,7 +61,7 @@
                     android:layout_marginStart="4dp"
                     android:fontFamily="@font/tt_commons_medium"
                     android:singleLine="true"
-                    android:textColor="?colorAccent"
+                    android:textColor="?itemTitleColor"
                     android:textSize="20sp"
                     tools:text="Unidevs" />
 

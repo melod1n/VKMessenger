@@ -4,6 +4,7 @@
     <color name="primaryDark">#ffffff</color>
     <color name="accent">#5C9CE6</color>
     <color name="navigationBar">#eeeeee</color>
+    <color name="background">#ffffff</color>
 
     <color name="divider">#e6e6e6</color>
 </resources>

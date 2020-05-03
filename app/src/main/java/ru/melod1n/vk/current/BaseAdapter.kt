@@ -11,7 +11,7 @@ import java.io.Serializable
 import java.util.*
 
 @Suppress("UNCHECKED_CAST")
-abstract class BaseAdapter<T, VH : BaseAdapter.Holder>(var context: Context, var values: ArrayList<T>) : RecyclerView.Adapter<VH>() {
+abstract class BaseAdapter<T, VH : BaseHolder>(var context: Context, var values: ArrayList<T>) : RecyclerView.Adapter<VH>() {
 
     protected var inflater: LayoutInflater = LayoutInflater.from(context)
 
@@ -119,10 +119,6 @@ abstract class BaseAdapter<T, VH : BaseAdapter.Holder>(var context: Context, var
 
     interface OnItemLongClickListener {
         fun onItemLongClick(position: Int)
-    }
-
-    abstract class Holder(v: View) : RecyclerView.ViewHolder(v) {
-        abstract fun bind(position: Int)
     }
 
     companion object {

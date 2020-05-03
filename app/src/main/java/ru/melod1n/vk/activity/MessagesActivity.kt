@@ -6,15 +6,21 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
-import android.view.Menu
-import android.view.MenuItem
-import android.view.View
+import android.view.*
+import android.widget.LinearLayout
 import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.amulyakhare.textdrawable.TextDrawable
+<<<<<<< Updated upstream
 import com.google.android.material.snackbar.Snackbar
+=======
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+>>>>>>> Stashed changes
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_messages.*
 import kotlinx.android.synthetic.main.no_internet_view.*
@@ -22,6 +28,7 @@ import kotlinx.android.synthetic.main.no_items_view.*
 import kotlinx.android.synthetic.main.recycler_view.*
 import ru.melod1n.vk.R
 import ru.melod1n.vk.adapter.MessageAdapter
+import ru.melod1n.vk.adapter.ProfileItemAdapter
 import ru.melod1n.vk.api.UserConfig
 import ru.melod1n.vk.api.VKApi
 import ru.melod1n.vk.api.model.VKConversation
@@ -35,12 +42,18 @@ import ru.melod1n.vk.current.BaseActivity
 import ru.melod1n.vk.current.BaseAdapter
 import ru.melod1n.vk.database.CacheStorage
 import ru.melod1n.vk.database.MemoryCache
+import ru.melod1n.vk.item.ProfileMenuItem
 import ru.melod1n.vk.mvp.contract.BaseContract
 import ru.melod1n.vk.mvp.contract.BaseContract.Presenter
 import ru.melod1n.vk.mvp.presenter.MessagesPresenter
 import ru.melod1n.vk.util.AndroidUtils
+<<<<<<< Updated upstream
 import ru.melod1n.vk.util.AndroidUtils.hasConnection
+=======
+import ru.melod1n.vk.util.ViewUtils
+>>>>>>> Stashed changes
 import kotlin.random.Random
+
 
 class MessagesActivity : BaseActivity(),
         BaseContract.View<VKMessage>,
@@ -339,13 +352,105 @@ class MessagesActivity : BaseActivity(),
             e.printStackTrace()
         }
 
+        toolbar.setOnClickListener {
+            openProfile()
+        }
+
+        chatAvatar.setOnClickListener {
+            openProfile()
+        }
+
         chatTitle.text = title
 
         supportActionBar?.setDisplayShowTitleEnabled(false)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         toolbar.navigationIcon?.setTint(AppGlobal.colorAccent)
-//        toolbar.setNavigationOnClickListener { onBackPressed() }
+    }
+
+    private fun openProfile() {
+        if (conversation == null || title == null) return
+
+        val profileDialog = ProfileDialog(conversation!!, title!!)
+        profileDialog.show(supportFragmentManager, "")
+    }
+
+    open class ProfileDialog(private val conversation: VKConversation, private val chatTitle: String) : BottomSheetDialogFragment() {
+
+        private lateinit var title: TextView
+        private lateinit var subtitle: TextView
+        private lateinit var recyclerView: RecyclerView
+        private lateinit var root: LinearLayout
+
+        private var adapter: ProfileItemAdapter? = null
+
+        override fun onCreate(savedInstanceState: Bundle?) {
+            super.onCreate(savedInstanceState)
+
+            setStyle(STYLE_NO_TITLE, R.style.AppTheme_ProfileDialog)
+        }
+
+        override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+            return inflater.inflate(R.layout.profile_bottom_sheet, container, false)
+        }
+
+        override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+            super.onViewCreated(view, savedInstanceState)
+
+            title = view.findViewById(R.id.profileTitle)
+            subtitle = view.findViewById(R.id.profileSubtitle)
+            recyclerView = view.findViewById(R.id.profileItemMenu)
+            root = view.findViewById(R.id.profileRoot)
+
+            val layoutManager = LinearLayoutManager(requireContext(), RecyclerView.VERTICAL, false)
+
+            recyclerView.setHasFixedSize(true)
+            recyclerView.layoutManager = layoutManager
+
+            title.text = chatTitle
+
+            subtitle.text = getSubtitle()
+
+            val items = ArrayList<ProfileMenuItem>()
+
+            items.add(ProfileMenuItem(ContextCompat.getDrawable(requireContext(), R.drawable.ic_search)!!, "Search"))
+            items.add(ProfileMenuItem(ContextCompat.getDrawable(requireContext(), R.drawable.ic_search)!!, "Search"))
+            items.add(ProfileMenuItem(ContextCompat.getDrawable(requireContext(), R.drawable.ic_search)!!, "Search"))
+            items.add(ProfileMenuItem(ContextCompat.getDrawable(requireContext(), R.drawable.ic_search)!!, "Search"))
+            items.add(ProfileMenuItem(ContextCompat.getDrawable(requireContext(), R.drawable.ic_search)!!, "Search"))
+
+            createAdapter(items)
+        }
+
+        private fun createAdapter(items: ArrayList<ProfileMenuItem>) {
+            adapter = ProfileItemAdapter(requireContext(), items)
+            recyclerView.adapter = adapter
+        }
+
+        private fun getSubtitle(): String {
+            conversation
+
+            return when (conversation.type) {
+                VKConversation.TYPE_CHAT -> getString(R.string.chat_members, conversation.membersCount)
+                VKConversation.TYPE_GROUP -> {
+                    val group = MemoryCache.getGroup(conversation.id) ?: return ""
+
+                    if (group.screenName == null) "@id${group.id}" else "@${group.screenName}"
+                }
+                VKConversation.TYPE_USER -> {
+                    val user = MemoryCache.getUser(conversation.id) ?: return ""
+
+                    var str = if (user.screenName == null || user.screenName!!.contains("id${user.id}")) "" else "@${user.screenName}"
+
+                    val online = getString(if (user.isOnlineMobile) R.string.user_online_mobile else if (user.isOnline) R.string.user_online else R.string.user_offline)
+
+                    str += if (str.isEmpty()) online else " · $online"
+
+                    str
+                }
+                else -> ""
+            }
+        }
     }
 
     private fun prepareRefreshLayout() {
@@ -353,10 +458,20 @@ class MessagesActivity : BaseActivity(),
     }
 
     private fun prepareRecyclerView() {
-        val layoutManager = LinearLayoutManager(this, RecyclerView.VERTICAL, false)
-        layoutManager.stackFromEnd = true
+        val layoutManager = LinearLayoutManager(this, RecyclerView.VERTICAL, false).apply { stackFromEnd = true }
 
         recyclerView.layoutManager = layoutManager
+
+
+        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+
+                if (dy < 0 && AppGlobal.inputMethodManager.isAcceptingText) {
+                    ViewUtils.hideKeyboardFrom(chatMessage)
+                }
+            }
+        })
     }
 
     private fun initExtraData() {
@@ -440,6 +555,7 @@ class MessagesActivity : BaseActivity(),
         }
     }
 
+<<<<<<< Updated upstream
     private fun getChatInfo(): String? {
         return when (conversation!!.type) {
             VKConversation.TYPE_CHAT -> {
@@ -502,6 +618,8 @@ class MessagesActivity : BaseActivity(),
 
     }
 
+=======
+>>>>>>> Stashed changes
     override fun showNoItemsView(visible: Boolean) {
         if (visible) {
             noItemsView.apply {

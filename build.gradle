@@ -5,7 +5,11 @@ buildscript {
         
     }
     dependencies {
+<<<<<<< Updated upstream
         classpath 'com.android.tools.build:gradle:3.6.2'
+=======
+        classpath 'com.android.tools.build:gradle:4.1.0-alpha08'
+>>>>>>> Stashed changes
         classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.71'
     }
 }

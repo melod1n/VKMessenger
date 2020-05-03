@@ -20,6 +20,7 @@ import ru.melod1n.vk.api.util.VKUtil
 import ru.melod1n.vk.common.AppGlobal
 import ru.melod1n.vk.common.EventInfo
 import ru.melod1n.vk.current.BaseAdapter
+import ru.melod1n.vk.current.BaseHolder
 import ru.melod1n.vk.database.CacheStorage
 import ru.melod1n.vk.util.AndroidUtils
 import ru.melod1n.vk.util.ArrayUtil
@@ -310,7 +311,7 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>, var convers
     inner class ViewController {
 
         fun prepareText(message: VKMessage, bubble: BoundedLinearLayout, text: TextView) {
-            bubble.maxWidth = AppGlobal.screenWidth - AppGlobal.screenWidth / 4
+            bubble.maxWidth = AppGlobal.screenWidth - AppGlobal.screenWidth / 5
             text.text = message.text
         }
 
@@ -341,7 +342,7 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>, var convers
 
     }
 
-    open inner class BaseHolder(v: View) : BaseAdapter.Holder(v) {
+    open inner class BaseHolder(v: View) : ru.melod1n.vk.current.BaseHolder(v) {
         override fun bind(position: Int) {
         }
     }
