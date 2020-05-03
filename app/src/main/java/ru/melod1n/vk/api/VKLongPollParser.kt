@@ -6,8 +6,8 @@ import ru.melod1n.vk.api.model.VKConversation.Companion.isChatId
 import ru.melod1n.vk.api.model.VKMessage
 import ru.melod1n.vk.common.AppGlobal
 import ru.melod1n.vk.common.EventInfo
-import ru.melod1n.vk.common.TaskManager.loadConversation
-import ru.melod1n.vk.common.TaskManager.loadMessage
+import ru.melod1n.vk.common.TaskManager
+import ru.melod1n.vk.database.CacheStorage
 import java.util.*
 
 @Suppress("UNCHECKED_CAST")
@@ -53,11 +53,16 @@ class VKLongPollParser {
 
         private fun messageEvent(item: JSONArray) {
             val message = VKMessage.parse(item)
-            loadMessage(message.id)
+            TaskManager.loadMessage(message.id)
+
             if (isChatId(message.peerId)) {
-                loadConversation(message.peerId)
+                TaskManager.loadConversation(message.peerId)
             }
+
             val info = EventInfo(EventInfo.MESSAGE_NEW, message)
+
+            CacheStorage.insertMessage(message)
+
             sendEvent(info)
             sendMessageEvent(info)
         }
@@ -65,6 +70,10 @@ class VKLongPollParser {
         private fun messageEdit(item: JSONArray) {
             val message = VKMessage.parse(item)
             val info = EventInfo(EventInfo.MESSAGE_EDIT, message)
+
+            if (CacheStorage.getMessage(message.id) != null)
+                CacheStorage.updateMessage(message)
+
             sendEvent(info)
             sendMessageEvent(info)
         }
@@ -73,19 +82,35 @@ class VKLongPollParser {
             val messageId = item.optInt(1)
             val peerId = item.optInt(3)
             val info = EventInfo(EventInfo.MESSAGE_DELETE, arrayOf(messageId, peerId))
+
+            if (CacheStorage.getMessage(messageId) != null)
+                CacheStorage.deleteMessage(messageId)
+
             sendEvent(info)
             sendMessageEvent(info)
         }
 
         private fun messageRestored(item: JSONArray) {
             val message = VKMessage.parse(item)
-            sendEvent(EventInfo(EventInfo.MESSAGE_RESTORE, message))
+            val info = EventInfo(EventInfo.MESSAGE_RESTORE, message)
+
+            CacheStorage.insertMessage(message)
+
+            sendEvent(info)
+            sendMessageEvent(info)
         }
 
         private fun messageRead(item: JSONArray) {
             val messageId = item.optInt(1)
             val peerId = item.optInt(3)
             val info = EventInfo(EventInfo.MESSAGE_READ, arrayOf(messageId, peerId))
+
+            val message = CacheStorage.getMessage(messageId)
+
+            if (message != null) {
+                CacheStorage.updateMessage(message.apply { isRead = true })
+            }
+
             sendEvent(info)
             sendMessageEvent(info)
         }

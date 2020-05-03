@@ -11,7 +11,7 @@ import java.io.Serializable
 import java.util.*
 
 @Suppress("UNCHECKED_CAST")
-abstract class BaseAdapter<T, VH : BaseAdapter.Holder>(var context: Context, var values: ArrayList<T>) : RecyclerView.Adapter<VH>() {
+abstract class BaseAdapter<T, VH : BaseHolder>(var context: Context, var values: ArrayList<T>) : RecyclerView.Adapter<VH>() {
 
     protected var inflater: LayoutInflater = LayoutInflater.from(context)
 
@@ -59,20 +59,23 @@ abstract class BaseAdapter<T, VH : BaseAdapter.Holder>(var context: Context, var
         values.removeAt(index)
     }
 
+    fun isEmpty(): Boolean {
+        return values.isNullOrEmpty()
+    }
+
     fun view(resId: Int, viewGroup: ViewGroup): View {
         return inflater.inflate(resId, viewGroup, false)
     }
 
     fun setItems(list: ArrayList<T>) {
-        values.clear()
-        values.addAll(list)
+        values = list
     }
 
     override fun onBindViewHolder(holder: VH, position: Int) {
         onBindItemViewHolder(holder, position)
     }
 
-    private fun initListeners(itemView: View, position: Int) {
+    fun initListeners(itemView: View, position: Int) {
         itemView.setOnClickListener { if (onItemClickListener != null) onItemClickListener!!.onItemClick(position) }
         itemView.setOnLongClickListener {
             if (onItemLongClickListener != null) onItemLongClickListener!!.onItemLongClick(position)
@@ -116,10 +119,6 @@ abstract class BaseAdapter<T, VH : BaseAdapter.Holder>(var context: Context, var
 
     interface OnItemLongClickListener {
         fun onItemLongClick(position: Int)
-    }
-
-    abstract class Holder(v: View) : RecyclerView.ViewHolder(v) {
-        abstract fun bind(position: Int)
     }
 
     companion object {

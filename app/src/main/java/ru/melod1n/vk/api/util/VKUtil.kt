@@ -63,13 +63,30 @@ object VKUtil {
         return if (!m.find()) null else m.group(2)
     }
 
-    fun sortMessagesByDate(values: ArrayList<VKMessage>, reverse: Boolean): ArrayList<VKMessage> {
+    fun sortMessagesByDate(values: ArrayList<VKMessage>, firstOnTop: Boolean): ArrayList<VKMessage> {
         values.sortWith(Comparator { m1, m2 ->
+            val d1 = m1.date
+            val d2 = m2.date
 
-            if (reverse) {
-                m2.date - m1.date
+            if (firstOnTop) {
+                d2 - d1
             } else {
-                m1.date - m2.date
+                d1 - d2
+            }
+        })
+
+        return values
+    }
+
+    fun sortConversationsByDate(values: ArrayList<VKConversation>, firstOnTop: Boolean): ArrayList<VKConversation> {
+        values.sortWith(Comparator { c1, c2 ->
+            val d1 = c1.lastMessage.date
+            val d2 = c2.lastMessage.date
+
+            if (firstOnTop) {
+                d2 - d1
+            } else {
+                d1 - d2
             }
         })
 
@@ -77,6 +94,26 @@ object VKUtil {
     }
 
     fun prepareList(messages: ArrayList<VKMessage>) {
+        when (messages.size) {
+            0 -> return
+            1 -> {
+                if (messages[0] is MessageAdapter.TimeStamp) {
+                    messages.clear()
+                } else {
+                    messages.add(0, MessageAdapter.TimeStamp(Util.removeTime(Date(messages[0].date * 1000L))))
+                }
+
+                return
+            }
+//            2 -> {
+//                if (messages[0] is MessageAdapter.TimeStamp) {
+//                    messages.clear()
+//                } else {
+//                    messages.add(0, MessageAdapter.TimeStamp(Util.removeTime(Date(messages[0].date * 1000L))))
+//                }
+//            }
+        }
+
         for (i in messages.size - 1 downTo 1) {
             val m1 = messages[i]
             val m2 = messages[i - 1]
@@ -84,8 +121,8 @@ object VKUtil {
             val d1 = Util.removeTime(Date(m1.date * 1000L))
             val d2 = Util.removeTime(Date(m2.date * 1000L))
 
-            if (d1 > d2) {
-                messages.add(i, MessageAdapter.TimeStamp(d1))
+            if (d1 > d2 || i == 1) {
+                messages.add(i - 1, MessageAdapter.TimeStamp(d1))
             }
         }
     }

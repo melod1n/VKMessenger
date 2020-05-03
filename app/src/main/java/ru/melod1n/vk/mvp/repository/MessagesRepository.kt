@@ -1,4 +1,4 @@
-package ru.melod1n.vk.mvp.model
+package ru.melod1n.vk.mvp.repository
 
 import ru.melod1n.vk.api.VKApi
 import ru.melod1n.vk.api.VKApi.OnResponseListener
@@ -32,7 +32,8 @@ class MessagesRepository : BaseContract.Repository<VKMessage>() {
                         .count(count)
                         .execute(VKMessage::class.java) ?: ArrayList()
 
-                insertDataInDatabase(models)
+                cacheValues(models)
+
                 AppGlobal.handler.post(SuccessCallback(listener, models))
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -41,7 +42,7 @@ class MessagesRepository : BaseContract.Repository<VKMessage>() {
         })
     }
 
-    override fun insertDataInDatabase(models: ArrayList<VKMessage>) {
-        CacheStorage.insertMessages(models)
+    override fun cacheValues( values: ArrayList<VKMessage>) {
+        CacheStorage.insertMessages(values)
     }
 }

@@ -3,6 +3,7 @@ package ru.melod1n.vk.adapter
 import android.content.Context
 import android.graphics.Typeface
 import android.text.SpannableString
+import android.text.format.DateUtils
 import android.text.style.StyleSpan
 import android.view.View
 import android.view.ViewGroup
@@ -10,17 +11,16 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
+import kotlinx.android.synthetic.main.recycler_view.*
 import ru.melod1n.vk.R
 import ru.melod1n.vk.activity.MessagesActivity
 import ru.melod1n.vk.api.VKLongPollParser
-import ru.melod1n.vk.api.model.VKConversation
-import ru.melod1n.vk.api.model.VKGroup
-import ru.melod1n.vk.api.model.VKMessage
-import ru.melod1n.vk.api.model.VKUser
+import ru.melod1n.vk.api.model.*
 import ru.melod1n.vk.api.util.VKUtil
 import ru.melod1n.vk.common.AppGlobal
 import ru.melod1n.vk.common.EventInfo
 import ru.melod1n.vk.current.BaseAdapter
+import ru.melod1n.vk.current.BaseHolder
 import ru.melod1n.vk.database.CacheStorage
 import ru.melod1n.vk.util.AndroidUtils
 import ru.melod1n.vk.util.ArrayUtil
@@ -35,9 +35,6 @@ import kotlin.math.abs
 
 class MessageAdapter(context: Context, values: ArrayList<VKMessage>, var conversation: VKConversation) : BaseAdapter<VKMessage, MessageAdapter.BaseHolder>(context, values), VKLongPollParser.OnMessagesListener,
         VKLongPollParser.OnEventListener {
-
-    private var layoutManager = (context as MessagesActivity).getRecyclerView().layoutManager as LinearLayoutManager
-    private var recyclerView = (context as MessagesActivity).getRecyclerView()
 
     companion object {
         private const val TYPE_TIME_STAMP = 7900
@@ -57,6 +54,9 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>, var convers
         VKLongPollParser.addOnMessagesListener(this)
         VKLongPollParser.addOnEventListener(this)
     }
+
+    private var recyclerView = (context as MessagesActivity).recyclerView
+    private var layoutManager = recyclerView.layoutManager as LinearLayoutManager
 
     override fun onDestroy() {
         VKLongPollParser.removeOnMessagesListener(this)
@@ -133,10 +133,11 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>, var convers
             val item = getItem(position) as TimeStamp
             val nowTime = Util.removeTime(Date(System.currentTimeMillis()))
 
-            stamp.text = if (item.time == nowTime)
-                context.getString(R.string.today)
-            else
-                SimpleDateFormat("d MMM", Locale.getDefault()).format(item.time)
+            stamp.text = when {
+                item.time == nowTime -> context.getString(R.string.today)
+                nowTime - item.time == DateUtils.DAY_IN_MILLIS -> context.getString(R.string.yesterday)
+                else -> SimpleDateFormat("d MMM", Locale.getDefault()).format(item.time)
+            }
         }
     }
 
@@ -205,6 +206,8 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>, var convers
     }
 
     inner class ItemAttachmentIn(v: View) : ItemNormalIn(v) {
+        val attachments: LinearLayout = v.findViewById(R.id.messageAttachments)
+
     }
 
 
@@ -226,6 +229,17 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>, var convers
     }
 
     inner class ItemAttachmentOut(v: View) : ItemNormalOut(v) {
+
+        val attachments: LinearLayout = v.findViewById(R.id.messageAttachments)
+
+        override fun bind(position: Int) {
+            super.bind(position)
+
+            val message = getItem(position)
+
+            AttachmentInflater.showAttachments(message, this)
+        }
+
     }
 
     abstract inner class NormalViewHolder(v: View) : BaseHolder(v) {
@@ -236,15 +250,79 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>, var convers
         protected val avatar: CircleImageView = v.findViewById(R.id.messageAvatar)
     }
 
+    object AttachmentInflater {
+        fun showAttachments(message: VKMessage, holder: NormalViewHolder) {
+            val attachments = (if (holder is ItemAttachmentOut) holder.attachments else if (holder is ItemAttachmentIn) holder.attachments else null)
+                    ?: return
+
+            if (!ArrayUtil.isEmpty(message.fwdMessages) || !ArrayUtil.isEmpty(message.attachments)) {
+                attachments.visibility = View.VISIBLE
+                attachments.removeAllViews()
+            } else {
+                attachments.visibility = View.GONE
+            }
+
+            if (!ArrayUtil.isEmpty(message.attachments)) {
+                prepareAttachments(message, attachments)
+            }
+
+            if (!ArrayUtil.isEmpty(message.fwdMessages)) {
+                prepareForwardedMessages(message, attachments)
+            }
+        }
+
+        private fun prepareAttachments(message: VKMessage, attachments: LinearLayout) {
+            for (attachment in message.attachments) {
+                when (attachment) {
+                    is VKPhoto -> photo(message, attachments)
+                    is VKVideo -> video(message, attachments)
+                    is VKLink -> link(message, attachments)
+                    is VKAudio -> audio(message, attachments)
+                    is VKDoc -> doc(message, attachments)
+                }
+            }
+        }
+
+        private fun prepareForwardedMessages(message: VKMessage, attachments: LinearLayout) {
+
+        }
+
+        fun link(message: VKMessage, attachments: LinearLayout) {
+
+        }
+
+        fun video(message: VKMessage, attachments: LinearLayout) {
+
+        }
+
+        fun photo(message: VKMessage, attachments: LinearLayout) {
+
+        }
+
+        fun audio(message: VKMessage, attachments: LinearLayout) {
+
+        }
+
+        fun doc(message: VKMessage, attachments: LinearLayout) {
+
+        }
+    }
+
     inner class ViewController {
 
         fun prepareText(message: VKMessage, bubble: BoundedLinearLayout, text: TextView) {
-            bubble.maxWidth = AppGlobal.screenWidth - AppGlobal.screenWidth / 4
+            bubble.maxWidth = AppGlobal.screenWidth - AppGlobal.screenWidth / 5
             text.text = message.text
         }
 
         fun prepareDate(message: VKMessage, date: TextView) {
-            date.text = SimpleDateFormat("HH:mm", Locale.getDefault()).format(message.date * 1000L)
+            var dateText = SimpleDateFormat("HH:mm", Locale.getDefault()).format(message.date * 1000L)
+
+            if (message.editTime > 0) {
+                dateText += ", ${context.getString(R.string.edited).toLowerCase(Locale.getDefault())}"
+            }
+
+            date.text = dateText
         }
 
         fun prepareAvatar(message: VKMessage, avatar: ImageView) {
@@ -264,7 +342,7 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>, var convers
 
     }
 
-    open inner class BaseHolder(v: View) : BaseAdapter.Holder(v) {
+    open inner class BaseHolder(v: View) : ru.melod1n.vk.current.BaseHolder(v) {
         override fun bind(position: Int) {
         }
     }
@@ -322,6 +400,83 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>, var convers
         notifyItemChanged(index)
     }
 
+    private fun searchMessagePosition(messageId: Int): Int {
+        for (i in values.indices) {
+            if (getItem(i).id == messageId) return i
+        }
+
+        return -1
+    }
+
+    private fun containsRandomId(randomId: Int): Boolean {
+        for (message in values) {
+            if (message.randomId == randomId) return true
+        }
+
+        return false
+    }
+
+    fun addMessage(message: VKMessage, withScroll: Boolean = false) {
+        if (containsRandomId(message.randomId)) return
+
+        if (isEmpty()) {
+            val list = arrayListOf(message)
+            VKUtil.prepareList(list)
+        } else {
+            val list = arrayListOf<VKMessage>()
+            val last = getItem(values.size - 1)
+
+            list.add(last)
+            list.add(message)
+
+            VKUtil.prepareList(list)
+
+            removeAt(values.size - 1)
+
+            addAll(list)
+        }
+
+        notifyDataSetChanged()
+
+        (context as MessagesActivity).presenter.checkListIsEmpty(values)
+
+        val lastPosition = layoutManager.findLastVisibleItemPosition()
+
+        if (withScroll && lastPosition >= itemCount - 2) {
+            recyclerView.smoothScrollToPosition(itemCount + 2)
+        }
+    }
+
+    fun editMessage(message: VKMessage) {
+        val index = searchMessagePosition(message.id)
+        if (index == -1) return
+
+        set(index, message)
+        notifyItemChanged(index)
+    }
+
+    fun deleteMessage(messageId: Int, peerId: Int) {
+        if (peerId != conversation.id) return
+
+        val index = searchMessagePosition(messageId)
+        if (index == -1) return
+
+        removeAt(index)
+        notifyDataSetChanged()
+
+        (context as MessagesActivity).presenter.checkListIsEmpty(values)
+    }
+
+    //TODO: кривое сообщение
+    fun restoreMessage(message: VKMessage) {
+        if (message.peerId != conversation.id) return
+
+        setItems(VKUtil.sortMessagesByDate(values.apply { add(message) }, false))
+        notifyDataSetChanged()
+
+        (context as MessagesActivity).presenter.checkListIsEmpty(values)
+    }
+
     override fun onEvent(info: EventInfo<*>) {
         when (info.key) {
             EventInfo.MESSAGE_UPDATE -> updateMessage(info.data as Int)
@@ -331,29 +486,22 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>, var convers
     }
 
     override fun onNewMessage(message: VKMessage) {
-        add(message)
-        notifyItemInserted(itemCount + 2)
-
-        val lastPosition = layoutManager.findLastVisibleItemPosition()
-
-        if (lastPosition >= itemCount - 2) {
-            recyclerView.smoothScrollToPosition(itemCount + 2)
-        }
+        addMessage(message)
     }
 
     override fun onEditMessage(message: VKMessage) {
-
+        editMessage(message)
     }
 
     override fun onReadMessage(messageId: Int, peerId: Int) {
-
+        //TODO: реализовать
     }
 
     override fun onDeleteMessage(messageId: Int, peerId: Int) {
-
+        deleteMessage(messageId, peerId)
     }
 
     override fun onRestoredMessage(message: VKMessage) {
-
+        restoreMessage(message)
     }
 }

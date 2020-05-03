@@ -6,7 +6,6 @@ import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
-import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.graphics.drawable.DrawerArrowDrawable
 import androidx.core.view.GravityCompat
@@ -16,23 +15,23 @@ import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.toolbar.*
 import ru.melod1n.vk.R
 import ru.melod1n.vk.api.UserConfig
-import ru.melod1n.vk.api.VKApi
-import ru.melod1n.vk.api.VKApi.OnResponseListener
 import ru.melod1n.vk.api.model.VKUser
 import ru.melod1n.vk.common.AppGlobal
+import ru.melod1n.vk.common.EventInfo
 import ru.melod1n.vk.common.FragmentSwitcher
 import ru.melod1n.vk.common.TaskManager
 import ru.melod1n.vk.current.BaseActivity
-import ru.melod1n.vk.database.CacheStorage.insertUsers
-import ru.melod1n.vk.database.MemoryCache.getUser
+import ru.melod1n.vk.database.MemoryCache
 import ru.melod1n.vk.fragment.FragmentConversations
 import ru.melod1n.vk.fragment.FragmentFriends
 import ru.melod1n.vk.fragment.FragmentSettings
 import ru.melod1n.vk.service.LongPollService
-import ru.melod1n.vk.util.ViewUtils.prepareNavigationHeader
+import ru.melod1n.vk.util.AndroidUtils
+import ru.melod1n.vk.util.ViewUtils
 import java.util.*
 
-class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener {
+
+class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener, TaskManager.OnEventListener {
 
     private var toggleDrawable: DrawerArrowDrawable? = null
     private var toggleClick: View.OnClickListener? = null
@@ -46,22 +45,41 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
         ButterKnife.bind(this)
+
         prepareToolbar()
         prepareNavigationView()
         prepareDrawerToggle()
         checkExtraData()
         checkLogin(savedInstanceState)
+
+        TaskManager.addOnEventListener(this)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        TaskManager.removeOnEventListener(this)
+    }
+
+    override fun onNewEvent(event: EventInfo<*>) {
+        when (event.key) {
+            EventInfo.USER_UPDATE -> {
+                prepareNavigationHeader(MemoryCache.getUser(UserConfig.userId) ?: VKUser())
+            }
+        }
     }
 
     private fun prepareDrawerToggle() {
         val toggle = ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.app_name, R.string.app_name)
+
         toggleDrawable = DrawerArrowDrawable(this)
         toggleDrawable!!.color = AppGlobal.colorAccent
 
         toggle.drawerArrowDrawable = toggleDrawable!!
 
-        drawerLayout!!.addDrawerListener(toggle)
+        drawerLayout.addDrawerListener(toggle)
 
         toggle.isDrawerSlideAnimationEnabled = false
         toggle.syncState()
@@ -74,14 +92,16 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     }
 
     private fun prepareNavigationView() {
-        navigationView!!.setNavigationItemSelectedListener(this)
-        prepareNavigationHeader(navigationView!!, null)
+        navigationView.layoutParams?.width = AppGlobal.screenWidth - AppGlobal.screenWidth / 6
+
+        navigationView.setNavigationItemSelectedListener(this)
     }
 
     private fun checkExtraData() {
         if (intent.hasExtra("token")) {
             val token = intent.getStringExtra("token")
             val userId = intent.getIntExtra("user_id", -1)
+
             UserConfig.token = token
             UserConfig.userId = userId
             UserConfig.save()
@@ -92,6 +112,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         if (UserConfig.isLoggedIn) {
             loadProfileInfo()
             startLongPoll()
+
             if (savedInstanceState == null) {
                 selectedId = R.id.navigationConversations
                 navigationView!!.setCheckedItem(selectedId)
@@ -121,24 +142,17 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     }
 
     private fun loadProfileInfo() {
-        TaskManager.execute {
-            VKApi.users().get().fields(VKUser.DEFAULT_FIELDS).execute(VKUser::class.java, object : OnResponseListener<VKUser> {
-                override fun onSuccess(models: ArrayList<VKUser>) {
-                    val profileUser = models[0]
-                    insertUsers(profileUser.asList())
-                    prepareNavigationHeader(navigationView!!, profileUser)
-                }
-
-                override fun onError(e: Exception) {
-                    val cachedUser = getUser(UserConfig.userId)
-                    if (cachedUser != null) {
-                        prepareNavigationHeader(navigationView!!, cachedUser)
-                    } else {
-                        Toast.makeText(this@MainActivity, "Something went wrong", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            })
+        if (AndroidUtils.hasConnection()) {
+            TaskManager.loadUser(UserConfig.userId)
         }
+
+        val user = MemoryCache.getUser(UserConfig.userId) ?: return
+
+        prepareNavigationHeader(user)
+    }
+
+    private fun prepareNavigationHeader(user: VKUser) {
+        ViewUtils.prepareNavigationHeader(navigationView, user)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

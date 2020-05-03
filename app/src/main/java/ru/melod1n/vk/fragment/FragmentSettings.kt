@@ -28,6 +28,9 @@ class FragmentSettings : PreferenceFragmentCompat(), Preference.OnPreferenceClic
             listeners.remove(onEventListener)
         }
 
+        const val CATEGORY_GENERAL = "general"
+        const val KEY_HIDE_KEYBOARD_ON_SCROLL_UP = "hide_keyboard_on_scroll_up"
+
         const val CATEGORY_APPEARANCE = "appearance"
         const val KEY_EXTENDED_CONVERSATIONS = "appearance_extended_conversations"
 
@@ -65,6 +68,9 @@ class FragmentSettings : PreferenceFragmentCompat(), Preference.OnPreferenceClic
         setNavigationIcon()
         setPreferencesFromResource(currentPreferenceLayout, null)
 
+        val general = findPreference<Preference>(CATEGORY_GENERAL)
+        general?.onPreferenceClickListener = Preference.OnPreferenceClickListener { changeRootLayout(it) }
+
         val account = findPreference<Preference>(CATEGORY_ACCOUNT)
         account?.onPreferenceClickListener = Preference.OnPreferenceClickListener { changeRootLayout(it) }
 
@@ -96,6 +102,7 @@ class FragmentSettings : PreferenceFragmentCompat(), Preference.OnPreferenceClic
     private fun setTitle() {
         var title = R.string.navigation_settings
         when (currentPreferenceLayout) {
+            R.xml.fragment_settings_general -> title = R.string.prefs_general
             R.xml.fragment_settings_appearance -> title = R.string.prefs_appearance
             R.xml.fragment_settings_about -> title = R.string.prefs_about
             R.xml.fragment_settings_account -> title = R.string.prefs_account
@@ -104,11 +111,14 @@ class FragmentSettings : PreferenceFragmentCompat(), Preference.OnPreferenceClic
     }
 
     private fun changeRootLayout(preference: Preference): Boolean {
-        when (preference.key) {
-            CATEGORY_ABOUT -> currentPreferenceLayout = R.xml.fragment_settings_about
-            CATEGORY_ACCOUNT -> currentPreferenceLayout = R.xml.fragment_settings_account
-            CATEGORY_APPEARANCE -> currentPreferenceLayout = R.xml.fragment_settings_appearance
+        currentPreferenceLayout = when (preference.key) {
+            CATEGORY_GENERAL -> R.xml.fragment_settings_general
+            CATEGORY_ABOUT -> R.xml.fragment_settings_about
+            CATEGORY_ACCOUNT -> R.xml.fragment_settings_account
+            CATEGORY_APPEARANCE -> R.xml.fragment_settings_appearance
+            else -> R.xml.fragment_settings
         }
+
         init()
         return true
     }

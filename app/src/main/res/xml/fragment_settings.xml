@@ -2,12 +2,17 @@
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <PreferenceScreen
-        app:icon="@drawable/ic_brush"
+        app:icon="@drawable/ic_edit"
+        app:key="general"
+        app:title="@string/prefs_general" />
+
+    <PreferenceScreen
+        app:icon="@drawable/ic_palette_swatch_outline"
         app:key="appearance"
         app:title="@string/prefs_appearance" />
 
     <PreferenceScreen
-        app:icon="@drawable/ic_account_circle"
+        app:icon="@drawable/ic_account_circle_outline"
         app:key="account"
         app:title="@string/prefs_account" />
 

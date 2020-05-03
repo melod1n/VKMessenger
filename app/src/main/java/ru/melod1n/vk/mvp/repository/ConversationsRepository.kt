@@ -1,4 +1,4 @@
-package ru.melod1n.vk.mvp.model
+package ru.melod1n.vk.mvp.repository
 
 import ru.melod1n.vk.api.VKApi
 import ru.melod1n.vk.api.VKApi.OnResponseListener
@@ -6,9 +6,11 @@ import ru.melod1n.vk.api.VKApi.SuccessCallback
 import ru.melod1n.vk.api.model.VKConversation
 import ru.melod1n.vk.api.model.VKMessage
 import ru.melod1n.vk.api.model.VKUser
+import ru.melod1n.vk.api.util.VKUtil
 import ru.melod1n.vk.common.AppGlobal
 import ru.melod1n.vk.common.TaskManager
 import ru.melod1n.vk.database.CacheStorage
+import ru.melod1n.vk.database.DatabaseHelper
 import ru.melod1n.vk.mvp.contract.BaseContract
 import ru.melod1n.vk.util.ArrayUtil
 
@@ -19,27 +21,16 @@ class ConversationsRepository : BaseContract.Repository<VKConversation>() {
 
         val dialogs = ArrayList<VKConversation>(conversations.size)
 
-        conversations.sortWith(Comparator { o1: VKConversation, o2: VKConversation ->
-
-            val m1 = CacheStorage.getMessage(o1.lastMessageId)
-            val m2 = CacheStorage.getMessage(o2.lastMessageId)
-
-            if (m1 == null || m2 == null) return@Comparator 0
-
-            val x = m1.date
-            val y = m2.date
-
-            y - x
-//            if (x > y) -1 else if (x == y) 1 else 0
-        })
+        VKUtil.sortConversationsByDate(dialogs, true)
 
         for (i in conversations.indices) {
             val conversation = conversations[i].apply {
-                lastMessage = CacheStorage.getMessage(lastMessageId)!!
+                lastMessage = CacheStorage.getMessage(lastMessageId) ?: return@apply
             }
 
             dialogs.add(conversation)
         }
+
         return dialogs
     }
 
@@ -54,7 +45,14 @@ class ConversationsRepository : BaseContract.Repository<VKConversation>() {
                         .offset(offset).count(count)
                         .execute(VKConversation::class.java)!!
 
-                insertDataInDatabase(models)
+                if (models.isEmpty()) {
+                    CacheStorage.delete(DatabaseHelper.TABLE_CONVERSATIONS)
+                    CacheStorage.delete(DatabaseHelper.TABLE_MESSAGES)
+                } else if (offset == 0) {
+                    CacheStorage.delete(DatabaseHelper.TABLE_CONVERSATIONS)
+                }
+
+                cacheValues(models)
 
                 AppGlobal.handler.post(SuccessCallback(listener, models))
             } catch (e: Exception) {
@@ -64,16 +62,17 @@ class ConversationsRepository : BaseContract.Repository<VKConversation>() {
         }
     }
 
-    override fun insertDataInDatabase(models: ArrayList<VKConversation>) {
-        val messages = ArrayList<VKMessage>(models.size)
+    override fun cacheValues(values: ArrayList<VKConversation>) {
+        val messages = ArrayList<VKMessage>(values.size)
 
-        for (conversation in models) {
-            messages.add(conversation.lastMessage!!)
+        for (conversation in values) {
+            messages.add(conversation.lastMessage)
         }
 
         CacheStorage.insertMessages(messages)
-        CacheStorage.insertConversations(models)
+        CacheStorage.insertConversations(values)
         CacheStorage.insertUsers(VKConversation.profiles)
         CacheStorage.insertGroups(VKConversation.groups)
     }
+
 }

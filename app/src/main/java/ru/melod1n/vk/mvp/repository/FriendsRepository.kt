@@ -1,4 +1,4 @@
-package ru.melod1n.vk.mvp.model
+package ru.melod1n.vk.mvp.repository
 
 import ru.melod1n.vk.api.VKApi
 import ru.melod1n.vk.api.model.VKUser
@@ -9,6 +9,7 @@ import ru.melod1n.vk.mvp.contract.FriendsContract
 import ru.melod1n.vk.util.ArrayUtil
 
 class FriendsRepository : FriendsContract.Repository<VKUser>() {
+
     override fun loadCachedValues(id: Int, offset: Int, count: Int, onlyOnline: Boolean): ArrayList<VKUser> {
         val friends = CacheStorage.getFriends(id, onlyOnline)
 
@@ -26,7 +27,8 @@ class FriendsRepository : FriendsContract.Repository<VKUser>() {
                         .offset(offset)
                         .execute(VKUser::class.java) ?: ArrayList()
 
-                insertDataInDatabase(models)
+                cacheValues(models)
+
                 AppGlobal.handler.post(VKApi.SuccessCallback(listener, models))
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -34,8 +36,15 @@ class FriendsRepository : FriendsContract.Repository<VKUser>() {
             }
         }
     }
-
-    override fun insertDataInDatabase(models: ArrayList<VKUser>) {
-        CacheStorage.insertFriends(models)
+    override fun cacheValues(values: ArrayList<VKUser>) {
+        CacheStorage.insertFriends(values)
     }
+
+    override fun loadValues(id: Int, offset: Int, count: Int, listener: VKApi.OnResponseListener<VKUser>) {
+    }
+
+    override fun loadCachedValues(id: Int, offset: Int, count: Int): ArrayList<VKUser> {
+        return ArrayList()
+    }
+
 }

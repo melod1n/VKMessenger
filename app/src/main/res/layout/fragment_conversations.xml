@@ -13,17 +13,15 @@
         android:layout_gravity="center" />
 
     <include
-        android:id="@+id/noItemsView"
-        android:visibility="gone"
+        layout="@layout/no_items_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        layout="@layout/no_items_view" />
+        android:visibility="gone" />
 
     <include
-        android:id="@+id/noInternetView"
+        layout="@layout/no_internet_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="gone"
-        layout="@layout/no_internet_view" />
-
+        android:visibility="gone" />
+     
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

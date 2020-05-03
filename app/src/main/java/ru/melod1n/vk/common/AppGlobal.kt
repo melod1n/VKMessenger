@@ -9,6 +9,8 @@ import android.database.sqlite.SQLiteDatabase
 import android.net.ConnectivityManager
 import android.os.Handler
 import android.view.WindowManager
+import android.view.inputmethod.InputMethodManager
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import androidx.core.content.pm.PackageInfoCompat
 import androidx.preference.PreferenceManager
@@ -24,6 +26,8 @@ class AppGlobal : Application() {
     companion object {
         lateinit var windowManager: WindowManager
         lateinit var connectivityManager: ConnectivityManager
+        lateinit var inputMethodManager: InputMethodManager
+
         lateinit var preferences: SharedPreferences
         lateinit var locale: Locale
         lateinit var handler: Handler
@@ -62,6 +66,8 @@ class AppGlobal : Application() {
         Companion.resources = resources
 
         database = DatabaseHelper.getInstance(this).writableDatabase
+
+        inputMethodManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
@@ -76,7 +82,7 @@ class AppGlobal : Application() {
         UserConfig.restore()
         TimeManager.init(this)
 
-
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
     }
 
 }

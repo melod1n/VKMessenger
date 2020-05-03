@@ -61,6 +61,13 @@
             app:fixWrap="true"
             tools:text="Some text" />
 
+        <LinearLayout
+            android:id="@+id/messageAttachments"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            tools:ignore="Orientation" />
+
     </ru.melod1n.vk.widget.BoundedLinearLayout>
 
 

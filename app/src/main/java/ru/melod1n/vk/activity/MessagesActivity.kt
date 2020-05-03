@@ -6,19 +6,25 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
-import android.view.Menu
-import android.view.MenuItem
-import android.view.View
+import android.view.*
+import android.widget.LinearLayout
 import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.amulyakhare.textdrawable.TextDrawable
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.snackbar.Snackbar
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_messages.*
+import kotlinx.android.synthetic.main.no_internet_view.*
+import kotlinx.android.synthetic.main.no_items_view.*
 import kotlinx.android.synthetic.main.recycler_view.*
 import ru.melod1n.vk.R
 import ru.melod1n.vk.adapter.MessageAdapter
+import ru.melod1n.vk.adapter.ProfileItemAdapter
 import ru.melod1n.vk.api.UserConfig
 import ru.melod1n.vk.api.VKApi
 import ru.melod1n.vk.api.model.VKConversation
@@ -32,11 +38,14 @@ import ru.melod1n.vk.current.BaseActivity
 import ru.melod1n.vk.current.BaseAdapter
 import ru.melod1n.vk.database.CacheStorage
 import ru.melod1n.vk.database.MemoryCache
+import ru.melod1n.vk.item.ProfileMenuItem
 import ru.melod1n.vk.mvp.contract.BaseContract
 import ru.melod1n.vk.mvp.contract.BaseContract.Presenter
 import ru.melod1n.vk.mvp.presenter.MessagesPresenter
 import ru.melod1n.vk.util.AndroidUtils
+import ru.melod1n.vk.util.ViewUtils
 import kotlin.random.Random
+
 
 class MessagesActivity : BaseActivity(),
         BaseContract.View<VKMessage>,
@@ -64,31 +73,24 @@ class MessagesActivity : BaseActivity(),
 
     private var conversation: VKConversation? = null
 
-    private var title: String? = null
-    private var avatar: String? = null
+    private var title = ""
+    private var avatar = ""
 
     private var lastMessageText = ""
     private var attachments = ArrayList<VKModel>()
 
     private var peerId = 0
 
-    private var presenter: Presenter<VKMessage>? = null
+    internal lateinit var presenter: Presenter<VKMessage>
 
     private var adapter: MessageAdapter? = null
 
     private var loadedId = false
 
-    private fun onLoad() {
-        presenter!!.valuesLoading()
-        presenter!!.requestClearList()
-        presenter!!.requestValues(peerId, 0, MESSAGES_COUNT)
-    }
-
     override fun onDestroy() {
         super.onDestroy()
 
         adapter?.onDestroy()
-        presenter = null
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -101,9 +103,11 @@ class MessagesActivity : BaseActivity(),
         prepareRefreshLayout()
         prepareRecyclerView()
         prepareEditText()
+        prepareNoItemsView()
+        prepareNoInternetView()
 
         presenter = MessagesPresenter(this)
-        (presenter as MessagesPresenter).readyForLoading()
+        (presenter as MessagesPresenter).prepareForLoading()
 
         if (conversation == null) {
             loadConversation()
@@ -111,6 +115,19 @@ class MessagesActivity : BaseActivity(),
         }
 
         initData()
+    }
+
+    private fun loadValues() {
+        if (AndroidUtils.hasConnection()) {
+            if (adapter != null && !adapter!!.isEmpty()) {
+                presenter.prepareForLoading();
+            }
+
+            presenter.requestValues(0, 0, MESSAGES_COUNT)
+        } else {
+            showNoInternetView(true);
+            showRefreshLayout(false);
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -121,15 +138,12 @@ class MessagesActivity : BaseActivity(),
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             android.R.id.home -> onBackPressed()
-            R.id.messagesRefresh -> onLoad()
+            R.id.messagesRefresh -> loadValues()
         }
 
         return super.onOptionsItemSelected(item)
     }
 
-    fun getRecyclerView(): RecyclerView {
-        return recyclerView
-    }
 
     private fun loadConversation() {
         TaskManager.loadConversation(peerId, object : VKApi.OnResponseListener<VKConversation> {
@@ -149,13 +163,19 @@ class MessagesActivity : BaseActivity(),
 
         val viewedDialogs = MainActivity.viewedDialogs
 
+        presenter.requestCachedValues(peerId, 0, MESSAGES_COUNT)
+
+        if (adapter?.values?.size == 1) {
+            showProgressBar(true)
+        }
+
         if (AndroidUtils.hasConnection() && !viewedDialogs.contains(peerId)) {
             chatInfo.setText(R.string.loading)
             viewedDialogs.add(peerId)
 
-            onLoad()
+            loadValues()
         } else {
-            presenter!!.requestCachedValues(peerId, 0, MESSAGES_COUNT)
+            showProgressBar(false)
         }
 
         refreshFabStyle()
@@ -312,7 +332,7 @@ class MessagesActivity : BaseActivity(),
 
         val placeholder = TextDrawable
                 .builder()
-                .buildRound(if (title!!.isEmpty()) "" else title!!.substring(0, 1), AppGlobal.colorAccent)
+                .buildRound(if (title.isEmpty()) "" else title.substring(0, 1), AppGlobal.colorAccent)
 
         chatAvatar.setImageDrawable(placeholder)
 
@@ -322,13 +342,105 @@ class MessagesActivity : BaseActivity(),
             e.printStackTrace()
         }
 
+        toolbar.setOnClickListener {
+            openProfile()
+        }
+
+        chatAvatar.setOnClickListener {
+            openProfile()
+        }
+
         chatTitle.text = title
 
         supportActionBar?.setDisplayShowTitleEnabled(false)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         toolbar.navigationIcon?.setTint(AppGlobal.colorAccent)
-//        toolbar.setNavigationOnClickListener { onBackPressed() }
+    }
+
+    private fun openProfile() {
+        if (conversation == null || title == null) return
+
+        val profileDialog = ProfileDialog(conversation!!, title!!)
+        profileDialog.show(supportFragmentManager, "")
+    }
+
+    open class ProfileDialog(private val conversation: VKConversation, private val chatTitle: String) : BottomSheetDialogFragment() {
+
+        private lateinit var title: TextView
+        private lateinit var subtitle: TextView
+        private lateinit var recyclerView: RecyclerView
+        private lateinit var root: LinearLayout
+
+        private var adapter: ProfileItemAdapter? = null
+
+        override fun onCreate(savedInstanceState: Bundle?) {
+            super.onCreate(savedInstanceState)
+
+            setStyle(STYLE_NO_TITLE, R.style.AppTheme_ProfileDialog)
+        }
+
+        override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+            return inflater.inflate(R.layout.profile_bottom_sheet, container, false)
+        }
+
+        override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+            super.onViewCreated(view, savedInstanceState)
+
+            title = view.findViewById(R.id.profileTitle)
+            subtitle = view.findViewById(R.id.profileSubtitle)
+            recyclerView = view.findViewById(R.id.profileItemMenu)
+            root = view.findViewById(R.id.profileRoot)
+
+            val layoutManager = LinearLayoutManager(requireContext(), RecyclerView.VERTICAL, false)
+
+            recyclerView.setHasFixedSize(true)
+            recyclerView.layoutManager = layoutManager
+
+            title.text = chatTitle
+
+            subtitle.text = getSubtitle()
+
+            val items = ArrayList<ProfileMenuItem>()
+
+            items.add(ProfileMenuItem(ContextCompat.getDrawable(requireContext(), R.drawable.ic_search)!!, "Search"))
+            items.add(ProfileMenuItem(ContextCompat.getDrawable(requireContext(), R.drawable.ic_search)!!, "Search"))
+            items.add(ProfileMenuItem(ContextCompat.getDrawable(requireContext(), R.drawable.ic_search)!!, "Search"))
+            items.add(ProfileMenuItem(ContextCompat.getDrawable(requireContext(), R.drawable.ic_search)!!, "Search"))
+            items.add(ProfileMenuItem(ContextCompat.getDrawable(requireContext(), R.drawable.ic_search)!!, "Search"))
+
+            createAdapter(items)
+        }
+
+        private fun createAdapter(items: ArrayList<ProfileMenuItem>) {
+            adapter = ProfileItemAdapter(requireContext(), items)
+            recyclerView.adapter = adapter
+        }
+
+        private fun getSubtitle(): String {
+            conversation
+
+            return when (conversation.type) {
+                VKConversation.TYPE_CHAT -> getString(R.string.chat_members, conversation.membersCount)
+                VKConversation.TYPE_GROUP -> {
+                    val group = MemoryCache.getGroup(conversation.id) ?: return ""
+
+                    if (group.screenName == null) "@id${group.id}" else "@${group.screenName}"
+                }
+                VKConversation.TYPE_USER -> {
+                    val user = MemoryCache.getUser(conversation.id) ?: return ""
+
+                    var str = if (user.screenName == null || user.screenName!!.contains("id${user.id}")) "" else "@${user.screenName}"
+
+                    val online = getString(if (user.isOnlineMobile) R.string.user_online_mobile else if (user.isOnline) R.string.user_online else R.string.user_offline)
+
+                    str += if (str.isEmpty()) online else " · $online"
+
+                    str
+                }
+                else -> ""
+            }
+        }
     }
 
     private fun prepareRefreshLayout() {
@@ -336,20 +448,30 @@ class MessagesActivity : BaseActivity(),
     }
 
     private fun prepareRecyclerView() {
-        val layoutManager = LinearLayoutManager(this, RecyclerView.VERTICAL, false)
-        layoutManager.stackFromEnd = true
+        val layoutManager = LinearLayoutManager(this, RecyclerView.VERTICAL, false).apply { stackFromEnd = true }
 
         recyclerView.layoutManager = layoutManager
+
+
+        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+
+                if (dy < 0 && AppGlobal.inputMethodManager.isAcceptingText) {
+                    ViewUtils.hideKeyboardFrom(chatMessage)
+                }
+            }
+        })
     }
 
     private fun initExtraData() {
         conversation = intent.getSerializableExtra(TAG_EXTRA_CONVERSATION) as VKConversation?
 
         peerId = intent.getIntExtra(TAG_ID, -1)
-        title = intent.getStringExtra(TAG_EXTRA_TITLE)
-        avatar = intent.getStringExtra(TAG_EXTRA_AVATAR)
+        title = intent.getStringExtra(TAG_EXTRA_TITLE) ?: ""
+        avatar = intent.getStringExtra(TAG_EXTRA_AVATAR) ?: ""
 
-        if (conversation == VKConversation()) {
+        if (conversation == VKConversation() && AndroidUtils.hasConnection()) {
             Thread(Runnable {
                 try {
                     val conversation = VKApi.messages()
@@ -364,12 +486,16 @@ class MessagesActivity : BaseActivity(),
 
                     this@MessagesActivity.conversation = conversation[0]
 
-                    val user = MemoryCache.getUser(peerId)
+                    val user = VKUtil.searchUser(peerId)
+                    val group = VKUtil.searchGroup(peerId)
+
                     if (user != null) {
                         title = user.toString()
-                        avatar = user.photo200
+                        avatar = user.photo200!!
+                    } else if (group != null) {
+                        title = group.name!!
+                        avatar = group.photo200!!
                     }
-
 
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -394,11 +520,9 @@ class MessagesActivity : BaseActivity(),
 
         chatMessage.setText("")
 
-        adapter!!.add(message)
-        adapter!!.notifyDataSetChanged()
+        adapter!!.addMessage(message, scrollToBottom)
 
-        if (scrollToBottom)
-            recyclerView.smoothScrollToPosition(adapter!!.itemCount - 1)
+        presenter.checkListIsEmpty(adapter!!.values)
 
         TaskManager.execute {
             VKApi.messages().send()
@@ -410,106 +534,14 @@ class MessagesActivity : BaseActivity(),
                             message.id = models[0]
 
                             CacheStorage.insertMessage(message)
+
+                            TaskManager.loadMessage(message.id)
                         }
 
                         override fun onError(e: Exception) {
                             e.printStackTrace()
                         }
                     })
-        }
-    }
-
-    override fun showNoItemsView(visible: Boolean) {
-        noItemsViewStub.visibility = View.GONE
-
-        if (visible) {
-            noItemsViewStub.inflate()
-
-            noItemsViewStub.apply {
-                alpha = 0f
-                visibility = View.VISIBLE
-                animate().alpha(1f).setDuration(250).start()
-            }
-        } else {
-            noItemsViewStub.apply {
-                alpha = 1f
-                animate().alpha(0f).setDuration(250).withEndAction { visibility = View.GONE }.start()
-            }
-        }
-    }
-
-    override fun showNoInternetView(visible: Boolean) {
-        if (visible) clearList()
-
-        noInternetViewStub.visibility = View.GONE
-
-        if (visible) {
-            noInternetViewStub.inflate()
-
-            noInternetViewStub.apply {
-                alpha = 0f
-                visibility = View.VISIBLE
-                animate().alpha(1f).setDuration(250).start()
-            }
-        } else {
-            noInternetViewStub.apply {
-                alpha = 1f
-                animate().alpha(0f).setDuration(250).withEndAction { visibility = View.GONE }.start()
-            }
-        }
-    }
-
-    override fun showErrorView(errorTitle: String, errorDescription: String) {
-        Log.d(TAG, "showErrorView: $errorTitle: $errorDescription")
-        if (!AndroidUtils.hasConnection()) {
-            presenter!!.requestCachedValues(0, 0, MESSAGES_COUNT)
-        }
-    }
-
-    override fun hideErrorView() {
-        Log.d(TAG, "hideErrorView")
-    }
-
-    override fun showRefreshLayout(visible: Boolean) {}
-
-    override fun showProgressBar(visible: Boolean) {
-        findViewById<ProgressBar>(R.id.progressBar).visibility = if (visible) View.VISIBLE else View.GONE
-    }
-
-    override fun loadValuesIntoList(offset: Int, values: ArrayList<VKMessage>, isCache: Boolean) {
-        Log.d(TAG, "loadValuesIntoList: " + offset + ", " + values.size)
-
-        setChatInfoText()
-
-        if (values.isEmpty()) return
-
-        VKUtil.sortMessagesByDate(values, false)
-        VKUtil.prepareList(values)
-
-        if (adapter == null) {
-            adapter = MessageAdapter(this, values, conversation ?: VKConversation()).also {
-                it.onItemClickListener = this
-            }
-
-            recyclerView!!.adapter = adapter
-            return
-        }
-
-        if (recyclerView!!.adapter == null) {
-            recyclerView!!.adapter = adapter
-        }
-
-        if (offset > 0) {
-            adapter!!.addAll(values)
-            adapter!!.notifyItemRangeInserted(offset, values.size)
-            return
-        }
-
-        adapter!!.values = values
-        adapter!!.notifyDataSetChanged()
-
-        if (offset == 0) {
-            recyclerView!!.smoothScrollToPosition(adapter!!.itemCount + 1)
         }
     }
 
@@ -544,18 +576,121 @@ class MessagesActivity : BaseActivity(),
         }
     }
 
-    override fun clearList() {
-        Log.d(TAG, "clearList")
-
-        if (adapter == null) return
-
-        adapter!!.clear()
-        adapter!!.notifyDataSetChanged()
-    }
-
     override fun onItemClick(position: Int) {
         val message = adapter!!.getItem(position)
 
         Toast.makeText(this, message.text, Toast.LENGTH_SHORT).show()
+    }
+
+    override fun prepareNoInternetView() {
+        noInternetUpdate.setOnClickListener {
+            if (AndroidUtils.hasConnection()) {
+                loadValues()
+            } else {
+                Snackbar.make(noInternetView, R.string.no_connection, Snackbar.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    override fun prepareNoItemsView() {
+        noItemsRefresh.setOnClickListener {
+            if (AndroidUtils.hasConnection()) {
+                loadValues()
+            } else {
+                showNoInternetView(true)
+            }
+        }
+
+        noItemsText.text = getString(R.string.dialog_is_empty)
+    }
+
+    override fun prepareErrorView() {
+
+    }
+
+    override fun showNoItemsView(visible: Boolean) {
+        if (visible) {
+            noItemsView.apply {
+                alpha = 0f
+                visibility = View.VISIBLE
+                animate().alpha(1f).setDuration(250).start()
+            }
+        } else {
+            noItemsView.apply {
+                alpha = 1f
+                animate().alpha(0f).setDuration(250).withEndAction { visibility = View.GONE }.start()
+            }
+        }
+    }
+
+    override fun showNoInternetView(visible: Boolean) {
+        if (visible) clearList()
+
+        if (visible) {
+            noInternetView.apply {
+                alpha = 0f
+                visibility = View.VISIBLE
+                animate().alpha(1f).setDuration(250).start()
+            }
+        } else {
+            noInternetView.apply {
+                alpha = 1f
+                animate().alpha(0f).setDuration(250).withEndAction { visibility = View.GONE }.start()
+            }
+        }
+    }
+
+    override fun showErrorView(e: Exception?) {
+        if (!AndroidUtils.hasConnection()) {
+            presenter.requestCachedValues(0, 0, MESSAGES_COUNT)
+        }
+    }
+
+    override fun showRefreshLayout(visible: Boolean) {}
+
+    override fun showProgressBar(visible: Boolean) {
+        findViewById<ProgressBar>(R.id.progressBar).visibility = if (visible) View.VISIBLE else View.GONE
+    }
+
+    override fun insertValues(id: Int, offset: Int, count: Int, values: ArrayList<VKMessage>, isCache: Boolean) {
+        Log.d(TAG, "loadValuesIntoList: " + offset + ", " + values.size)
+
+        setChatInfoText()
+
+        VKUtil.sortMessagesByDate(values, false)
+        VKUtil.prepareList(values)
+
+        if (adapter == null) {
+            adapter = MessageAdapter(this, values, conversation!!).also {
+                it.onItemClickListener = this
+            }
+
+            recyclerView.adapter = adapter
+            return
+        }
+
+        if (recyclerView.adapter == null) {
+            recyclerView.adapter = adapter
+        }
+
+        if (offset > 0) {
+            adapter!!.addAll(values)
+            adapter!!.notifyItemRangeInserted(offset, values.size)
+            return
+        }
+
+        adapter!!.values = values
+        adapter!!.notifyDataSetChanged()
+
+        if (offset == 0) {
+            recyclerView.smoothScrollToPosition(adapter!!.itemCount + 1)
+        }
+    }
+
+    override fun clearList() {
+        if (adapter == null) return
+
+        adapter!!.clear()
+        adapter!!.notifyDataSetChanged()
     }
 }
