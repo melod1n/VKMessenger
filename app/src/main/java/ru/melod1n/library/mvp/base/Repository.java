@@ -26,7 +26,7 @@ public abstract class Repository<T> {
         }
     }
 
-    protected void sendValuesToPresenter(@NonNull MvpFields fields, @NonNull ArrayList<VKUser> values, @Nullable OnLoadListener<VKUser> listener) {
+    protected void sendValuesToPresenter(@NonNull MvpFields fields, @NonNull ArrayList<T> values, @Nullable OnLoadListener<T> listener) {
         if (listener != null) {
             AppGlobal.handler.post(() -> listener.onSuccessLoad(values));
         }
