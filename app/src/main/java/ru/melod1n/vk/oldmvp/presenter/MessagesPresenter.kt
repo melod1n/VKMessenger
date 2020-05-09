@@ -1,8 +1,8 @@
-package ru.melod1n.vk.mvp.presenter
+package ru.melod1n.vk.oldmvp.presenter
 
 import ru.melod1n.vk.api.model.VKMessage
-import ru.melod1n.vk.mvp.contract.BaseContract
-import ru.melod1n.vk.mvp.repository.MessagesRepository
+import ru.melod1n.vk.oldmvp.contract.BaseContract
+import ru.melod1n.vk.oldmvp.repository.MessagesRepository
 
 class MessagesPresenter(private val view: BaseContract.View<VKMessage>) : BaseContract.Presenter<VKMessage>(view) {
 

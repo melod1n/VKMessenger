@@ -39,9 +39,9 @@ import ru.melod1n.vk.current.BaseAdapter
 import ru.melod1n.vk.database.CacheStorage
 import ru.melod1n.vk.database.MemoryCache
 import ru.melod1n.vk.item.ProfileMenuItem
-import ru.melod1n.vk.mvp.contract.BaseContract
-import ru.melod1n.vk.mvp.contract.BaseContract.Presenter
-import ru.melod1n.vk.mvp.presenter.MessagesPresenter
+import ru.melod1n.vk.oldmvp.contract.BaseContract
+import ru.melod1n.vk.oldmvp.contract.BaseContract.Presenter
+import ru.melod1n.vk.oldmvp.presenter.MessagesPresenter
 import ru.melod1n.vk.util.AndroidUtils
 import ru.melod1n.vk.util.ViewUtils
 import kotlin.random.Random
@@ -90,7 +90,7 @@ class MessagesActivity : BaseActivity(),
     override fun onDestroy() {
         super.onDestroy()
 
-        adapter?.onDestroy()
+        adapter?.destroy()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

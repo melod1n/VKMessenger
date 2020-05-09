@@ -20,7 +20,6 @@ import ru.melod1n.vk.api.util.VKUtil
 import ru.melod1n.vk.common.AppGlobal
 import ru.melod1n.vk.common.EventInfo
 import ru.melod1n.vk.current.BaseAdapter
-import ru.melod1n.vk.current.BaseHolder
 import ru.melod1n.vk.database.CacheStorage
 import ru.melod1n.vk.util.AndroidUtils
 import ru.melod1n.vk.util.ArrayUtil
@@ -58,7 +57,7 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>, var convers
     private var recyclerView = (context as MessagesActivity).recyclerView
     private var layoutManager = recyclerView.layoutManager as LinearLayoutManager
 
-    override fun onDestroy() {
+    override fun destroy() {
         VKLongPollParser.removeOnMessagesListener(this)
         VKLongPollParser.removeOnEventListener(this)
     }
@@ -208,8 +207,15 @@ class MessageAdapter(context: Context, values: ArrayList<VKMessage>, var convers
     inner class ItemAttachmentIn(v: View) : ItemNormalIn(v) {
         val attachments: LinearLayout = v.findViewById(R.id.messageAttachments)
 
-    }
+        override fun bind(position: Int) {
+            super.bind(position)
 
+            val message = getItem(position)
+
+            AttachmentInflater.showAttachments(message, this)
+        }
+
+    }
 
     open inner class ItemNormalOut(v: View) : NormalViewHolder(v) {
 

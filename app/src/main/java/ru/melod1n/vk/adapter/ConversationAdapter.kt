@@ -9,17 +9,20 @@ import android.text.style.ForegroundColorSpan
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.recycler_view.*
 import ru.melod1n.vk.R
-import ru.melod1n.vk.adapter.diffutil.ConversationDiffUtilCallback
+import ru.melod1n.vk.adapter.diffutil.ConversationCallback
 import ru.melod1n.vk.api.UserConfig
 import ru.melod1n.vk.api.VKLongPollParser
 import ru.melod1n.vk.api.model.VKConversation
+import ru.melod1n.vk.api.model.VKGroup
 import ru.melod1n.vk.api.model.VKMessage
+import ru.melod1n.vk.api.model.VKUser
 import ru.melod1n.vk.api.util.VKUtil
 import ru.melod1n.vk.common.AppGlobal
 import ru.melod1n.vk.common.EventInfo
@@ -47,13 +50,13 @@ class ConversationAdapter(private val fragmentConversations: FragmentConversatio
         VKLongPollParser.addOnMessagesListener(this)
     }
 
-    override fun onDestroy() {
+    override fun destroy() {
         VKLongPollParser.removeOnEventListener(this)
         VKLongPollParser.removeOnMessagesListener(this)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ConversationHolder {
-        return ConversationHolder(view(R.layout.item_conversation, parent))
+        return ConversationHolder(view(R.layout.item_conversation_light, parent))
     }
 
     override fun onBindViewHolder(holder: ConversationHolder, position: Int, payloads: MutableList<Any>) {
@@ -62,26 +65,25 @@ class ConversationAdapter(private val fragmentConversations: FragmentConversatio
     }
 
     inner class ConversationHolder(v: View) : BaseHolder(v) {
-        override fun bind(position: Int) {
-            bind(position, mutableListOf())
-        }
 
-        fun bind(position: Int, payloads: MutableList<Any>) {
+        private var text: TextView = v.findViewById(R.id.conversationText)
+        private var title: TextView = v.findViewById(R.id.conversationTitle)
+        private var avatar: CircleImageView = v.findViewById(R.id.conversationAvatar)
+        private var online: ImageView = v.findViewById(R.id.conversationUserOnline)
+        private var out: CircleImageView = v.findViewById(R.id.conversationOut)
+        private var counter: TextView = v.findViewById(R.id.conversationCounter)
+        private var date: TextView = v.findViewById(R.id.conversationDate)
+        private var outCounterContainer : FrameLayout = v.findViewById(R.id.conversationOutCounter)
 
-        }
-    }
-
-    inner class NormalMessageOut(v: View) : BaseHolder(v) {
-
-        private var text = v.findViewById<TextView>(R.id.dialogText)
-        private var title = v.findViewById<TextView>(R.id.dialogTitle)
-        private var avatar = v.findViewById<CircleImageView>(R.id.dialogAvatar)
-        private var userAvatar = v.findViewById<CircleImageView>(R.id.dialogUserAvatar)
-        private var userOnline = v.findViewById<ImageView>(R.id.dialogUserOnline)
-        private var dialogType = v.findViewById<ImageView>(R.id.dialogType)
-        private var dialogCounter = v.findViewById<TextView>(R.id.dialogCounter)
-        private var dialogOut = v.findViewById<CircleImageView>(R.id.dialogOut)
-        private var dialogDate = v.findViewById<TextView>(R.id.dialogDate)
+//        private var text = v.findViewById<TextView>(R.id.dialogText)
+//        private var title = v.findViewById<TextView>(R.id.dialogTitle)
+//        private var avatar = v.findViewById<CircleImageView>(R.id.dialogAvatar)
+//        private var userAvatar = v.findViewById<CircleImageView>(R.id.dialogUserAvatar)
+//        private var userOnline = v.findViewById<ImageView>(R.id.dialogUserOnline)
+//        private var dialogType = v.findViewById<ImageView>(R.id.dialogType)
+//        private var dialogCounter = v.findViewById<TextView>(R.id.dialogCounter)
+//        private var dialogOut = v.findViewById<CircleImageView>(R.id.dialogOut)
+//        private var dialogDate = v.findViewById<TextView>(R.id.dialogDate)
 
         private val placeholderNormal: Drawable = ColorDrawable(Color.TRANSPARENT)
         private val colorHighlight = AppGlobal.colorAccent
@@ -98,20 +100,11 @@ class ConversationAdapter(private val fragmentConversations: FragmentConversatio
         }
 
         fun bind(position: Int, payloads: MutableList<Any>) {
-            Log.d("BIND", "position = $position");
+            Log.d("BIND", "position = $position")
 
             val conversation = getItem(position)
 
             val lastMessage = conversation.lastMessage
-
-            if (payloads.isNotEmpty()) {
-                val payload = payloads[0]
-
-                if (payload == ConversationDiffUtilCallback.DATE_CHANGED) {
-                    dialogDate.text = VKUtil.getTime(context, lastMessage)
-                    return
-                }
-            }
 
             val peerUser = VKUtil.searchUser(lastMessage.peerId)
             val peerGroup = VKUtil.searchGroup(lastMessage.peerId)
@@ -119,6 +112,85 @@ class ConversationAdapter(private val fragmentConversations: FragmentConversatio
             val fromUser = VKUtil.searchUser(lastMessage.fromId)
             val fromGroup = VKUtil.searchGroup(lastMessage.fromId)
 
+            val dialogTitle = setTitle(conversation, peerUser, peerGroup)
+
+            if (payloads.isNotEmpty()) {
+                for (payload in payloads) {
+                    when (payload) {
+                        ConversationCallback.CONVERSATION -> {
+                            setUserOnline(conversation, peerUser)
+                            prepareUserAvatar(conversation, lastMessage, fromUser, fromGroup)
+                            prepareAvatar(dialogTitle, conversation, peerUser, peerGroup)
+                            setDialogType(conversation)
+                            setIsRead(lastMessage, conversation)
+                            setCounterBackground(conversation)
+                        }
+                        ConversationCallback.MESSAGE -> {
+                            prepareUserAvatar(conversation, lastMessage, fromUser, fromGroup)
+                            prepareAttachments(lastMessage)
+                            setIsRead(lastMessage, conversation)
+                            setDate(lastMessage)
+                        }
+                        ConversationCallback.GROUP -> {
+                            prepareAvatar(dialogTitle, conversation, peerUser, peerGroup)
+                        }
+                        ConversationCallback.USER -> {
+                            setUserOnline(conversation, peerUser)
+                            prepareAvatar(dialogTitle, conversation, peerUser, peerGroup)
+                        }
+                        ConversationCallback.EDIT_MESSAGE -> {
+                            prepareUserAvatar(conversation, lastMessage, fromUser, fromGroup)
+                            prepareAttachments(lastMessage)
+                            setIsRead(lastMessage, conversation)
+                            setDate(lastMessage)
+                        }
+                        ConversationCallback.DATE -> {
+                            setDate(lastMessage)
+                        }
+                        ConversationCallback.ONLINE -> {
+                            setUserOnline(conversation, peerUser)
+                        }
+                        ConversationCallback.ATTACHMENTS -> {
+                            prepareAttachments(lastMessage)
+                        }
+                        ConversationCallback.AVATAR -> {
+                            prepareAvatar(dialogTitle, conversation, peerUser, peerGroup)
+                        }
+                        ConversationCallback.USER_AVATAR -> {
+                            prepareUserAvatar(conversation, lastMessage, fromUser, fromGroup)
+                        }
+                        ConversationCallback.READ -> {
+                            setIsRead(lastMessage, conversation)
+                        }
+                        ConversationCallback.NOTIFICATIONS -> {
+                            setCounterBackground(conversation)
+                        }
+                    }
+                }
+
+                return
+            }
+
+            applySizeParams()
+
+            setUserOnline(conversation, peerUser)
+
+            prepareUserAvatar(conversation, lastMessage, fromUser, fromGroup)
+
+            prepareAvatar(dialogTitle, conversation, peerUser, peerGroup)
+
+            setDialogType(conversation)
+
+            prepareAttachments(lastMessage)
+
+            setIsRead(lastMessage, conversation)
+
+            setDate(lastMessage)
+
+            setCounterBackground(conversation)
+        }
+
+        private fun applySizeParams() {
             avatar.layoutParams.apply {
                 if (height != avatarSize) height = avatarSize
                 if (width != avatarSize) width = avatarSize
@@ -127,38 +199,55 @@ class ConversationAdapter(private val fragmentConversations: FragmentConversatio
             if (text.maxLines != maxLines) {
                 text.maxLines = maxLines
             }
+        }
 
+        private fun setTitle(conversation: VKConversation, peerUser: VKUser?, peerGroup: VKGroup?): String {
             val dialogTitle = VKUtil.getTitle(conversation, peerUser, peerGroup)
             title.text = dialogTitle
 
+            return dialogTitle
+        }
+
+        private fun setUserOnline(conversation: VKConversation, peerUser: VKUser?) {
             val onlineIcon = VKUtil.getUserOnlineIcon(context, conversation, peerUser)
 
-            userOnline.apply {
+            online.apply {
                 setImageDrawable(onlineIcon)
                 visibility = if (onlineIcon == null) View.GONE else View.VISIBLE
             }
+        }
 
-            if ((conversation.isChat() || lastMessage.isOut) && !conversation.isGroupChannel) {
-                userAvatar!!.visibility = View.VISIBLE
-                ImageUtil.loadImage(VKUtil.getUserAvatar(lastMessage, fromUser, fromGroup), userAvatar, placeholderNormal)
-            } else {
-                userAvatar!!.visibility = View.GONE
-                userAvatar!!.setImageDrawable(null)
-            }
+        //TODO: привести к нормальному виду список чатов, попробовать убрать mvp
 
+        private fun prepareUserAvatar(conversation: VKConversation, lastMessage: VKMessage, fromUser: VKUser?, fromGroup: VKGroup?) {
+//            if ((conversation.isChat() || lastMessage.isOut) && !conversation.isGroupChannel) {
+//                userAvatar!!.visibility = View.VISIBLE
+//                ImageUtil.loadImage(VKUtil.getUserAvatar(lastMessage, fromUser, fromGroup), userAvatar, placeholderNormal)
+//            } else {
+//                userAvatar!!.visibility = View.GONE
+//                userAvatar!!.setImageDrawable(null)
+//            }
+        }
+
+        private fun prepareAvatar(dialogTitle: String, conversation: VKConversation, peerUser: VKUser?, peerGroup: VKGroup?) {
             val dialogAvatarPlaceholder = VKUtil.getAvatarPlaceholder(dialogTitle)
 
             avatar.setImageDrawable(dialogAvatarPlaceholder)
 
             ImageUtil.loadImage(VKUtil.getAvatar(conversation, peerUser, peerGroup), avatar, dialogAvatarPlaceholder)
+        }
 
-            val dDialogType = VKUtil.getDialogType(context, conversation)
+        private fun setDialogType(conversation: VKConversation) {
+//            val dDialogType = VKUtil.getDialogType(context, conversation)
+//
+//            dialogType.apply {
+//                visibility = if (dDialogType != null) View.VISIBLE else View.GONE
+//                setImageDrawable(dDialogType)
+//            }
 
-            dialogType.apply {
-                visibility = if (dDialogType != null) View.VISIBLE else View.GONE
-                setImageDrawable(dDialogType)
-            }
+        }
 
+        private fun prepareAttachments(lastMessage: VKMessage) {
             text.apply {
                 compoundDrawablePadding = 0
                 setCompoundDrawablesRelativeWithIntrinsicBounds(null, null, null, null)
@@ -166,7 +255,7 @@ class ConversationAdapter(private val fragmentConversations: FragmentConversatio
 
             if (lastMessage.action == null) {
                 if (!ArrayUtil.isEmpty(lastMessage.attachments)) {
-                    val attachmentString = VKUtil.getAttachmentText(context, lastMessage.attachments!!)
+                    val attachmentString = VKUtil.getAttachmentText(context, lastMessage.attachments)
 
                     val attachmentText = if (lastMessage.text.isNullOrEmpty()) attachmentString else (lastMessage.text
                             ?: "")
@@ -177,7 +266,7 @@ class ConversationAdapter(private val fragmentConversations: FragmentConversatio
                         setSpan(ForegroundColorSpan(colorHighlight), startIndex, attachmentText.length, 0)
                     }
 
-                    val attachmentDrawable = VKUtil.getAttachmentDrawable(context, lastMessage.attachments!!)
+                    val attachmentDrawable = VKUtil.getAttachmentDrawable(context, lastMessage.attachments)
 
                     text.apply {
                         text = span
@@ -211,29 +300,47 @@ class ConversationAdapter(private val fragmentConversations: FragmentConversatio
 
                 text.text = span
             }
+        }
 
+        private fun setIsRead(lastMessage: VKMessage, conversation: VKConversation) {
             val isRead = ((lastMessage.isOut && conversation.outRead == conversation.lastMessageId ||
                     !lastMessage.isOut && conversation.inRead == conversation.lastMessageId) && conversation.lastMessageId == lastMessage.id) && conversation.unreadCount == 0
 
             if (isRead) {
-                dialogCounter.visibility = View.GONE
-                dialogOut.visibility = View.GONE
+                counter.visibility = View.GONE
+                out.visibility = View.GONE
             } else {
                 if (lastMessage.isOut) {
-                    dialogOut.visibility = View.VISIBLE
-                    dialogCounter.visibility = View.GONE
-                    dialogCounter.text = ""
+                    out.visibility = View.VISIBLE
+                    counter.visibility = View.GONE
+                    counter.text = ""
                 } else {
-                    dialogOut.visibility = View.GONE
-                    dialogCounter.visibility = View.VISIBLE
-                    dialogCounter.text = conversation.unreadCount.toString()
+                    out.visibility = View.GONE
+                    counter.visibility = View.VISIBLE
+                    counter.text = conversation.unreadCount.toString()
                 }
             }
 
-            dialogDate.text = VKUtil.getTime(context, lastMessage)
-            dialogCounter.background.setTint(if (conversation.isNotificationsDisabled()) Color.GRAY else colorHighlight)
         }
 
+        private fun setDate(lastMessage: VKMessage) {
+            date.text = VKUtil.getTime(context, lastMessage)
+        }
+
+
+        private fun setCounterBackground(conversation: VKConversation) {
+            counter.background.setTint(if (conversation.isNotificationsDisabled()) Color.GRAY else colorHighlight)
+        }
+    }
+
+
+    fun updateList(newList: List<VKConversation>) {
+        val diffCallBack = ConversationCallback(values, newList)
+        val diffResult = DiffUtil.calculateDiff(diffCallBack, false)
+
+        setItems(newList)
+
+        diffResult.dispatchUpdatesTo(this)
     }
 
     private fun addMessage(message: VKMessage) {
@@ -246,12 +353,8 @@ class ConversationAdapter(private val fragmentConversations: FragmentConversatio
         if (index >= 0) {
             val conversation = prepareConversation(getItem(index), message)
 
-            if (index == 0) {
-                notifyItemChanged(0)
-            } else {
-                list.removeAt(index)
-                list.add(0, conversation)
-            }
+            list.removeAt(index)
+            list.add(0, conversation)
         } else {
             val conversation = CacheStorage.getConversation(message.peerId)
 
@@ -281,15 +384,6 @@ class ConversationAdapter(private val fragmentConversations: FragmentConversatio
         }
     }
 
-    fun updateList(newList: List<VKConversation>) {
-        val diffCallBack = ConversationDiffUtilCallback(values, newList)
-        val diffResult = DiffUtil.calculateDiff(diffCallBack, false)
-
-        setItems(ArrayList(newList))
-
-        diffResult.dispatchUpdatesTo(this)
-    }
-
     private fun editMessage(message: VKMessage) {
         val index = searchConversationIndex(message.peerId)
         if (index == -1) return
@@ -298,7 +392,7 @@ class ConversationAdapter(private val fragmentConversations: FragmentConversatio
 
         dialog.lastMessage = message
 
-        notifyItemChanged(index)
+        notifyItemChanged(index, ConversationCallback.EDIT_MESSAGE)
     }
 
     private fun readMessage(messageId: Int, peerId: Int) {
@@ -313,24 +407,25 @@ class ConversationAdapter(private val fragmentConversations: FragmentConversatio
             dialog.unreadCount = dialog.lastMessageId - messageId
         }
 
-        notifyItemChanged(index)
+        notifyItemChanged(index, ConversationCallback.READ)
     }
 
     private fun deleteMessage(peerId: Int) {
         val index = searchConversationIndex(peerId)
         if (index == -1) return
 
-        val dialog = getItem(index)
+        val list = ArrayList(values)
+
+        val dialog = list[index]
 
         val messages = VKUtil.sortMessagesByDate(CacheStorage.getMessages(dialog.id), true)
 
         if (messages.isEmpty()) {
             CacheStorage.deleteConversation(dialog.id)
 
-            val items = ArrayList(values)
-            items.removeAt(index)
+            list.removeAt(index)
 
-            updateList(items)
+            updateList(list)
 
             fragmentConversations.presenter.checkListIsEmpty(values)
         } else {
@@ -339,8 +434,9 @@ class ConversationAdapter(private val fragmentConversations: FragmentConversatio
             dialog.lastMessageId = lastMessage.id
             dialog.lastMessage = lastMessage
 
-            setItems(VKUtil.sortConversationsByDate(values, true))
-            notifyDataSetChanged()
+
+            VKUtil.sortConversationsByDate(list, true)
+            updateList(list)
         }
     }
 
@@ -348,7 +444,8 @@ class ConversationAdapter(private val fragmentConversations: FragmentConversatio
         val index = searchConversationIndex(message.peerId)
         if (index == -1) return
 
-        val dialog = getItem(index)
+        val list = ArrayList(values)
+        val dialog = list[index]
 
         //TODO: кривое сообщение
 
@@ -360,8 +457,8 @@ class ConversationAdapter(private val fragmentConversations: FragmentConversatio
         dialog.lastMessageId = lastMessage.id
         dialog.lastMessage = lastMessage
 
-        setItems(VKUtil.sortConversationsByDate(values, true))
-        notifyDataSetChanged()
+        VKUtil.sortConversationsByDate(list, true)
+        updateList(list)
 
         fragmentConversations.presenter.checkListIsEmpty(values)
     }
@@ -416,30 +513,33 @@ class ConversationAdapter(private val fragmentConversations: FragmentConversatio
 
         set(index, CacheStorage.getConversation(peerId)!!)
 
-        notifyItemChanged(index)
+        notifyItemChanged(index, ConversationCallback.CONVERSATION)
     }
 
     private fun updateGroup(groupId: Int) {
         val index = searchConversationIndex(groupId)
         if (index == -1) return
-        notifyItemChanged(index)
+
+        notifyItemChanged(index, ConversationCallback.GROUP)
     }
 
     private fun updateUser(userId: Int) {
         val index = searchConversationIndex(userId)
         if (index == -1) return
-        notifyItemChanged(index)
+
+        notifyItemChanged(index, ConversationCallback.USER)
     }
 
     private fun updateMessage(messageId: Int) {
         val index = searchMessageIndex(messageId)
         if (index == -1) return
+
         getItem(index).apply {
             lastMessageId = messageId
             lastMessage = CacheStorage.getMessage(messageId)!!
         }
 
-        notifyItemChanged(index)
+        notifyItemChanged(index, ConversationCallback.MESSAGE)
     }
 
     override fun onNewMessage(message: VKMessage) {

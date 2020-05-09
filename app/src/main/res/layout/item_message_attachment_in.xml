@@ -49,6 +49,13 @@
 
     </ru.melod1n.vk.widget.BoundedLinearLayout>
 
+    <LinearLayout
+        android:id="@+id/messageAttachments"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        tools:ignore="Orientation" />
+
     <TextView
         android:id="@+id/messageDate"
         android:layout_width="wrap_content"

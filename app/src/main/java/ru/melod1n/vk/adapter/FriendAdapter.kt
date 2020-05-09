@@ -5,7 +5,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
 import ru.melod1n.vk.R
+import ru.melod1n.vk.adapter.diffutil.ConversationCallback
+import ru.melod1n.vk.adapter.diffutil.UserCallback
 import ru.melod1n.vk.api.model.VKUser
 import ru.melod1n.vk.api.util.VKUtil
 import ru.melod1n.vk.current.BaseAdapter
@@ -46,5 +49,14 @@ class FriendAdapter(context: Context, values: ArrayList<VKUser>) : BaseAdapter<V
 
             //TODO: отладить "заходил недавно" и открытие чата
         }
+    }
+
+    fun updateList(newList: List<VKUser>) {
+        val diffCallBack = UserCallback(values, newList)
+        val diffResult = DiffUtil.calculateDiff(diffCallBack, false)
+
+        setItems(newList)
+
+        diffResult.dispatchUpdatesTo(this)
     }
 }

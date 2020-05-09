@@ -1,5 +1,6 @@
 package ru.melod1n.vk.fragment
 
+import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
@@ -8,17 +9,21 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import kotlinx.android.synthetic.main.activity_messages.progressBar
-import kotlinx.android.synthetic.main.fragment_conversations.*
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.google.android.material.snackbar.Snackbar
+import kotlinx.android.synthetic.main.activity_messages.*
+import kotlinx.android.synthetic.main.no_internet_view.*
+import kotlinx.android.synthetic.main.no_items_view.*
 import kotlinx.android.synthetic.main.recycler_view.*
 import ru.melod1n.vk.R
 import ru.melod1n.vk.activity.MainActivity
 import ru.melod1n.vk.activity.MessagesActivity
 import ru.melod1n.vk.adapter.ConversationAdapter
-import ru.melod1n.vk.adapter.diffutil.ConversationDiffUtilCallback
+import ru.melod1n.vk.adapter.diffutil.ConversationCallback
 import ru.melod1n.vk.api.VKException
 import ru.melod1n.vk.api.model.VKConversation
 import ru.melod1n.vk.api.util.VKUtil
@@ -29,10 +34,10 @@ import ru.melod1n.vk.current.BaseAdapter
 import ru.melod1n.vk.current.BaseFragment
 import ru.melod1n.vk.database.MemoryCache.getGroup
 import ru.melod1n.vk.database.MemoryCache.getUser
-import ru.melod1n.vk.mvp.contract.BaseContract
-import ru.melod1n.vk.mvp.presenter.ConversationsPresenter
+import ru.melod1n.vk.oldmvp.contract.BaseContract
+import ru.melod1n.vk.oldmvp.presenter.ConversationsPresenter
 import ru.melod1n.vk.util.AndroidUtils
-import ru.melod1n.vk.util.AndroidUtils.hasConnection
+
 
 class FragmentConversations : BaseFragment(),
         BaseContract.View<VKConversation>,
@@ -44,6 +49,7 @@ class FragmentConversations : BaseFragment(),
     companion object {
         const val CONVERSATIONS_COUNT = 30
         const val TAG = "FragmentConversations"
+
     }
 
     private var adapter: ConversationAdapter? = null
@@ -53,6 +59,8 @@ class FragmentConversations : BaseFragment(),
     override fun onResume() {
         super.onResume()
 
+        Log.d(tag, "onResume")
+
         requireActivity().setTitle(R.string.navigation_conversations)
     }
 
@@ -61,10 +69,13 @@ class FragmentConversations : BaseFragment(),
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        Log.d(tag, "onCreateView")
         return inflater.inflate(R.layout.fragment_conversations, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        Log.d(tag, "onViewCreated, savedInstanceState ${if (savedInstanceState == null) "== null" else "!= null"}")
+
         prepareRefreshLayout()
         prepareRecyclerView()
 
@@ -79,13 +90,20 @@ class FragmentConversations : BaseFragment(),
         loadValues()
 
         TimeManager.addOnMinuteChangeListener(this)
+
+//        (requireActivity() as MainActivity).getToolbar().setOnClickListener {
+//            loadValues()
+////            adapter ?: return@setOnClickListener
+////
+////            val list = ArrayList(adapter!!.values)
+////
+////            adapter!!.updateList(list.reversed())
+//        }
     }
 
     private fun prepareRefreshLayout() {
-        swipeRefreshLayout.apply {
-            setColorSchemeColors(AppGlobal.colorAccent)
-            setOnRefreshListener(this@FragmentConversations)
-        }
+        swipeRefreshLayout.setColorSchemeColors(AppGlobal.colorAccent)
+        swipeRefreshLayout.setOnRefreshListener(this)
     }
 
     private fun prepareRecyclerView() {
@@ -95,26 +113,40 @@ class FragmentConversations : BaseFragment(),
 
         decoration.setDrawable(ColorDrawable(ContextCompat.getColor(requireContext(), R.color.divider)))
 
+        recyclerView.setHasFixedSize(true)
+
+        recyclerView.itemAnimator = DefaultItemAnimator()
         recyclerView.addItemDecoration(decoration)
+
         recyclerView.layoutManager = manager
     }
 
     private fun loadCachedValues() {
         presenter.requestCachedValues(0, 0, CONVERSATIONS_COUNT)
+
+//        if (AndroidUtils.hasConnection()) {
+//            loadValues()
+//        }
     }
 
     private fun loadValues() {
-        if (hasConnection()) {
+        if (AndroidUtils.hasConnection()) {
             if (adapter != null && !adapter!!.isEmpty()) {
-                presenter.prepareForLoading();
+                presenter.prepareForLoading()
             } else {
-                showRefreshLayout(true);
+                showRefreshLayout(true)
             }
 
             presenter.requestValues(0, 0, CONVERSATIONS_COUNT)
         } else {
-            showNoInternetView(true);
-            showRefreshLayout(false);
+            showRefreshLayout(false)
+
+            if (adapter != null && adapter!!.isEmpty()) {
+                showNoInternetView(true)
+            } else {
+                //showNoInternetSnackbar
+            }
+
         }
     }
 
@@ -150,7 +182,7 @@ class FragmentConversations : BaseFragment(),
         requireActivity().runOnUiThread {
             adapter ?: return@runOnUiThread
 
-            adapter!!.notifyItemRangeChanged(0, adapter!!.itemCount, ConversationDiffUtilCallback.DATE_CHANGED)
+            adapter!!.notifyItemRangeChanged(0, adapter!!.itemCount, ConversationCallback.DATE)
         }
     }
 
@@ -158,7 +190,7 @@ class FragmentConversations : BaseFragment(),
         noInternetUpdate.setOnClickListener {
             loadValues()
 
-            if (!hasConnection()) {
+            if (!AndroidUtils.hasConnection()) {
                 Snackbar.make(noInternetView, R.string.no_connection, Snackbar.LENGTH_SHORT).show()
             }
         }
@@ -168,7 +200,7 @@ class FragmentConversations : BaseFragment(),
         noItemsRefresh.setOnClickListener {
             loadValues()
 
-            if (!hasConnection())
+            if (!AndroidUtils.hasConnection())
                 showNoInternetView(true)
         }
 
@@ -195,10 +227,9 @@ class FragmentConversations : BaseFragment(),
     }
 
     override fun showNoInternetView(visible: Boolean) {
+        if (visible) {
+            clearList()
 
-        if (visible) clearList() {
-
-        
             noInternetView.apply {
                 alpha = 0f
                 visibility = View.VISIBLE
@@ -233,12 +264,7 @@ class FragmentConversations : BaseFragment(),
     }
 
     override fun insertValues(id: Int, offset: Int, count: Int, values: ArrayList<VKConversation>, isCache: Boolean) {
-        Log.d(TAG, "loadValuesIntoList: $offset, ${values.size}, isCache: $isCache")
-
-        if (isCache && values.isEmpty() && !hasConnection()) {
-            showNoInternetView(true)
-            return
-        }
+        Log.d(tag, "loadValuesIntoList: $offset, ${values.size}, isCache: $isCache")
 
         if (adapter == null) {
             adapter = ConversationAdapter(this, values).also { it.onItemClickListener = this }
@@ -246,41 +272,76 @@ class FragmentConversations : BaseFragment(),
             return
         }
 
-        val newList = ArrayList(adapter!!.values)
 
-        if (recyclerView.adapter == null) {
-            recyclerView.adapter = adapter
-        }
+            if (recyclerView.adapter == null) {
+                recyclerView.adapter = adapter
+            }
 
-        if (offset != 0) {
-            newList.addAll(values)
+            if (offset != 0) {
+                val list = ArrayList(adapter!!.values)
+                list.addAll(values)
+                adapter!!.updateList(list)
+                return
+            }
 
-            adapter!!.updateList(newList)
-            return
-        }
-
-        adapter!!.values = values
-
-        adapter!!.notifyDataSetChanged()
+            adapter!!.updateList(values)
     }
 
     override fun clearList() {
-        if (adapter == null) return
-
-        val values = ArrayList<VKConversation>()
-
-        adapter!!.updateList(values)
+        adapter?.let {
+            it.clear()
+            it.notifyDataSetChanged()
+        }
     }
 
     override fun onDestroy() {
         FragmentSettings.removeOnEventListener(this)
         super.onDestroy()
+
+        Log.d(tag, "onDestroy")
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        adapter?.onDestroy()
+        adapter?.destroy()
+        presenter.destroy()
 
+        Log.d(tag, "onDestroyView")
         TimeManager.removeOnMinuteChangeListener(this)
+    }
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        Log.d(tag, "onAttach")
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        Log.d(tag, "onCreate")
+    }
+
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
+        Log.d(tag, "onActivityCreated")
+    }
+
+    override fun onStart() {
+        super.onStart()
+        Log.d(tag, "onStart")
+    }
+
+    override fun onPause() {
+        super.onPause()
+        Log.d(tag, "onPause")
+    }
+
+    override fun onStop() {
+        super.onStop()
+        Log.d(tag, "onStop")
+    }
+
+    override fun onDetach() {
+        super.onDetach()
+        Log.d(tag, "onDetach")
     }
 }

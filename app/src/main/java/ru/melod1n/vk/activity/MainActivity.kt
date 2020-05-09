@@ -8,6 +8,7 @@ import android.view.MenuItem
 import android.view.View
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.graphics.drawable.DrawerArrowDrawable
+import androidx.appcompat.widget.Toolbar
 import androidx.core.view.GravityCompat
 import butterknife.ButterKnife
 import com.google.android.material.navigation.NavigationView
@@ -58,9 +59,9 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     }
 
     override fun onDestroy() {
-        super.onDestroy()
-
         TaskManager.removeOnEventListener(this)
+
+        super.onDestroy()
     }
 
     override fun onNewEvent(event: EventInfo<*>) {
@@ -91,6 +92,10 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         setSupportActionBar(toolbar)
     }
 
+    fun getToolbar(): Toolbar {
+        return toolbar
+    }
+
     private fun prepareNavigationView() {
         navigationView.layoutParams?.width = AppGlobal.screenWidth - AppGlobal.screenWidth / 6
 
@@ -116,7 +121,9 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             if (savedInstanceState == null) {
                 selectedId = R.id.navigationConversations
                 navigationView!!.setCheckedItem(selectedId)
-                openConversationsScreen()
+//                openConversationsScreen()
+                openFriendsScreen()
+//                FragmentSwitcher.instance.switchFragment(this, FragmentDialogs())
             }
         } else {
             openStartScreen()

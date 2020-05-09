@@ -26,11 +26,13 @@ import ru.melod1n.vk.common.AppGlobal
 import ru.melod1n.vk.common.EventInfo
 import ru.melod1n.vk.current.BaseAdapter
 import ru.melod1n.vk.current.BaseFragment
-import ru.melod1n.vk.mvp.contract.BaseContract
+import ru.melod1n.library.mvp.base.MvpConstants
+import ru.melod1n.library.mvp.base.MvpFields
 import ru.melod1n.vk.mvp.presenter.FriendsPresenter
-import ru.melod1n.vk.util.AndroidUtils.hasConnection
+import ru.melod1n.vk.mvp.view.FriendsView
+import ru.melod1n.vk.util.AndroidUtils
 
-class FragmentFriends : BaseFragment(), BaseContract.View<VKUser>, SwipeRefreshLayout.OnRefreshListener, BaseAdapter.OnItemClickListener, FragmentSettings.OnEventListener {
+class FragmentFriends : BaseFragment(), FriendsView, SwipeRefreshLayout.OnRefreshListener, BaseAdapter.OnItemClickListener, FragmentSettings.OnEventListener {
 
     companion object {
         const val FRIENDS_COUNT = 30
@@ -65,11 +67,10 @@ class FragmentFriends : BaseFragment(), BaseContract.View<VKUser>, SwipeRefreshL
 
         presenter = FriendsPresenter(this)
 
-        loadCachedData()
+        loadCachedValues()
 
         loadValues()
     }
-
 
     override fun onDestroy() {
         FragmentSettings.removeOnEventListener(this)
@@ -77,7 +78,7 @@ class FragmentFriends : BaseFragment(), BaseContract.View<VKUser>, SwipeRefreshL
     }
 
     override fun onDetach() {
-        if (adapter != null) adapter!!.onDestroy()
+        if (adapter != null) adapter!!.destroy()
         super.onDetach()
     }
 
@@ -91,22 +92,34 @@ class FragmentFriends : BaseFragment(), BaseContract.View<VKUser>, SwipeRefreshL
     }
 
     private fun loadValues() {
-        if (hasConnection()) {
+        if (AndroidUtils.hasConnection()) {
             if (adapter != null && !adapter!!.isEmpty()) {
-                presenter.prepareForLoading();
+                presenter.prepareForLoading()
             } else {
-                showRefreshLayout(true);
+                startRefreshing()
             }
 
-            presenter.requestValues(0, 0, FragmentConversations.CONVERSATIONS_COUNT)
+            presenter.requestLoadValues(MvpFields().apply {
+                put(MvpConstants.ID, 0)
+                put(MvpConstants.OFFSET, 0)
+                put(MvpConstants.COUNT, FRIENDS_COUNT)
+                put(MvpConstants.FROM_CACHE, false)
+                put(FriendsPresenter.ONLY_ONLINE, false)
+            })
         } else {
-            showNoInternetView(true);
-            showRefreshLayout(false);
+            showNoInternetView()
+            stopRefreshing()
         }
     }
 
-    private fun loadCachedData() {
-        presenter.requestCachedValues(0, 0, FRIENDS_COUNT, false)
+    private fun loadCachedValues() {
+        presenter.requestCachedData(MvpFields().apply {
+            put(MvpConstants.ID, 0)
+            put(MvpConstants.OFFSET, 0)
+            put(MvpConstants.COUNT, FRIENDS_COUNT)
+            put(MvpConstants.FROM_CACHE, true)
+            put(FriendsPresenter.ONLY_ONLINE, false)
+        })
     }
 
     private fun openChat(position: Int) {
@@ -144,11 +157,12 @@ class FragmentFriends : BaseFragment(), BaseContract.View<VKUser>, SwipeRefreshL
         openChat(position)
     }
 
+
     override fun prepareNoInternetView() {
         noInternetUpdate.setOnClickListener {
             loadValues()
 
-            if (!hasConnection()) {
+            if (!AndroidUtils.hasConnection()) {
                 Snackbar.make(noInternetView, R.string.no_connection, Snackbar.LENGTH_SHORT).show()
             }
         }
@@ -158,8 +172,8 @@ class FragmentFriends : BaseFragment(), BaseContract.View<VKUser>, SwipeRefreshL
         noItemsRefresh.setOnClickListener {
             loadValues()
 
-            if (!hasConnection())
-                showNoInternetView(true)
+            if (!AndroidUtils.hasConnection())
+                showNoInternetView()
         }
 
         noItemsText.text = getString(R.string.friends_is_empty)
@@ -169,60 +183,69 @@ class FragmentFriends : BaseFragment(), BaseContract.View<VKUser>, SwipeRefreshL
 
     }
 
-    override fun showNoItemsView(visible: Boolean) {
-        if (visible) {
-            noItemsView.apply {
-                alpha = 0f
-                visibility = View.VISIBLE
-                animate().alpha(1f).setDuration(250).start()
-            }
-        } else {
-            noItemsView.apply {
-                alpha = 1f
-                animate().alpha(0f).setDuration(250).withEndAction { visibility = View.GONE }.start()
-            }
+
+    override fun showNoInternetView() {
+        clearList()
+
+        noInternetView.apply {
+            alpha = 0f
+            visibility = View.VISIBLE
+            animate().alpha(1f).setDuration(250).start()
         }
     }
 
-    override fun showNoInternetView(visible: Boolean) {
-        if (visible) clearList()
+    override fun hideNoInternetView() {
+        noInternetView.apply {
+            alpha = 1f
+            animate().alpha(0f).setDuration(250).withEndAction { visibility = View.GONE }.start()
+        }
+    }
 
-        if (visible) {
-            noInternetView.apply {
-                alpha = 0f
-                visibility = View.VISIBLE
-                animate().alpha(1f).setDuration(250).start()
-            }
-        } else {
-            noInternetView.apply {
-                alpha = 1f
-                animate().alpha(0f).setDuration(250).withEndAction { visibility = View.GONE }.start()
-            }
+    override fun showNoItemsView() {
+        noItemsView.apply {
+            alpha = 0f
+            visibility = View.VISIBLE
+            animate().alpha(1f).setDuration(250).start()
+        }
+    }
+
+    override fun hideNoItemsView() {
+        noItemsView.apply {
+            alpha = 1f
+            animate().alpha(0f).setDuration(250).withEndAction { visibility = View.GONE }.start()
         }
     }
 
     override fun showErrorView(e: Exception?) {
-        if (!hasConnection()) {
-            presenter.requestCachedValues(0, 0, FragmentConversations.CONVERSATIONS_COUNT, false)
-        }
+
     }
 
-    override fun showRefreshLayout(visible: Boolean) {
-        swipeRefreshLayout.isRefreshing = visible
+    override fun hideErrorView() {
+
     }
 
-    override fun showProgressBar(visible: Boolean) {
-        progressBar.visibility = if (visible) View.VISIBLE else View.GONE
+    override fun startRefreshing() {
+        swipeRefreshLayout.isRefreshing = true
     }
 
-    override fun insertValues(id: Int, offset: Int, count: Int, values: ArrayList<VKUser>, isCache: Boolean) {
-        Log.d(TAG, "loadValuesIntoList: $offset, ${values.size}, isCache: $isCache")
+    override fun stopRefreshing() {
+        swipeRefreshLayout.isRefreshing = false
+    }
 
-        if (isCache && values.isEmpty() && !hasConnection()) {
-            showNoInternetView(true)
-            return
+    override fun showProgressBar() {
+        progressBar.visibility = View.VISIBLE
+    }
 
-        }
+    override fun hideProgressBar() {
+        progressBar.visibility = View.GONE
+    }
+
+    override fun insertValues(fields: MvpFields, values: java.util.ArrayList<VKUser>) {
+        val offset = fields.getInt(MvpConstants.OFFSET)
+        val fromCache = fields.getBoolean(MvpConstants.FROM_CACHE)
+
+        Log.d(tag, "loadValuesIntoList: $offset, ${values.size}, fromCache: $fromCache")
+
 
         if (adapter == null) {
             adapter = FriendAdapter(requireContext(), values).also { it.onItemClickListener = this }
@@ -230,24 +253,22 @@ class FragmentFriends : BaseFragment(), BaseContract.View<VKUser>, SwipeRefreshL
             return
         }
 
-//        val newList = ArrayList(adapter!!.values)
+        val list = ArrayList(adapter!!.values)
 
         if (recyclerView.adapter == null) {
             recyclerView.adapter = adapter
         }
 
-        if (offset != 0) {
-            adapter!!.addAll(values)
+        if (offset > 0) {
+            list.addAll(values)
 
-            adapter!!.notifyDataSetChanged()
-//            adapter!!.updateList(newList)
+            adapter!!.updateList(list)
             return
         }
 
-        adapter!!.values = values
-
-        adapter!!.notifyDataSetChanged()
+        adapter!!.updateList(values)
     }
+
 
     override fun clearList() {
         if (adapter == null) return

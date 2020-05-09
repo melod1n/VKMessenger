@@ -38,7 +38,6 @@ class LoginActivity : BaseActivity() {
         webView.loadUrl(url)
     }
 
-
     @SuppressLint("SetJavaScriptEnabled")
     private fun prepareSettings() {
         webView.settings.javaScriptEnabled = true
@@ -53,6 +52,7 @@ class LoginActivity : BaseActivity() {
         setSupportActionBar(toolbar)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
 
+        toolbar.setNavigationIcon(R.drawable.ic_close)
         toolbar.navigationIcon?.setTint(AppGlobal.colorAccent)
     }
 

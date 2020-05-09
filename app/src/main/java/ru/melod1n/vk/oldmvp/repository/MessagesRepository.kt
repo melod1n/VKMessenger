@@ -1,4 +1,4 @@
-package ru.melod1n.vk.mvp.repository
+package ru.melod1n.vk.oldmvp.repository
 
 import ru.melod1n.vk.api.VKApi
 import ru.melod1n.vk.api.VKApi.OnResponseListener
@@ -9,14 +9,14 @@ import ru.melod1n.vk.api.model.VKUser
 import ru.melod1n.vk.common.AppGlobal
 import ru.melod1n.vk.common.TaskManager
 import ru.melod1n.vk.database.CacheStorage
-import ru.melod1n.vk.mvp.contract.BaseContract
+import ru.melod1n.vk.oldmvp.contract.BaseContract
 import ru.melod1n.vk.util.ArrayUtil
 
 class MessagesRepository : BaseContract.Repository<VKMessage>() {
 
     override fun loadCachedValues(id: Int, offset: Int, count: Int): ArrayList<VKMessage> {
         val messages = CacheStorage.getMessages(id)
-        return ArrayUtil.cut(messages, offset, count)
+        return ArrayUtil.prepareList(messages, offset, count)
     }
 
     override fun loadValues(id: Int, offset: Int, count: Int, listener: OnResponseListener<VKMessage>) {

@@ -5,6 +5,9 @@ import android.text.TextUtils
 import androidx.fragment.app.Fragment
 
 abstract class BaseFragment : Fragment {
+
+    val TAG = javaClass.simpleName
+
     private var title: String? = null
     private var titleRes = -1
     private var requestReopen = false
@@ -27,6 +30,7 @@ abstract class BaseFragment : Fragment {
         if (TextUtils.isEmpty(title) && titleRes > 0) {
             title = getString(titleRes)
         }
+
     }
 
     override fun onResume() {
@@ -37,6 +41,7 @@ abstract class BaseFragment : Fragment {
         } else {
             requireActivity().title = title
         }
+
         if (requestReopen) {
             requestReopen = false
             onReopen(reopenBundle)

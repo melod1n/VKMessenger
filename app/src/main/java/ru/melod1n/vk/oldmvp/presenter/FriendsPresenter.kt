@@ -1,9 +1,9 @@
-package ru.melod1n.vk.mvp.presenter
+package ru.melod1n.vk.oldmvp.presenter
 
 import ru.melod1n.vk.api.model.VKUser
-import ru.melod1n.vk.mvp.contract.BaseContract
-import ru.melod1n.vk.mvp.contract.FriendsContract
-import ru.melod1n.vk.mvp.repository.FriendsRepository
+import ru.melod1n.vk.oldmvp.contract.BaseContract
+import ru.melod1n.vk.oldmvp.contract.FriendsContract
+import ru.melod1n.vk.oldmvp.repository.FriendsRepository
 
 class FriendsPresenter(view: BaseContract.View<VKUser>) : FriendsContract.Presenter<VKUser>(view) {
 

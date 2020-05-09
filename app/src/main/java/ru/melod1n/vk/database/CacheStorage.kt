@@ -69,6 +69,8 @@ import kotlin.math.abs
 
 @Suppress("UNCHECKED_CAST")
 object CacheStorage {
+
+    @JvmStatic
     private fun selectCursor(table: String, column: String, value: Any): Cursor {
         return QueryBuilder.query()
                 .select("*").from(table)
@@ -76,30 +78,36 @@ object CacheStorage {
                 .asCursor(AppGlobal.database)
     }
 
+    @JvmStatic
     private fun selectCursor(table: String, where: String): Cursor {
         return QueryBuilder.query()
                 .select("*").from(table).where(where)
                 .asCursor(AppGlobal.database)
     }
 
+    @JvmStatic
     private fun selectCursor(table: String): Cursor {
         return QueryBuilder.query()
                 .select("*").from(table)
                 .asCursor(AppGlobal.database)
     }
 
+    @JvmStatic
     private fun getInt(cursor: Cursor, columnName: String): Int {
         return cursor.getInt(cursor.getColumnIndex(columnName))
     }
 
+    @JvmStatic
     private fun getString(cursor: Cursor, columnName: String): String? {
         return cursor.getString(cursor.getColumnIndex(columnName))
     }
 
+    @JvmStatic
     private fun getBlob(cursor: Cursor, columnName: String): ByteArray? {
         return cursor.getBlob(cursor.getColumnIndex(columnName))
     }
 
+    @JvmStatic
     private fun insert(table: String, values: ArrayList<*>) {
         AppGlobal.database.beginTransaction()
 
@@ -126,6 +134,7 @@ object CacheStorage {
         }
     }
 
+    @JvmStatic
     private fun update(table: String, values: ArrayList<*>, whereClause: String, whereArgs: Array<String>) {
         AppGlobal.database.beginTransaction()
 
@@ -152,14 +161,17 @@ object CacheStorage {
         }
     }
 
+    @JvmStatic
     fun delete(table: String?, where: Any, args: Any) {
         AppGlobal.database.delete(table, "$where = ?", arrayOf(args.toString()))
     }
 
+    @JvmStatic
     fun delete(table: String?) {
         AppGlobal.database.delete(table, null, null)
     }
 
+    @JvmStatic
     fun getMessage(messageId: Int): VKMessage? {
         val cursor = selectCursor(TABLE_MESSAGES, MESSAGE_ID, messageId)
 
@@ -174,6 +186,7 @@ object CacheStorage {
         return message
     }
 
+    @JvmStatic
     fun getMessages(peerId: Int): ArrayList<VKMessage> {
         val cursor = selectCursor(TABLE_MESSAGES, PEER_ID, peerId)
 
@@ -187,6 +200,7 @@ object CacheStorage {
         return messages
     }
 
+    @JvmStatic
     fun getConversation(peerId: Int): VKConversation? {
         val cursor = selectCursor(TABLE_CONVERSATIONS, PEER_ID, peerId)
 
@@ -201,10 +215,12 @@ object CacheStorage {
         return conversation
     }
 
+    @JvmStatic
     fun getConversations(): ArrayList<VKConversation> {
         return getConversations(0)
     }
 
+    @JvmStatic
     fun getConversations(size: Int): ArrayList<VKConversation> {
         val cursor = selectCursor(TABLE_CONVERSATIONS)
         val conversations = ArrayList<VKConversation>()
@@ -218,6 +234,7 @@ object CacheStorage {
         return conversations
     }
 
+    @JvmStatic
     fun getFriends(userId: Int, onlyOnline: Boolean): ArrayList<VKUser> {
         val cursor = QueryBuilder.query()
                 .select("*")
@@ -244,6 +261,7 @@ object CacheStorage {
         return users
     }
 
+    @JvmStatic
     fun getUser(id: Int): VKUser? {
         val cursor = selectCursor(TABLE_USERS, USER_ID, id)
         if (cursor.count == 0) return null
@@ -256,6 +274,7 @@ object CacheStorage {
         return user
     }
 
+    @JvmStatic
     fun getGroup(gid: Int): VKGroup? {
         val id = abs(gid)
         val cursor = selectCursor(TABLE_GROUPS, GROUP_ID, id)
@@ -269,6 +288,7 @@ object CacheStorage {
         return group
     }
 
+    @JvmStatic
     private fun parseMessage(cursor: Cursor): VKMessage {
         return VKMessage().apply {
             id = getInt(cursor, MESSAGE_ID)
@@ -294,6 +314,7 @@ object CacheStorage {
         }
     }
 
+    @JvmStatic
     private fun parseConversation(cursor: Cursor): VKConversation {
         return VKConversation().apply {
             inRead = getInt(cursor, IN_READ)
@@ -320,6 +341,7 @@ object CacheStorage {
         }
     }
 
+    @JvmStatic
     private fun parseUser(cursor: Cursor): VKUser {
         return VKUser().apply {
             id = getInt(cursor, USER_ID)
@@ -342,6 +364,7 @@ object CacheStorage {
         }
     }
 
+    @JvmStatic
     private fun parseGroup(cursor: Cursor): VKGroup {
         return VKGroup().apply {
             id = abs(getInt(cursor, GROUP_ID))
@@ -355,6 +378,7 @@ object CacheStorage {
         }
     }
 
+    @JvmStatic
     private fun putValues(message: VKMessage, values: ContentValues) {
         values.put(MESSAGE_ID, message.id)
         values.put(DATE, message.date)
@@ -373,6 +397,7 @@ object CacheStorage {
         values.put(ACTION, Util.serialize(message.action))
     }
 
+    @JvmStatic
     private fun putValues(conversation: VKConversation, values: ContentValues) {
         values.put(PEER_ID, conversation.id)
         values.put(IN_READ, conversation.inRead)
@@ -395,6 +420,7 @@ object CacheStorage {
         values.put(LAST_MESSAGE_ID, conversation.lastMessageId)
     }
 
+    @JvmStatic
     private fun putValues(user: VKUser, values: ContentValues, isFriend: Boolean) {
         if (isFriend) {
             values.put(USER_ID, UserConfig.userId)
@@ -420,6 +446,7 @@ object CacheStorage {
         values.put(VERIFIED, user.isVerified)
     }
 
+    @JvmStatic
     private fun putValues(group: VKGroup, values: ContentValues) {
         values.put(GROUP_ID, abs(group.id))
         values.put(NAME, group.name)
@@ -432,16 +459,19 @@ object CacheStorage {
         values.put(PHOTO_200, group.photo200)
     }
 
+    @JvmStatic
     fun insertConversation(conversation: VKConversation) {
         insertConversations(ArrayList(listOf(conversation)))
     }
 
+    @JvmStatic
     fun insertConversations(conversations: ArrayList<VKConversation>) {
         insert(TABLE_CONVERSATIONS, conversations)
     }
 
+    @JvmStatic
     fun updateConversations(conversations: ArrayList<VKConversation>) {
-        val ids = Array(conversations.size) {it.toString()}
+        val ids = Array(conversations.size) { it.toString() }
 
         for (i in conversations.indices) {
             ids[i] = conversations[i].id.toString()
@@ -450,6 +480,7 @@ object CacheStorage {
         update(TABLE_CONVERSATIONS, conversations, PEER_ID, ids)
     }
 
+    @JvmStatic
     fun deleteConversations(conversations: ArrayList<VKConversation>) {
         val ids = IntArray(conversations.size)
 
@@ -460,43 +491,52 @@ object CacheStorage {
         deleteConversations(ids)
     }
 
+    @JvmStatic
     fun deleteConversations(conversationsIds: IntArray) {
         val args = TextUtils.join(", ", conversationsIds.toMutableList())
 
         delete(TABLE_CONVERSATIONS, PEER_ID, args)
     }
 
+    @JvmStatic
     fun deleteConversation(conversation: VKConversation) {
         deleteConversations(ArrayList(listOf(conversation)))
     }
 
+    @JvmStatic
     fun deleteConversation(conversationId: Int) {
         deleteConversations(intArrayOf(conversationId))
     }
 
+    @JvmStatic
     fun insertUser(user: VKUser) {
         insertUsers(ArrayList(listOf(user)))
     }
 
+    @JvmStatic
     fun insertUsers(users: ArrayList<VKUser>) {
         insert(TABLE_USERS, users)
     }
 
+    @JvmStatic
     fun insertFriends(users: ArrayList<VKUser>) {
         insertUsers(users)
         insert(TABLE_FRIENDS, users)
     }
 
+    @JvmStatic
     fun insertGroup(group: VKGroup) {
         insertGroups(ArrayList(listOf(group)))
     }
 
+    @JvmStatic
     fun insertGroups(groups: ArrayList<VKGroup>) {
         insert(TABLE_GROUPS, groups)
     }
 
+    @JvmStatic
     fun updateMessages(messages: ArrayList<VKMessage>) {
-        val ids = Array(messages.size) {it.toString()}
+        val ids = Array(messages.size) { it.toString() }
 
         for (i in messages.indices) {
             ids[i] = messages[i].id.toString()
@@ -505,18 +545,22 @@ object CacheStorage {
         update(TABLE_MESSAGES, messages, MESSAGE_ID, ids)
     }
 
+    @JvmStatic
     fun updateMessage(message: VKMessage) {
         updateMessages(ArrayList(listOf(message)))
     }
 
+    @JvmStatic
     fun insertMessages(messages: ArrayList<VKMessage>) {
         insert(TABLE_MESSAGES, messages)
     }
 
+    @JvmStatic
     fun insertMessage(message: VKMessage) {
         insertMessages(ArrayList(listOf(message)))
     }
 
+    @JvmStatic
     fun deleteMessages(messages: ArrayList<VKMessage>) {
         val ids = IntArray(messages.size)
 
@@ -527,16 +571,19 @@ object CacheStorage {
         deleteMessages(ids)
     }
 
+    @JvmStatic
     fun deleteMessages(messagesIds: IntArray) {
         val args = TextUtils.join(", ", messagesIds.toMutableList())
 
         delete(TABLE_MESSAGES, MESSAGE_ID, args)
     }
 
+    @JvmStatic
     fun deleteMessage(message: VKMessage) {
         deleteMessages(ArrayList(listOf(message)))
     }
 
+    @JvmStatic
     fun deleteMessage(messageId: Int) {
         deleteMessages(intArrayOf(messageId))
     }

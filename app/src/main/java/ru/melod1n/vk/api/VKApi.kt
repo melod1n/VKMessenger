@@ -205,10 +205,12 @@ object VKApi {
         }
     }
 
+    @JvmStatic
     fun users(): VKUsers {
         return VKUsers()
     }
 
+    @JvmStatic
     fun friends(): VKFriends {
         return VKFriends()
     }
@@ -218,10 +220,12 @@ object VKApi {
         return VKMessages()
     }
 
+    @JvmStatic
     fun groups(): VKGroups {
         return VKGroups()
     }
 
+    @JvmStatic
     fun account(): VKAccounts {
         return VKAccounts()
     }

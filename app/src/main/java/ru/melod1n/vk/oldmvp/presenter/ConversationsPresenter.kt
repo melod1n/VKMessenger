@@ -1,8 +1,8 @@
-package ru.melod1n.vk.mvp.presenter
+package ru.melod1n.vk.oldmvp.presenter
 
 import ru.melod1n.vk.api.model.VKConversation
-import ru.melod1n.vk.mvp.contract.BaseContract
-import ru.melod1n.vk.mvp.repository.ConversationsRepository
+import ru.melod1n.vk.oldmvp.contract.BaseContract
+import ru.melod1n.vk.oldmvp.repository.ConversationsRepository
 
 class ConversationsPresenter(view: BaseContract.View<VKConversation>) : BaseContract.Presenter<VKConversation>(view) {
 

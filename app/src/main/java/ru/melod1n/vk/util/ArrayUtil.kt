@@ -161,7 +161,13 @@ object ArrayUtil {
         return false
     }
 
-    fun <E> cut(list: ArrayList<E>, offset: Int, count: Int): ArrayList<E> {
+    fun <E> prepareList(list: ArrayList<E>, offset: Int, count: Int): ArrayList<E> {
+        if (true) {
+            //some prepares
+
+            return list
+        }
+
         var arrayList = list
 
         if (isEmpty(arrayList)) return arrayList

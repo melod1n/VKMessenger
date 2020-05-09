@@ -23,13 +23,9 @@ class VKConversation : VKModel, Serializable {
 
         var count = 0
 
-        fun isChatId(id: Int): Boolean {
-            return id > 2_000_000_000
-        }
+        fun isChatId(id: Int) = id > 2_000_000_000
 
-        fun toChatId(id: Int): Int {
-            return if (id > 2_000_000_000) id else 2_000_000_000 + id
-        }
+        fun toChatId(id: Int) = if (id > 2_000_000_000) id else 2_000_000_000 + id
 
         fun parse(array: JSONArray): ArrayList<VKConversation> {
             val conversations = ArrayList<VKConversation>()
@@ -133,27 +129,15 @@ class VKConversation : VKModel, Serializable {
         }
     }
 
-    fun isNotificationsDisabled(): Boolean {
-        return isDisabledForever || disabledUntil > 0 || isNoSound
-    }
+    fun isNotificationsDisabled() = (isDisabledForever || disabledUntil > 0 || isNoSound)
 
-    fun isChatId(): Boolean {
-        return id > 2_000_000_000
-    }
+    fun isChatId() = id > 2_000_000_000
 
-    fun isChat(): Boolean {
-        return type == TYPE_CHAT
-    }
+    fun isChat() = type == TYPE_CHAT
 
-    fun isUser(): Boolean {
-        return type == TYPE_USER
-    }
+    fun isUser() = type == TYPE_USER
 
-    fun isGroup(): Boolean {
-        return type == TYPE_GROUP
-    }
+    fun isGroup() = type == TYPE_GROUP
 
-    override fun toString(): String {
-        return title ?: ""
-    }
+    override fun toString() = title ?: ""
 }

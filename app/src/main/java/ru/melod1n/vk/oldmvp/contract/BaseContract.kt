@@ -1,6 +1,10 @@
-package ru.melod1n.vk.mvp.contract
+package ru.melod1n.vk.oldmvp.contract
 
+import android.util.Log
 import ru.melod1n.vk.api.VKApi
+import ru.melod1n.vk.api.VKException
+import java.util.*
+import kotlin.collections.ArrayList
 
 
 open class BaseContract {
@@ -27,7 +31,7 @@ open class BaseContract {
         fun clearList()
     }
 
-    abstract class Presenter<T>(private var view: View<T>) {
+    abstract class Presenter<T>(private var view: View<T>?) {
 
         abstract val tag: String
 
@@ -36,24 +40,26 @@ open class BaseContract {
         abstract var loadedValues: ArrayList<T>
         abstract var cachedValues: ArrayList<T>
 
+        private var timer = Timer()
+
         fun prepareForLoading() {
-            view.showNoInternetView(false)
-            view.showNoItemsView(false)
-            view.showProgressBar(false)
-            view.showErrorView(null)
+            view?.showNoInternetView(false)
+            view?.showNoItemsView(false)
+            view?.showProgressBar(false)
+            view?.showErrorView(null)
         }
 
         fun showList() {
-            view.showProgressBar(false)
-            view.showRefreshLayout(false)
+            view?.showProgressBar(false)
+            view?.showRefreshLayout(false)
         }
 
         fun checkListIsEmpty(isCache: Boolean) {
-            view.showNoItemsView((isCache && cachedValues.isEmpty()) || (!isCache && loadedValues.isEmpty()))
+            view?.showNoItemsView((isCache && cachedValues.isEmpty()) || (!isCache && loadedValues.isEmpty()))
         }
 
         fun checkListIsEmpty(values: ArrayList<T>) {
-            view.showNoItemsView(values.isEmpty())
+            view?.showNoItemsView(values.isEmpty())
         }
 
         fun requestValues(id: Int = 0, offset: Int = 0, count: Int) {
@@ -83,7 +89,7 @@ open class BaseContract {
                 loadedValues = values
             }
 
-            view.insertValues(id, offset, count, values, isCache)
+            view?.insertValues(id, offset, count, values, isCache)
             checkListIsEmpty(isCache)
         }
 
@@ -92,7 +98,21 @@ open class BaseContract {
 
             loadedValues.clear()
 
-            view.showErrorView(e)
+            view?.showErrorView(e)
+        }
+
+        private fun waitMinute() {
+            timer.schedule(object : TimerTask() {
+                override fun run() {
+                    Log.d(tag, "1 minute pass")
+
+                    view?.showErrorView(VKException("", "", -1))
+                }
+            }, 60 * 1000)
+        }
+
+        fun destroy() {
+            view = null
         }
     }
 

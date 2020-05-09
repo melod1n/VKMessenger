@@ -18,7 +18,7 @@ abstract class BaseAdapter<T, VH : BaseHolder>(var context: Context, var values:
     var onItemClickListener: OnItemClickListener? = null
     var onItemLongClickListener: OnItemLongClickListener? = null
 
-    open fun onDestroy() {}
+    open fun destroy() {}
 
     open fun getItem(position: Int): T {
         return values[position]
@@ -69,6 +69,10 @@ abstract class BaseAdapter<T, VH : BaseHolder>(var context: Context, var values:
 
     fun setItems(list: ArrayList<T>) {
         values = list
+    }
+
+    fun setItems(list: List<T>) {
+        values = list as ArrayList<T>
     }
 
     override fun onBindViewHolder(holder: VH, position: Int) {

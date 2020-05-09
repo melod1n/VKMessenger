@@ -109,11 +109,8 @@
 
     <string name="conversations_is_empty">No conversations</string>
     <string name="friends_is_empty">No friends :(</string>
-    =======
-    <string name="start_screen_login_settings">Login settings</string>
-    <string name="in_progress_placeholder">In progress</string>
+
     <string name="prefs_general">General</string>
     <string name="fragment_settings_general_hide_keyboard_on_scroll_up_title">Hide the keyboard while scrolling up</string>
-    >>>>>>> Stashed changes
 
 </resources>

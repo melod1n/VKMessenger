@@ -1,4 +1,4 @@
-package ru.melod1n.vk.mvp.contract
+package ru.melod1n.vk.oldmvp.contract
 
 import ru.melod1n.vk.api.VKApi
 
