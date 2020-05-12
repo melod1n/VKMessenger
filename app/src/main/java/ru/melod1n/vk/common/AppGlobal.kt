@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import androidx.core.content.pm.PackageInfoCompat
 import androidx.preference.PreferenceManager
+import ru.melod1n.library.mvp.base.MvpBase
 import ru.melod1n.vk.R
 import ru.melod1n.vk.api.UserConfig
 import ru.melod1n.vk.database.DatabaseHelper
@@ -81,6 +82,8 @@ class AppGlobal : Application() {
 
         UserConfig.restore()
         TimeManager.init(this)
+
+        MvpBase.init(handler)
 
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
     }

@@ -34,7 +34,7 @@ class ConversationsRepository : BaseContract.Repository<VKConversation>() {
         TaskManager.execute {
             try {
                 val models = VKApi.messages()
-                        .conversations
+                        .getConversations()
                         .filter("all")
                         .extended(true)
                         .fields(VKUser.DEFAULT_FIELDS)

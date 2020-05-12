@@ -121,8 +121,8 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             if (savedInstanceState == null) {
                 selectedId = R.id.navigationConversations
                 navigationView!!.setCheckedItem(selectedId)
-//                openConversationsScreen()
-                openFriendsScreen()
+                openConversationsScreen()
+//                openFriendsScreen()
 //                FragmentSwitcher.instance.switchFragment(this, FragmentDialogs())
             }
         } else {

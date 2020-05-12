@@ -4,7 +4,7 @@ import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
 
-public interface View<T> {
+public interface MvpView<T> {
 
     void prepareNoInternetView();
 

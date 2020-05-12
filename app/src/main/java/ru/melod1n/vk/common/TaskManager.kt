@@ -13,23 +13,28 @@ import ru.melod1n.vk.database.CacheStorage
 import java.util.*
 
 object TaskManager {
+
     private const val TAG = "TaskManager"
     private val currentTasksIds = ArrayList<Int>()
 
     private val listeners = ArrayList<OnEventListener>()
 
+    @JvmStatic
     fun addOnEventListener(onEventListener: OnEventListener) {
         listeners.add(onEventListener)
     }
 
+    @JvmStatic
     fun removeOnEventListener(onEventListener: OnEventListener?) {
         listeners.remove(onEventListener)
     }
 
+    @JvmStatic
     fun execute(runnable: Runnable) {
         LowThread(runnable).start()
     }
 
+    @JvmStatic
     fun execute(runnable: () -> Unit) {
         LowThread(runnable).start()
     }
@@ -54,11 +59,12 @@ object TaskManager {
 
         AppGlobal.handler.post {
             for (listener in listeners) {
-                 listener.onNewEvent(info)
+                listener.onNewEvent(info)
             }
         }
     }
 
+    @JvmStatic
     fun loadUser(userId: Int) {
         Log.i(TAG, "loadUser: $userId")
 
@@ -79,6 +85,7 @@ object TaskManager {
         })
     }
 
+    @JvmStatic
     fun loadGroup(groupId: Int) {
         Log.i(TAG, "loadGroup: $groupId")
 
@@ -99,6 +106,7 @@ object TaskManager {
         })
     }
 
+    @JvmStatic
     fun loadMessage(messageId: Int, listener: OnResponseListener<VKMessage>? = null) {
         Log.i(TAG, "loadMessage: $messageId")
 
@@ -129,6 +137,7 @@ object TaskManager {
         })
     }
 
+    @JvmStatic
     fun loadConversation(peerId: Int, listener: OnResponseListener<VKConversation>? = null) {
         Log.i(TAG, "loadConversation: $peerId")
 

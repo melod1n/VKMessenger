@@ -247,8 +247,9 @@ object VKApi {
             return MessageMethodSetter("messages.get")
         }
 
-        val conversations: MessageMethodSetter
-            get() = MessageMethodSetter("messages.getConversations")
+        fun getConversations(): MessageMethodSetter {
+            return MessageMethodSetter("messages.getConversations")
+        }
 
         val conversationsById: MessageMethodSetter
             get() = MessageMethodSetter("messages.getConversationsById")
