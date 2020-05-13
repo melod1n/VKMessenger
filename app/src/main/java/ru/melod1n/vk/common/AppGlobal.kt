@@ -14,9 +14,11 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import androidx.core.content.pm.PackageInfoCompat
 import androidx.preference.PreferenceManager
+import ru.melod1n.library.mvp.base.MvpBase
 import ru.melod1n.vk.R
 import ru.melod1n.vk.api.UserConfig
 import ru.melod1n.vk.database.DatabaseHelper
+import ru.melod1n.vk.fragment.FragmentSettings
 import ru.melod1n.vk.util.AndroidUtils
 import java.util.*
 
@@ -24,6 +26,11 @@ import java.util.*
 class AppGlobal : Application() {
 
     companion object {
+        const val DARK_THEME_NEVER = "never"
+        const val DARK_THEME_ALWAYS = "always"
+        const val DARK_THEME_BY_SYSTEM = "system"
+        const val DARK_THEME_BY_POWER_SAVING = "power"
+
         lateinit var windowManager: WindowManager
         lateinit var connectivityManager: ConnectivityManager
         lateinit var inputMethodManager: InputMethodManager
@@ -47,6 +54,15 @@ class AppGlobal : Application() {
 
         var colorPrimary = 0
         var colorAccent = 0
+
+        fun updateTheme(themeValue: String) {
+            when(themeValue) {
+                DARK_THEME_ALWAYS -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+                DARK_THEME_NEVER -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+                DARK_THEME_BY_SYSTEM -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+                DARK_THEME_BY_POWER_SAVING -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_AUTO_BATTERY)
+            }
+        }
     }
 
     override fun onCreate() {
@@ -82,7 +98,10 @@ class AppGlobal : Application() {
         UserConfig.restore()
         TimeManager.init(this)
 
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        MvpBase.init(handler)
+
+        updateTheme(preferences.getString(FragmentSettings.KEY_DARK_THEME, DARK_THEME_BY_SYSTEM) ?: DARK_THEME_BY_SYSTEM)
+
     }
 
 }

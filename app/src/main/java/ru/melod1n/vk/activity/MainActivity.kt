@@ -22,8 +22,6 @@ import ru.melod1n.vk.common.FragmentSwitcher
 import ru.melod1n.vk.common.TaskManager
 import ru.melod1n.vk.current.BaseActivity
 import ru.melod1n.vk.database.MemoryCache
-import ru.melod1n.vk.fragment.FragmentConversations
-import ru.melod1n.vk.fragment.FragmentFriends
 import ru.melod1n.vk.fragment.FragmentSettings
 import ru.melod1n.vk.service.LongPollService
 import ru.melod1n.vk.util.AndroidUtils
@@ -84,7 +82,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         toggle.isDrawerSlideAnimationEnabled = false
         toggle.syncState()
 
-        toggleClick = View.OnClickListener { drawerLayout!!.openDrawer(navigationView!!) }
+        toggleClick = View.OnClickListener { drawerLayout.openDrawer(navigationView) }
     }
 
     private fun prepareToolbar() {
@@ -115,7 +113,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
             if (savedInstanceState == null) {
                 selectedId = R.id.navigationConversations
-                navigationView!!.setCheckedItem(selectedId)
+                navigationView.setCheckedItem(selectedId)
                 openConversationsScreen()
             }
         } else {
@@ -183,20 +181,20 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
         if (selectedId != itemId) {
             selectedId = itemId
-            navigationView!!.setCheckedItem(selectedId)
+            navigationView.setCheckedItem(selectedId)
         }
 
-        if (drawerLayout!!.isDrawerOpen(GravityCompat.START)) {
-            drawerLayout!!.closeDrawer(GravityCompat.START)
+        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START)
         }
     }
 
     fun setNavigationIcon(drawable: Drawable?) {
-        toolbar!!.navigationIcon = drawable ?: toggleDrawable
+        toolbar?.navigationIcon = drawable ?: toggleDrawable
     }
 
     fun setNavigationClick(listener: View.OnClickListener?) {
-        toolbar!!.setNavigationOnClickListener(listener ?: toggleClick)
+        toolbar?.setNavigationOnClickListener(listener ?: toggleClick)
     }
 
     override fun onBackPressed() {
@@ -204,8 +202,8 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         if (currentFragment != null && currentFragment.javaClass == FragmentSettings::class.java && (currentFragment as FragmentSettings).onBackPressed()) {
             super.onBackPressed()
         } else {
-            if (drawerLayout!!.isDrawerOpen(navigationView!!)) {
-                drawerLayout!!.closeDrawer(navigationView!!)
+            if (drawerLayout.isDrawerOpen(navigationView)) {
+                drawerLayout.closeDrawer(navigationView)
             } else {
                 if (currentFragment != null && currentFragment.javaClass != FragmentSettings::class.java) super.onBackPressed()
             }

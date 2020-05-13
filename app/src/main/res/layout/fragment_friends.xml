@@ -13,13 +13,13 @@
         android:layout_gravity="center" />
 
     <include
-        layout="@layout/no_items_view"
+        layout="@layout/placeholder_no_items"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone" />
 
     <include
-        layout="@layout/no_internet_view"
+        layout="@layout/placeholder_no_internet"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone" />

@@ -8,7 +8,6 @@
     android:orientation="horizontal">
 
     <LinearLayout
-        android:id="@+id/dialogContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_margin="6dp"
@@ -23,14 +22,14 @@
             android:layout_weight="0">
 
             <ru.melod1n.vk.widget.CircleImageView
-                android:id="@+id/dialogAvatar"
+                android:id="@+id/conversationAvatar"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
                 android:layout_gravity="bottom|end"
                 tools:src="?colorAccent" />
 
             <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/dialogUserOnline"
+                android:id="@+id/conversationUserOnline"
                 android:layout_width="14dp"
                 android:layout_height="14dp"
                 android:layout_gravity="bottom|end"
@@ -55,7 +54,7 @@
                 android:orientation="horizontal">
 
                 <androidx.appcompat.widget.AppCompatImageView
-                    android:id="@+id/dialogType"
+                    android:id="@+id/conversationType"
                     android:layout_width="20dp"
                     android:layout_height="match_parent"
                     android:layout_marginStart="4dp"
@@ -65,7 +64,7 @@
                     tools:src="@drawable/ic_people" />
 
                 <TextView
-                    android:id="@+id/dialogTitle"
+                    android:id="@+id/conversationTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="4dp"
@@ -87,7 +86,7 @@
                 android:orientation="horizontal">
 
                 <ru.melod1n.vk.widget.CircleImageView
-                    android:id="@+id/dialogUserAvatar"
+                    android:id="@+id/conversationUserAvatar"
                     android:layout_width="26dp"
                     android:layout_height="26dp"
                     android:layout_gravity="top"
@@ -96,7 +95,7 @@
                     tools:visibility="visible" />
 
                 <TextView
-                    android:id="@+id/dialogText"
+                    android:id="@+id/conversationText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="2dp"
@@ -119,7 +118,7 @@
             android:paddingEnd="6dp">
 
             <ru.melod1n.vk.widget.CircleImageView
-                android:id="@+id/dialogOut"
+                android:id="@+id/conversationOut"
                 android:layout_width="10dp"
                 android:layout_height="10dp"
                 android:src="?colorAccent"
@@ -127,7 +126,7 @@
                 tools:visibility="gone" />
 
             <TextView
-                android:id="@+id/dialogCounter"
+                android:id="@+id/conversationCounter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/ic_conversations_counter_background"
@@ -143,7 +142,7 @@
                 tools:visibility="visible" />
 
             <TextView
-                android:id="@+id/dialogDate"
+                android:id="@+id/conversationDate"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"

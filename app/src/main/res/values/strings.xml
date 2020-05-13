@@ -113,7 +113,17 @@
     <string name="start_screen_login_settings">Login settings</string>
     <string name="in_progress_placeholder">In progress</string>
     <string name="prefs_general">General</string>
+
     <string name="fragment_settings_general_hide_keyboard_on_scroll_up_title">Hide the keyboard while scrolling up</string>
     >>>>>>> Stashed changes
+
+    <string name="access_error">Access error</string>
+
+    <string name="pref_appearance_dark_theme_title">Dark theme</string>
+
+    <string name="dark_theme_never">Never</string>
+    <string name="dark_theme_always">Always</string>
+    <string name="dark_theme_by_system">By system</string>
+    <string name="dark_theme_by_power_saving">By power saving</string>
 
 </resources>

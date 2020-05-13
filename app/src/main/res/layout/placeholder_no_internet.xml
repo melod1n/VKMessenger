@@ -6,13 +6,12 @@
     android:id="@+id/noInternetView"
     android:background="?android:windowBackground"
     android:gravity="center"
-    android:clickable="false"
     android:orientation="vertical">
 
     <androidx.appcompat.widget.AppCompatImageView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:srcCompat="@drawable/ic_no_internet" />
+        android:src="@drawable/ic_placeholder_no_internet" />
 
     <TextView
         android:layout_width="wrap_content"

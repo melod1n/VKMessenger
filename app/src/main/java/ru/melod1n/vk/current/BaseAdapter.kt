@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import java.io.Serializable
 import java.util.*
+import kotlin.collections.ArrayList
 
 @Suppress("UNCHECKED_CAST")
 abstract class BaseAdapter<T, VH : BaseHolder>(var context: Context, var values: ArrayList<T>) : RecyclerView.Adapter<VH>() {
@@ -68,7 +69,16 @@ abstract class BaseAdapter<T, VH : BaseHolder>(var context: Context, var values:
     }
 
     fun setItems(list: ArrayList<T>) {
-        values = list
+//        values = list
+        values.clear()
+        values.addAll(list)
+    }
+
+
+    fun setItems(list: List<T>) {
+        values.clear()
+        values.addAll(list)
+//        values = ArrayList(list)
     }
 
     override fun onBindViewHolder(holder: VH, position: Int) {

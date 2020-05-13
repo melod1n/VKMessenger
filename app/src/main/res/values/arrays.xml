@@ -26,4 +26,17 @@
         <item>2</item>
     </string-array>
 
+    <string-array name="dark_theme_entries">
+        <item>@string/dark_theme_never</item>
+        <item>@string/dark_theme_always</item>
+        <item>@string/dark_theme_by_system</item>
+        <item>@string/dark_theme_by_power_saving</item>
+    </string-array>
+
+    <string-array name="dark_theme_values">
+        <item>never</item>
+        <item>always</item>
+        <item>system</item>
+        <item>power</item>
+    </string-array>
 </resources>

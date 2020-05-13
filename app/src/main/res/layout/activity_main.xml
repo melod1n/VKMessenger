@@ -25,6 +25,7 @@
         android:id="@+id/navigationView"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
+        android:background="?android:windowBackground"
         android:layout_gravity="start"
         app:headerLayout="@layout/activity_main_drawer_header"
         app:itemBackground="@drawable/navigation_view_item_background_selector"

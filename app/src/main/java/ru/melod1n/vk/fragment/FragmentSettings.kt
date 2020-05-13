@@ -25,6 +25,8 @@ class FragmentSettings : PreferenceFragmentCompat(), Preference.OnPreferenceClic
         }
 
         fun removeOnEventListener(onEventListener: OnEventListener?) {
+            onEventListener ?: return
+
             listeners.remove(onEventListener)
         }
 
@@ -32,6 +34,7 @@ class FragmentSettings : PreferenceFragmentCompat(), Preference.OnPreferenceClic
         const val KEY_HIDE_KEYBOARD_ON_SCROLL_UP = "hide_keyboard_on_scroll_up"
 
         const val CATEGORY_APPEARANCE = "appearance"
+        const val KEY_DARK_THEME = "appearance_dark_theme"
         const val KEY_EXTENDED_CONVERSATIONS = "appearance_extended_conversations"
 
         const val CATEGORY_ABOUT = "about"
@@ -45,7 +48,8 @@ class FragmentSettings : PreferenceFragmentCompat(), Preference.OnPreferenceClic
         fun onNewEvent(event: EventInfo<*>)
     }
 
-    private var currentPreferenceLayout = 0
+    private var currentLayout = 0
+    private var currentTitle = ""
 
     override fun onResume() {
         super.onResume()
@@ -59,14 +63,39 @@ class FragmentSettings : PreferenceFragmentCompat(), Preference.OnPreferenceClic
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.fragment_settings, rootKey)
-        currentPreferenceLayout = R.xml.fragment_settings
-        init()
+
+        currentLayout = R.xml.fragment_settings
+        currentTitle = getString(R.string.navigation_settings)
+
+        init(savedInstanceState)
     }
 
-    private fun init() {
-        setTitle()
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        outState.putInt("currentLayout", currentLayout)
+        outState.putString("currentTitle", currentTitle)
+    }
+
+    override fun onViewStateRestored(savedInstanceState: Bundle?) {
+        super.onViewStateRestored(savedInstanceState)
+
+        savedInstanceState?.let {
+            currentLayout = it.getInt("currentLayout", R.xml.fragment_settings)
+            currentTitle = it.getString("currentTitle", getString(R.string.navigation_settings))
+
+            requireActivity().title = currentTitle
+
+            init(it)
+        }
+    }
+
+    private fun init(savedInstanceState: Bundle? = null) {
+        if (savedInstanceState == null)
+            setTitle()
+
         setNavigationIcon()
-        setPreferencesFromResource(currentPreferenceLayout, null)
+        setPreferencesFromResource(currentLayout, null)
 
         val general = findPreference<Preference>(CATEGORY_GENERAL)
         general?.onPreferenceClickListener = Preference.OnPreferenceClickListener { changeRootLayout(it) }
@@ -86,6 +115,9 @@ class FragmentSettings : PreferenceFragmentCompat(), Preference.OnPreferenceClic
         val appearance = findPreference<Preference>(CATEGORY_APPEARANCE)
         appearance?.onPreferenceClickListener = Preference.OnPreferenceClickListener { changeRootLayout(it) }
 
+        val darkTheme = findPreference<Preference>(KEY_DARK_THEME)
+        darkTheme?.onPreferenceChangeListener = this
+
         val extendedConversations = findPreference<Preference>(KEY_EXTENDED_CONVERSATIONS)
         extendedConversations?.onPreferenceChangeListener = this
 
@@ -93,25 +125,29 @@ class FragmentSettings : PreferenceFragmentCompat(), Preference.OnPreferenceClic
     }
 
     private fun setNavigationIcon() {
-        val drawable = if (currentPreferenceLayout == R.xml.fragment_settings) null else requireContext().getDrawable(R.drawable.ic_arrow_back)
+        val drawable = if (currentLayout == R.xml.fragment_settings) null else requireContext().getDrawable(R.drawable.ic_arrow_back)
         drawable?.setTint(AppGlobal.colorAccent)
-        (requireActivity() as MainActivity).setNavigationIcon(drawable)
-        (requireActivity() as MainActivity).setNavigationClick(if (drawable == null) null else View.OnClickListener { onBackPressed() })
+
+        (activity as MainActivity).setNavigationIcon(drawable)
+        (activity as MainActivity).setNavigationClick(if (drawable == null) null else View.OnClickListener { onBackPressed() })
     }
 
     private fun setTitle() {
         var title = R.string.navigation_settings
-        when (currentPreferenceLayout) {
+        when (currentLayout) {
             R.xml.fragment_settings_general -> title = R.string.prefs_general
             R.xml.fragment_settings_appearance -> title = R.string.prefs_appearance
             R.xml.fragment_settings_about -> title = R.string.prefs_about
             R.xml.fragment_settings_account -> title = R.string.prefs_account
         }
-        requireActivity().setTitle(title)
+
+        currentTitle = getString(title)
+
+        requireActivity().title = currentTitle
     }
 
     private fun changeRootLayout(preference: Preference): Boolean {
-        currentPreferenceLayout = when (preference.key) {
+        currentLayout = when (preference.key) {
             CATEGORY_GENERAL -> R.xml.fragment_settings_general
             CATEGORY_ABOUT -> R.xml.fragment_settings_about
             CATEGORY_ACCOUNT -> R.xml.fragment_settings_account
@@ -162,6 +198,10 @@ class FragmentSettings : PreferenceFragmentCompat(), Preference.OnPreferenceClic
 //                sendEvent(EventInfo<Any>(EventInfo.CONVERSATIONS_REFRESH))
                 return true
             }
+            KEY_DARK_THEME -> {
+                AppGlobal.updateTheme(newValue as String)
+                return true
+            }
         }
 
         return false
@@ -174,10 +214,10 @@ class FragmentSettings : PreferenceFragmentCompat(), Preference.OnPreferenceClic
     }
 
     fun onBackPressed(): Boolean {
-        return if (currentPreferenceLayout == R.xml.fragment_settings) {
+        return if (currentLayout == R.xml.fragment_settings) {
             true
         } else {
-            currentPreferenceLayout = R.xml.fragment_settings
+            currentLayout = R.xml.fragment_settings
             init()
             false
         }

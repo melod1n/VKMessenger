@@ -19,8 +19,8 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.snackbar.Snackbar
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_messages.*
-import kotlinx.android.synthetic.main.no_internet_view.*
-import kotlinx.android.synthetic.main.no_items_view.*
+import kotlinx.android.synthetic.main.placeholder_no_internet.*
+import kotlinx.android.synthetic.main.placeholder_no_items.*
 import kotlinx.android.synthetic.main.recycler_view.*
 import ru.melod1n.vk.R
 import ru.melod1n.vk.adapter.MessageAdapter

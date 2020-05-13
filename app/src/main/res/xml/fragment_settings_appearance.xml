@@ -2,6 +2,14 @@
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <ListPreference
+        app:defaultValue="system"
+        app:entries="@array/dark_theme_entries"
+        app:entryValues="@array/dark_theme_values"
+        app:key="appearance_dark_theme"
+        app:persistent="true"
+        app:title="@string/pref_appearance_dark_theme_title" />
+
+    <ListPreference
         app:defaultValue="1"
         app:enabled="false"
         app:entries="@array/conversations_type_entries"
